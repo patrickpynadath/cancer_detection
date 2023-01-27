@@ -1,5 +1,7 @@
 from __future__ import absolute_import
-
+import pytorch_lightning as pl
+from torchmetrics import Accuracy
+import torch
 '''
 This file is from: https://raw.githubusercontent.com/bearpaw/pytorch-classification/master/models/cifar/resnet.py
 by Wei Yang
@@ -156,6 +158,36 @@ class ResNet(nn.Module):
         x = self.fc(x)
         x = self.sigmoid(x)
         return x
+
+
+class PLResNet(pl.LightningModule):
+    def __init__(self, resnet):
+        super().__init__()
+        self.resnet = resnet
+        self.criterion = nn.CrossEntropyLoss()
+
+    def forward(self, x):
+        return self.resnet(x)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self.resnet(x)
+        loss = self.criterion(logits, y)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = self.criterion(logits, y)
+        pred = torch.argmax(logits, dim=1)
+        accuracy = Accuracy(task='multiclass')
+        acc = accuracy(pred, y)
+        self.log('accuracy', acc, on_epoch=True)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
 
 
 def resnet(**kwargs):

@@ -17,7 +17,6 @@ if __name__ == '__main__':
     model_flags = train_resnet.add_argument_group('model_flags')
 
     # preprocessing data args
-    process_data.add_argument('--process', help='run image preprocessing', action='store_true')
     process_data.add_argument('--finalheight', default=256, type=int, help='final img height for processing')
     process_data.add_argument('--finalwidth', default=128, type=int, help='final img width for processing')
     process_data.add_argument('--par', help='run processing in parralel', action='store_false')

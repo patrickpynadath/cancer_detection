@@ -18,6 +18,14 @@ if __name__ == '__main__':
     parser.add_argument('--par', help='run processing in parralel', action='store_false')
     parser.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
 
+    # training classifiers data args
+
+
+    # training diffusion models args
+
+
+    # training VAE args
+
     args = parser.parse_args()
 
     if args.process:

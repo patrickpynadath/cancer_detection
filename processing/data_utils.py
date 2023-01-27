@@ -1,8 +1,31 @@
 import os
-
+from torch.utils.data import Dataset
+import pandas as pd
+from PIL import Image
+import torch
+import numpy as np
 
 def get_paths(base_dir='data', train=True):
     if train:
         return [f.path for f in os.scandir(f'{base_dir}/train_images') if f.is_dir()]
     else:
         return [f.path for f in os.scandir(f'{base_dir}/test_images') if f.is_dir()]
+
+
+class XRayDataset(Dataset):
+    def __init__(self, base_dir, image_ids):
+        self.base_dir = base_dir
+        self.image_ids = image_ids
+        train_csv = pd.read_csv(f'{base_dir}/train.csv')
+        train_csv.index = train_csv['image_id']
+        self.df = train_csv
+
+    def __len__(self):
+        return len(self.image_ids)
+
+    def __getitem__(self, i):
+        image_id = self.image_ids[i]
+        patient_id = self.df.loc[image_id]['patient_id']
+        xray = Image.open(f'{self.base_dir}/train_images/{patient_id}/{image_id}.png')
+        label = self.df.loc[image_id]['cancer']
+        return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(label, dtype=torch.long)

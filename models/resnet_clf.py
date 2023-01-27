@@ -10,7 +10,6 @@ import torch.nn as nn
 import math
 from .normalization_layers import get_normalize_layer
 
-__all__ = ['resnet']
 
 def conv3x3(in_planes, out_planes, stride=1):
     "3x3 convolution with padding"
@@ -197,8 +196,8 @@ class PLResNet(pl.LightningModule):
         return epoch_dct
 
 
-def resnet(**kwargs):
-    """
-    Constructs a ResNet model.
-    """
-    return ResNet(**kwargs)
+# construct untrained resnet from args
+def resnet_from_args(args, num_classes):
+    resnet = ResNet(depth=args.depth, num_classes = num_classes, block_name= args.block_name, device = args.device)
+    pl_resnet = PLResNet(resnet, args.lr)
+    return pl_resnet

@@ -26,6 +26,9 @@ if __name__ == '__main__':
 
     # training VAE args
 
+
+    # training XGBoost args
+
     args = parser.parse_args()
 
     if args.process:

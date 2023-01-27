@@ -160,10 +160,13 @@ class ResNet(nn.Module):
         return x
 
 
+# wrapper lightning module class for resnet
+# TODO: need to add method for end of epoch metrics
 class PLResNet(pl.LightningModule):
-    def __init__(self, resnet):
+    def __init__(self, resnet, lr = 1e-3):
         super().__init__()
         self.resnet = resnet
+        self.lr = lr
         self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, x):
@@ -186,8 +189,12 @@ class PLResNet(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
+
+    def training_epoch_end(self, outputs):
+        epoch_dct = {}
+        return epoch_dct
 
 
 def resnet(**kwargs):

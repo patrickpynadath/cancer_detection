@@ -21,7 +21,6 @@ class NormalizeLayer(torch.nn.Module):
         :param sds: the channel standard deviations
         """
         super(NormalizeLayer, self).__init__()
-        self.device = device
         self.means = torch.tensor(means)
         self.sds = torch.tensor(sds)
 

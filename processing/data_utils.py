@@ -57,13 +57,13 @@ def get_loaders_from_args(args):
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
 
     total_ids = train_csv['image_id']
-    rs = ShuffleSplit(n_splits=2, test_size=args.test_size)
-    total_train_ids, test_ids = next(rs.split(total_ids))
-    train_ids, val_ids = next(rs.split(total_ids))
+    rs = ShuffleSplit(n_splits=1, test_size=args.test_size)
+    total_idx, test_idx = next(rs.split(total_ids))
+    train_idx, val_idx = next(rs.split(total_ids))
     target_col = args.target_col
-    train_set = XRayDataset(base_dir, train_ids, target_col)
-    val_set = XRayDataset(base_dir, val_ids, target_col)
-    test_set = XRayDataset(base_dir, test_ids, target_col)
+    train_set = XRayDataset(base_dir, total_ids[train_idx], target_col)
+    val_set = XRayDataset(base_dir, total_ids[val_idx], target_col)
+    test_set = XRayDataset(base_dir, total_ids[test_idx], target_col)
     batch_size = args.batch_size
     return DataLoader(train_set, batch_size=batch_size), \
            DataLoader(val_set, batch_size=batch_size), \

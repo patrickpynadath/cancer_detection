@@ -49,7 +49,6 @@ if __name__ == '__main__':
         mp = MammographyPreprocessor(size=final_size, csv_path = f'{base_dir}/train.csv', train_path=f'{base_dir}/train_images')
 
         paths = get_paths()
-        print(paths[0])
         mp.preprocess_all(paths, parallel=args.par)
     elif args.command == 'train_resnet':
         print(args)

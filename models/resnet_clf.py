@@ -198,7 +198,7 @@ class PLResNet(pl.LightningModule):
 
 # construct untrained resnet from args
 def resnet_from_args(args, num_classes):
-    resnet = ResNet(depth=args.depth, num_classes = num_classes, block_name= args.block_name, device = args.device)
+    resnet = ResNet(depth=args.depth, num_classes = num_classes, block_name= args.block_name)
     pl_resnet = PLResNet(resnet, args.lr)
     return pl_resnet
 

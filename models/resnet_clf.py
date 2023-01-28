@@ -182,8 +182,7 @@ class PLResNet(pl.LightningModule):
         logits = self(x)
         loss = self.criterion(logits, y)
         pred = torch.argmax(logits, dim=1)
-        accuracy = Accuracy(task='multiclass')
-        acc = accuracy(pred, y)
+        acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))])/len(pred)
         self.log('accuracy', acc, on_epoch=True)
         return loss
 

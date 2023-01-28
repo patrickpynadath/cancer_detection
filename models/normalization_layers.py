@@ -25,10 +25,10 @@ class NormalizeLayer(torch.nn.Module):
         self.sds = torch.tensor(sds)
 
     def forward(self, input: torch.tensor):
-        print(input.device)
+
         (batch_size, num_channels, height, width) = input.shape
-        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(input.device)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(input.device)
         return (input - means)/sds
 
 

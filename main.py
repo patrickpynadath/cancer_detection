@@ -50,7 +50,7 @@ if __name__ == '__main__':
         mp = MammographyPreprocessor(size=final_size, csv_path = f'{base_dir}/train.csv', train_path=f'{base_dir}/train_images')
 
         paths = get_paths()
-        mp.preprocess_all(paths, parallel=args.par)
+        mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
     elif args.command == 'train_resnet':
         train_loader, val_loader, test_loader = get_loaders_from_args(args)
         pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))

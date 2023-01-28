@@ -15,6 +15,7 @@ if __name__ == '__main__':
 
     train_resnet = subparsers.add_parser('train_resnet', help = 'command to train resnet clf')
     model_flags = train_resnet.add_argument_group('model_flags')
+    data_flags = train_resnet.add_argument_group('data_flags')
 
     # preprocessing data args
     process_data.add_argument('--finalheight', default=256, type=int, help='final img height for processing')
@@ -23,9 +24,15 @@ if __name__ == '__main__':
     process_data.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
 
     # training resnet data args
-    model_flags.add_argument('--layers', help = 'layers for resnet', default=56, type=int)
-    model_flags.add_argument('--target_col', help = 'target column for training', default = 'cancer', type=str)
+    model_flags.add_argument('--lr', help = 'lr to use for adam optimizer', default = 1e-3, type=float)
+    model_flags.add_argument('--depth', help = 'layers for resnet', default=56, type=int)
     model_flags.add_argument('--block_name', help = 'block name to use for resnet', choices=['BasicBlock', 'BottleNeck'], default='BottleNeck')
+
+    data_flags.add_argument('--target_col', help='target column for training', default='cancer', type=str)
+    data_flags.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
+    data_flags.add_argument('--base_dir', help='base dir for data', default='data', type=str)
+    data_flags.add_argument('--test_size', help='ratio for size of validation set', default=.25, type=float)
+
     trainer_flags = Trainer.add_argparse_args(train_resnet)
     # training diffusion models args
 
@@ -40,7 +47,9 @@ if __name__ == '__main__':
         final_size = (args.finalwidth, args.finalheight)
         base_dir = args.base_data_dir
         mp = MammographyPreprocessor(size=final_size, csv_path = f'{base_dir}/train.csv', train_path=f'{base_dir}/train_images')
+
         paths = get_paths()
+        print(paths[0])
         mp.preprocess_all(paths, parallel=args.par)
     elif args.command == 'train_resnet':
         print(args)

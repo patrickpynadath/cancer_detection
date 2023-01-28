@@ -13,6 +13,7 @@ def get_paths(base_dir='data', train=True):
         return [f.path for f in os.scandir(f'{base_dir}/test_images') if f.is_dir()]
 
 
+
 # torch dataset class for mammographs
 # target col can be any column included in the given csv
 class XRayDataset(Dataset):
@@ -44,3 +45,5 @@ class XRayDataset(Dataset):
         return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(label, dtype=torch.long)
 
 
+def get_loaders_from_args(args):
+    return

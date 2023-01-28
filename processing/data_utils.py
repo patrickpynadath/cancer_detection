@@ -8,9 +8,17 @@ import numpy as np
 
 def get_paths(base_dir='data', train=True):
     if train:
-        return [f.path for f in os.scandir(f'{base_dir}/train_images') if f.is_dir()]
+        root_dir = f'{base_dir}/train_images'
     else:
-        return [f.path for f in os.scandir(f'{base_dir}/test_images') if f.is_dir()]
+        root_dir = f'{base_dir}/test_images'
+    train_csv = pd.read_csv(f'{base_dir}/train.csv')
+    train_csv.index = train_csv['image_id']
+    paths = []
+    for i, image_id in enumerate(train_csv.index):
+        patient_id = train_csv.loc[image_id]['patient_id']
+        paths.append(f'{root_dir}/{patient_id}/{image_id}.dcm')
+    return paths
+
 
 
 

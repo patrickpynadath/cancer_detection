@@ -18,8 +18,8 @@ if __name__ == '__main__':
     data_flags = train_resnet.add_argument_group('data_flags')
 
     # preprocessing data args
-    process_data.add_argument('--finalheight', default=256, type=int, help='final img height for processing')
-    process_data.add_argument('--finalwidth', default=128, type=int, help='final img width for processing')
+    process_data.add_argument('--finalheight', default=128, type=int, help='final img height for processing')
+    process_data.add_argument('--finalwidth', default=64, type=int, help='final img width for processing')
     process_data.add_argument('--par', help='run processing in parralel', action='store_true')
     process_data.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
 

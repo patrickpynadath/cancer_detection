@@ -1,8 +1,8 @@
-from processing import MammographyPreprocessor, get_paths
+from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, get_num_classes
 import argparse
+from models import resnet_from_args
 from pytorch_lightning import Trainer
-
-
+from training import resnet_training_loop
 
 
 # data preprocessing
@@ -51,6 +51,10 @@ if __name__ == '__main__':
         paths = get_paths()
         mp.preprocess_all(paths, parallel=args.par)
     elif args.command == 'train_resnet':
-        print(args)
+        train_loader, val_loader, test_loader = get_loaders_from_args(args)
+        pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
+        resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+
+
 
 

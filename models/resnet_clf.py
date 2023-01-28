@@ -201,3 +201,4 @@ def resnet_from_args(args, num_classes):
     resnet = ResNet(depth=args.depth, num_classes = num_classes, block_name= args.block_name, device = args.device)
     pl_resnet = PLResNet(resnet, args.lr)
     return pl_resnet
+

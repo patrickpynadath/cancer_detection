@@ -15,7 +15,8 @@ import dicomsdl
 import matplotlib.pyplot as plt
 
 # Progress bar library imports
-from tqdm.notebook import tqdm, trange
+import tqdm.notebook as notebook
+import tqdm
 
 # Parallel processing library imports
 from joblib import Parallel, delayed
@@ -86,15 +87,23 @@ class MammographyPreprocessor():
     # Preprocess all the images from the paths
     def preprocess_all(self, paths: list, save: bool = True,
                        save_dir: str = 'train_images', png: bool = True,
-                       parallel: bool = False, n_jobs: int = 4):
+                       parallel: bool = False, n_jobs: int = 4, is_notebook: bool = False):
         clock = time.time()
         if parallel:
+            if is_notebook:
+                pg_bar = tqdm.notebook.tqdm(paths, total=len(paths))
+            else:
+                pg_bar = tqdm.tqdm(paths, total=len(paths))
             Parallel(n_jobs=n_jobs) \
                 (delayed(self.preprocess_single_image) \
-                     (path, save, save_dir, png) for path in tqdm(paths, total=len(paths)))
+                     (path, save, save_dir, png) for path in pg_bar)
             print("Parallel preprocessing done!")
         else:
-            for i in trange(len(paths)):
+            if is_notebook:
+                pg_bar = tqdm.notebook.trange(len(paths))
+            else:
+                pg_bar = tqdm.trange(len(paths))
+            for i in pg_bar:
                 self.preprocess_single_image(paths[i], save, save_dir, png)
             print("Sequential preprocessing done!")
         print("Time =", np.around(time.time() - clock, 3), 'sec')

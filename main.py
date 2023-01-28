@@ -24,6 +24,7 @@ if __name__ == '__main__':
     process_data.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
 
     # training resnet data args
+    model_flags.add_argument('--device', help = 'device to train model on', default='cpu', type=str)
     model_flags.add_argument('--lr', help = 'lr to use for adam optimizer', default = 1e-3, type=float)
     model_flags.add_argument('--depth', help = 'layers for resnet', default=56, type=int)
     model_flags.add_argument('--block_name', help = 'block name to use for resnet', choices=['BasicBlock', 'BottleNeck'], default='BottleNeck')

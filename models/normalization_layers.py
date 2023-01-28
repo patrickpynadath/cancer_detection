@@ -15,20 +15,20 @@ class NormalizeLayer(torch.nn.Module):
       layer of the classifier rather than ras a part of preprocessing as is typical.
       """
 
-    def __init__(self, means: List[float], sds: List[float], device: str):
+    def __init__(self, means: List[float], sds: List[float]):
         """
         :param means: the channel means
         :param sds: the channel standard deviations
         """
         super(NormalizeLayer, self).__init__()
         self.device = device
-        self.means = torch.tensor(means).to(device)
-        self.sds = torch.tensor(sds).to(device)
+        self.means = torch.tensor(means)
+        self.sds = torch.tensor(sds)
 
     def forward(self, input: torch.tensor):
         (batch_size, num_channels, height, width) = input.shape
-        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(self.device)
-        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(self.device)
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
         return (input - means)/sds
 
 
@@ -54,8 +54,8 @@ class InputCenterLayer(torch.nn.Module):
         return input - means
 
 
-def get_normalize_layer(device):
-    return NormalizeLayer(_CIFAR10_MEAN, _CIFAR10_STDDEV, device)
+def get_normalize_layer():
+    return NormalizeLayer(_CIFAR10_MEAN, _CIFAR10_STDDEV)
 
 
 def get_input_center_layer():

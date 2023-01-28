@@ -21,13 +21,14 @@ class NormalizeLayer(torch.nn.Module):
         :param sds: the channel standard deviations
         """
         super(NormalizeLayer, self).__init__()
+        self.device = device
         self.means = torch.tensor(means).to(device)
         self.sds = torch.tensor(sds).to(device)
 
     def forward(self, input: torch.tensor):
         (batch_size, num_channels, height, width) = input.shape
-        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
-        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(self.device)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2).to(self.device)
         return (input - means)/sds
 
 

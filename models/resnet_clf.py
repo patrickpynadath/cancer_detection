@@ -189,10 +189,10 @@ class PLResNet(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
-
-    def training_epoch_end(self, outputs):
-        epoch_dct = {}
-        return epoch_dct
+    #
+    # def training_epoch_end(self, outputs):
+    #     epoch_dct = {}
+    #     return epoch_dct
 
 
 # construct untrained resnet from args

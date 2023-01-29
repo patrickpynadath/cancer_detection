@@ -1,1 +1,1 @@
-from .classifier_training import resnet_training_loop
+from .training_loops import resnet_training_loop

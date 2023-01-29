@@ -52,6 +52,7 @@ if __name__ == '__main__':
     diffusion_data_flags.add_argument('--test_size', default=.1, type=float, help='test ratio size')
     diffusion_data_flags.add_argument('--batch_size', default=32, type=int,help='batch size')
     diffusion_data_flags.add_argument('--loader_workers', default=32, type=int,help='num workers for data loader')
+    diffusion_data_flags.add_argument('--target_col', default='cancer', type=str, help='target col')
     # training VAE args
 
 

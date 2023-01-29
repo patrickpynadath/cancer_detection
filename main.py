@@ -3,7 +3,7 @@ import argparse
 from models import resnet_from_args, get_diffusion_model_from_args
 from pytorch_lightning import Trainer
 from training import resnet_training_loop, diffusion_training_loop
-
+import torch
 # data preprocessing
 
 
@@ -76,6 +76,7 @@ if __name__ == '__main__':
         train_loader, val_loader, test_loader = get_loaders_from_args(args, mimic_col=args.mimic_col, mimic_val=args.mimic_val)
         diffusion_model = get_diffusion_model_from_args(args)
         diffusion_training_loop(diffusion_model, train_loader)
+        torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
 
 
 

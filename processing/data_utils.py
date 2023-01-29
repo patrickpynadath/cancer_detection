@@ -57,11 +57,13 @@ class XRayDataset(Dataset):
         return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(label, dtype=torch.long)
 
 
-def get_loaders_from_args(args, mimic_col = None, mimic_val = None):
+def get_loaders_from_args(args, to_mimic=None):
     base_dir = args.base_dir
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    if mimic_col and mimic_val:
-        tmp = train_csv[train_csv[mimic_col].isin([mimic_val])]
+    if to_mimic:
+        tmp = train_csv
+        for col_name, val in to_mimic:
+            tmp = tmp[tmp[col_name].isin(val)]
         total_ids = tmp['image_id']
     else:
         total_ids = train_csv['image_id']

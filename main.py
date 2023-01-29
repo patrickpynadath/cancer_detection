@@ -73,7 +73,8 @@ if __name__ == '__main__':
         resnet_training_loop(args, pl_resnet, train_loader, val_loader)
 
     elif args.command == 'train_diffusion':
-        train_loader, val_loader, test_loader = get_loaders_from_args(args, mimic_col=args.mimic_col, mimic_val=args.mimic_val)
+        to_mimic = [('invasive', [1]), ('density', ['A', 'B']), ('cancer', [1])]
+        train_loader, val_loader, test_loader = get_loaders_from_args(args, to_mimic)
         diffusion_model = get_diffusion_model_from_args(args)
         diffusion_training_loop(diffusion_model, train_loader)
         torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')

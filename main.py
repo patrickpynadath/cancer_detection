@@ -33,6 +33,7 @@ if __name__ == '__main__':
     data_flags.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
     data_flags.add_argument('--base_dir', help='base dir for data', default='data', type=str)
     data_flags.add_argument('--test_size', help='ratio for size of validation set', default=.25, type=float)
+    data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
 
     trainer_flags = Trainer.add_argparse_args(train_resnet)
     # training diffusion models args

@@ -65,9 +65,9 @@ def get_loaders_from_args(args):
     val_set = XRayDataset(base_dir, list(total_ids[val_idx]), target_col)
     test_set = XRayDataset(base_dir, list(total_ids[test_idx]), target_col)
     batch_size = args.batch_size
-    return DataLoader(train_set, batch_size=batch_size), \
-           DataLoader(val_set, batch_size=batch_size), \
-           DataLoader(test_set, batch_size=batch_size)
+    return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
+           DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \
+           DataLoader(test_set, batch_size=batch_size, num_workers=args.loader_workers)
 
 
 def get_num_classes(target_col, base_dir):

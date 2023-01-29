@@ -6,7 +6,7 @@ from torchvision import transforms as T, utils
 from tqdm.auto import tqdm
 from ema_pytorch import EMA
 from accelerate import Accelerator
-from denoising_diffusion_pytorch.version import __version__
+__version__ = '1.0.6'
 
 
 def cycle(dl):

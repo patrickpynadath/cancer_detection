@@ -35,5 +35,10 @@ class GaussianDiffusionCustom(GaussianDiffusion):
         assert h == img_size[0] and w == img_size[1], f'height and width of image must be {img_size}'
         t = torch.randint(0, self.num_timesteps, (b,), device=device).long()
 
-        img = self.normalize(img)
+        img = self.norm(img)
         return self.p_losses(img, t, *args, **kwargs)
+
+    def norm(self, img):
+        return self.normalize(img)
+
+

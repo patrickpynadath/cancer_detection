@@ -69,9 +69,9 @@ def get_loaders_from_args(args, mimic_col = None, mimic_val = None):
     total_idx, test_idx = next(rs.split(total_ids))
     train_idx, val_idx = next(rs.split(total_ids))
     target_col = args.target_col
-    train_set = XRayDataset(base_dir, list(total_ids[train_idx]), target_col)
-    val_set = XRayDataset(base_dir, list(total_ids[val_idx]), target_col)
-    test_set = XRayDataset(base_dir, list(total_ids[test_idx]), target_col)
+    train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), target_col)
+    val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), target_col)
+    test_set = XRayDataset(base_dir, list(total_ids.iloc[test_idx]), target_col)
     batch_size = args.batch_size
     return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
            DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \

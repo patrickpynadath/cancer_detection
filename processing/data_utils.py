@@ -7,7 +7,7 @@ from sklearn.model_selection import ShuffleSplit
 import numpy as np
 
 
-def get_paths(base_dir='data', train=True):
+def get_paths(base_dir='data', train=True, target_col=None, target_val = None):
     if train:
         root_dir = f'{base_dir}/train_images'
     else:
@@ -15,9 +15,15 @@ def get_paths(base_dir='data', train=True):
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
     train_csv.index = train_csv['image_id']
     paths = []
-    for i, image_id in enumerate(train_csv.index):
-        patient_id = train_csv.loc[image_id]['patient_id']
-        paths.append(f'{root_dir}/{patient_id}/{image_id}.dcm')
+    if not target_val and not target_col:
+        for i, image_id in enumerate(train_csv.index):
+            patient_id = train_csv.loc[image_id]['patient_id']
+            paths.append(f'{root_dir}/{patient_id}/{image_id}.dcm')
+    else:
+        for i, image_id in enumerate(train_csv.index):
+            if train_csv.loc[image_id][target_col] == target_val:
+                patient_id = train_csv.loc[image_id]['patient_id']
+                paths.append(f'{root_dir}/{patient_id}/{image_id}.dcm')
     return paths
 
 

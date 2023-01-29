@@ -76,7 +76,7 @@ if __name__ == '__main__':
         to_mimic = [('invasive', [1]), ('density', ['A', 'B']), ('cancer', [1])]
         train_loader, val_loader, test_loader = get_loaders_from_args(args, to_mimic)
         diffusion_model = get_diffusion_model_from_args(args)
-        diffusion_training_loop(diffusion_model, train_loader)
+        diffusion_training_loop(diffusion_model, train_loader, 'high_fidelity_cancerex_results')
         torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
 
 

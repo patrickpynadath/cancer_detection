@@ -39,11 +39,3 @@ class GaussianDiffusionCustom(GaussianDiffusion):
 
         img = self.normalize(img)
         return self.p_losses(img, t, *args, **kwargs)
-
-
-def normalize_to_neg_one_to_one(img):
-    return img * 2 - 1
-
-
-def identity(t, *args, **kwargs):
-    return t

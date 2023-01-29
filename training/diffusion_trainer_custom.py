@@ -145,6 +145,7 @@ class DiffusionTrainer(object):
                 total_loss = 0.
 
                 for _ in range(self.gradient_accumulate_every):
+                    print(next(self.dl))
                     data = next(self.dl).to(device)
 
                     with self.accelerator.autocast():

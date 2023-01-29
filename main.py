@@ -46,11 +46,12 @@ if __name__ == '__main__':
     diffusion_model_flags.add_argument('--timesteps', default=1000, type=int, help='timesteps for diffusion model')
     diffusion_model_flags.add_argument('--loss_type', default='l2', choices=['l2', 'l1'], help='loss type for diffusion output')
 
-    diffusion_data_flags.add_argument('--target_col', default='cancer', type=str, help='target col to train diffusion model to generate')
-    diffusion_data_flags.add_argument('--target_val', default=1, help='the desired value the samples should mimic from target_col')
+    diffusion_data_flags.add_argument('--mimic_col', default='cancer', type=str, help='target col to train diffusion model to generate')
+    diffusion_data_flags.add_argument('--mimic_val', default=1, help='the desired value the samples should mimic from target_col')
     diffusion_data_flags.add_argument('--base_dir', default='data', type=str, help='base dir for data')
     diffusion_data_flags.add_argument('--test_size', default=.1, type=float, help='test ratio size')
-    diffusion_data_flags.add_argument('--batch_size', default=32, type=float,help='batch size')
+    diffusion_data_flags.add_argument('--batch_size', default=32, type=int,help='batch size')
+    diffusion_data_flags.add_argument('--loader_workers', default=32, type=int,help='num workers for data loader')
     # training VAE args
 
 
@@ -71,7 +72,7 @@ if __name__ == '__main__':
         resnet_training_loop(args, pl_resnet, train_loader, val_loader)
 
     elif args.command == 'train_diffusion':
-        train_loader, val_loader, test_loader = get_loaders_from_args(args)
+        train_loader, val_loader, test_loader = get_loaders_from_args(args, mimic_col=args.mimic_col, mimic_val=args.mimic_val)
         diffusion_model = get_diffusion_model_from_args(args)
         diffusion_training_loop(diffusion_model, train_loader)
 

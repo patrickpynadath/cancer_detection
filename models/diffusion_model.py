@@ -4,6 +4,7 @@ import torch
 
 def get_diffusion_model_from_args(args):
     model = Unet(
+        channels=1,
         dim=64,
         dim_mults=(1, 2, 4, 8)
     )

@@ -41,8 +41,8 @@ if __name__ == '__main__':
     trainer_flags = Trainer.add_argparse_args(train_resnet)
 
     # training diffusion models args
-    diffusion_model_flags.add_argument('--imgheight', default = 128, type=int, help='input img height')
-    diffusion_model_flags.add_argument('--imgwidth', default=64, type=int, help='input img width')
+    diffusion_model_flags.add_argument('--img_height', default = 128, type=int, help='input img height')
+    diffusion_model_flags.add_argument('--img_width', default=64, type=int, help='input img width')
     diffusion_model_flags.add_argument('--timesteps', default=1000, type=int, help='timesteps for diffusion model')
     diffusion_model_flags.add_argument('--loss_type', default='l2', choices=['l2', 'l1'], help='loss type for diffusion output')
 

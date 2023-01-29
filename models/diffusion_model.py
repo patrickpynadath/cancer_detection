@@ -1,5 +1,6 @@
 from denoising_diffusion_pytorch import Unet, GaussianDiffusion
 import torch
+from tqdm import tqdm
 
 
 def get_diffusion_model_from_args(args):
@@ -30,6 +31,24 @@ class GaussianDiffusionCustom(GaussianDiffusion):
         sample_fn = self.p_sample_loop if not self.is_ddim_sampling else self.ddim_sample
         return sample_fn((batch_size, channels, image_size[0], image_size[1]),
                          return_all_timesteps=return_all_timesteps)
+
+    def p_sample_loop(self, shape, return_all_timesteps = False):
+        batch, device = shape[0], self.betas.device
+
+        img = torch.randn(shape, device = device)
+        imgs = [img]
+
+        x_start = None
+
+        for t in tqdm(reversed(range(0, self.num_timesteps)), desc = 'sampling loop time step', total = self.num_timesteps):
+            self_cond = x_start if self.self_condition else None
+            img, x_start = self.p_sample(img, t, self_cond)
+            imgs.append(img)
+
+        ret = img if not return_all_timesteps else torch.stack(imgs, dim = 1)
+
+        ret = self.unnormalize(ret)
+        return ret
 
     def forward(self, img, *args, **kwargs):
         b, c, h, w, device, img_size, = *img.shape, img.device, self.image_size

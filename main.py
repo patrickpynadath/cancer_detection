@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     diffusion_data_flags.add_argument('--target_col', default='cancer', type=str, help='target col to train diffusion model to generate')
     diffusion_data_flags.add_argument('--target_val', default=1, help='the desired value the samples should mimic from target_col')
-
+    diffusion_model_flags.add_argument('--base_dir', default='data', type=str, help='base dir for data')
 
     # training VAE args
 

@@ -57,11 +57,14 @@ class XRayDataset(Dataset):
         return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(label, dtype=torch.long)
 
 
-def get_loaders_from_args(args):
+def get_loaders_from_args(args, target_col = None, target_val = None):
     base_dir = args.base_dir
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
-
-    total_ids = train_csv['image_id']
+    if target_col and target_val:
+        tmp = train_csv[train_csv[target_col].isin([target_val])]
+        total_ids = tmp['image_id']
+    else:
+        total_ids = train_csv['image_id']
     rs = ShuffleSplit(n_splits=1, test_size=args.test_size)
     total_idx, test_idx = next(rs.split(total_ids))
     train_idx, val_idx = next(rs.split(total_ids))
@@ -77,3 +80,5 @@ def get_loaders_from_args(args):
 
 def get_num_classes(target_col, base_dir):
     return len(pd.unique(pd.read_csv(f'{base_dir}/train.csv')[target_col]))
+
+

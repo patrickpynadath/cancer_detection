@@ -10,7 +10,7 @@ def get_diffusion_model_from_args(args):
 
     diffusion = GaussianDiffusionCustom(
         model,
-        image_size=args.img_size,
+        image_size=(args.img_height, args.img_width),
         timesteps=args.timesteps,  # number of steps
         loss_type=args.loss_type  # L1 or L2
     )

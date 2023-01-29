@@ -19,6 +19,11 @@ def get_diffusion_model_from_args(args):
 
 # the out-the-box diffusion only produces square images, but its pretty simple to adjust that
 class GaussianDiffusionCustom(GaussianDiffusion):
+    def __init__(self,
+                 model,
+                 *,
+                 image_size):
+        GaussianDiffusion.__init__(self, model = model, image_size = image_size)
 
     @torch.no_grad()
     def sample(self, batch_size=16, return_all_timesteps=False):

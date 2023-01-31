@@ -90,17 +90,17 @@ def get_balanced_loaders(args, train_size, val_size, test_size):
     total_ids = train_csv['image_id']
     index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
     index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
-    sampled_pos = random.sample(index_pos, (train_size + val_size + test_size)/2)
-    sampled_neg = random.sample(index_neg, (train_size + val_size + test_size)/2)
+    sampled_pos = random.sample(index_pos, (train_size + val_size + test_size)//2)
+    sampled_neg = random.sample(index_neg, (train_size + val_size + test_size)//2)
 
-    sampled_pos_train = sampled_pos[:train_size/2]
-    sampled_neg_train = sampled_neg[:train_size/2]
+    sampled_pos_train = sampled_pos[:train_size//2]
+    sampled_neg_train = sampled_neg[:train_size//2]
 
-    sampled_pos_val = sampled_pos[train_size/2 : (train_size + val_size)/2]
-    sampled_neg_val = sampled_neg[train_size / 2: (train_size + val_size) / 2]
+    sampled_pos_val = sampled_pos[train_size//2 : (train_size + val_size)//2]
+    sampled_neg_val = sampled_neg[train_size // 2: (train_size + val_size) // 2]
 
-    sampled_pos_test = sampled_pos[(train_size + val_size)/2 :]
-    sampled_neg_test = sampled_neg[(train_size + val_size)/2 :]
+    sampled_pos_test = sampled_pos[(train_size + val_size)//2 :]
+    sampled_neg_test = sampled_neg[(train_size + val_size)//2 :]
     batch_size = args.batch_size
     train_idx = sampled_pos_train + sampled_neg_train
     val_idx = sampled_pos_val + sampled_neg_val

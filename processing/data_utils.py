@@ -120,8 +120,8 @@ def over_sample_loader(args, train_size, val_size, test_size):
     total_ids = train_csv['image_id']
     index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
     index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
-    sampled_pos = random.sample(index_pos, train_size/2 + val_size/2 + test_size/2)
-    sampled_neg = random.sample(index_neg, train_size + val_size/2 + test_size/2)
+    sampled_pos = random.sample(index_pos, int(train_size/2 + val_size/2 + test_size/2))
+    sampled_neg = random.sample(index_neg, int(train_size + val_size/2 + test_size/2))
 
     sampled_pos_train_half = sampled_pos[:train_size / 2]
     sampled_pos_train = sampled_pos_train_half + copy.deepcopy(sampled_pos_train_half)

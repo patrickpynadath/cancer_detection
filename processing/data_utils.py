@@ -123,15 +123,15 @@ def over_sample_loader(args, train_size, val_size, test_size):
     sampled_pos = random.sample(index_pos, int(train_size/2 + val_size/2 + test_size/2))
     sampled_neg = random.sample(index_neg, int(train_size + val_size/2 + test_size/2))
 
-    sampled_pos_train_half = sampled_pos[:train_size / 2]
+    sampled_pos_train_half = sampled_pos[:train_size // 2]
     sampled_pos_train = sampled_pos_train_half + copy.deepcopy(sampled_pos_train_half)
     sampled_neg_train = sampled_neg[:train_size]
 
-    sampled_pos_val = sampled_pos[train_size / 2: (train_size + val_size) / 2]
-    sampled_neg_val = sampled_neg[train_size: train_size + val_size/2]
+    sampled_pos_val = sampled_pos[train_size // 2: (train_size + val_size) // 2]
+    sampled_neg_val = sampled_neg[train_size: train_size + val_size//2]
 
-    sampled_pos_test = sampled_pos[(train_size + val_size) / 2:]
-    sampled_neg_test = sampled_neg[train_size + val_size/2:]
+    sampled_pos_test = sampled_pos[(train_size + val_size) // 2:]
+    sampled_neg_test = sampled_neg[train_size + val_size//2:]
 
     batch_size = args.batch_size
     train_idx = sampled_pos_train + sampled_neg_train

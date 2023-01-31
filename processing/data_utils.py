@@ -5,6 +5,7 @@ import torch
 import random
 from sklearn.model_selection import ShuffleSplit
 import numpy as np
+import copy
 
 random.seed(1)
 
@@ -100,6 +101,38 @@ def get_balanced_loaders(args, train_size, val_size, test_size):
 
     sampled_pos_test = sampled_pos[(train_size + val_size)/2 :]
     sampled_neg_test = sampled_neg[(train_size + val_size)/2 :]
+    batch_size = args.batch_size
+    train_idx = sampled_pos_train + sampled_neg_train
+    val_idx = sampled_pos_val + sampled_neg_val
+    test_idx = sampled_pos_test + sampled_neg_test
+
+    train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), 'cancer')
+    val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), 'cancer')
+    test_set = XRayDataset(base_dir, list(total_ids.iloc[test_idx]), 'cancer')
+    return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
+           DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \
+           DataLoader(test_set, batch_size=batch_size, num_workers=args.loader_workers)
+
+
+def over_sample_loader(args, train_size, val_size, test_size):
+    base_dir = args.base_dir
+    train_csv = pd.read_csv(f'{base_dir}/train.csv')
+    total_ids = train_csv['image_id']
+    index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
+    index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
+    sampled_pos = random.sample(index_pos, train_size/2 + val_size/2 + test_size/2)
+    sampled_neg = random.sample(index_neg, train_size + val_size/2 + test_size/2)
+
+    sampled_pos_train_half = sampled_pos[:train_size / 2]
+    sampled_pos_train = sampled_pos_train_half + copy.deepcopy(sampled_pos_train_half)
+    sampled_neg_train = sampled_neg[:train_size]
+
+    sampled_pos_val = sampled_pos[train_size / 2: (train_size + val_size) / 2]
+    sampled_neg_val = sampled_neg[train_size: train_size + val_size/2]
+
+    sampled_pos_test = sampled_pos[(train_size + val_size) / 2:]
+    sampled_neg_test = sampled_neg[train_size + val_size/2:]
+
     batch_size = args.batch_size
     train_idx = sampled_pos_train + sampled_neg_train
     val_idx = sampled_pos_val + sampled_neg_val

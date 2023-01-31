@@ -1,6 +1,7 @@
 from denoising_diffusion_pytorch import Unet, GaussianDiffusion
 import torch
 from tqdm import tqdm
+from PIL import Image
 
 
 def get_diffusion_model_from_args(args):
@@ -73,4 +74,28 @@ def unnormalize_to_zero_to_one(t):
     return (t + 1) * 0.5
 
 
+def get_trained_diff_model(args):
+    model = Unet(
+        channels=1,
+        dim=64,
+        dim_mults=(1, 2, 4, 8)
+    )
+    diff_model = GaussianDiffusionCustom(model, image_size = (args.img_width, args.img_height))
+    diff_model.load_state_dict(torch.load(args.save_name))
+    return diff_model
 
+
+def create_save_artificial_samples(diff_model, num_samples, save_dir):
+    pbar = tqdm(total=num_samples)
+    i = 0
+    while i < num_samples:
+        cur_sampled_batch = diff_model.sample()
+        for j in range(cur_sampled_batch.shape(0)):
+            cur_img = cur_sampled_batch[j]
+            file_name = f'{save_dir}/img{i}.png'
+            ndarray = cur_img.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
+            im = Image.fromarray(ndarray)
+            im.save(file_name, format=None)
+            i += 1
+            pbar.update(1)
+    return

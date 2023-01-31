@@ -1,6 +1,8 @@
+import os
+
 from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, get_num_classes, get_balanced_loaders, over_sample_loader
 import argparse
-from models import resnet_from_args, get_diffusion_model_from_args
+from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, create_save_artificial_samples
 from pytorch_lightning import Trainer
 from training import resnet_training_loop, diffusion_training_loop
 import torch
@@ -19,6 +21,8 @@ if __name__ == '__main__':
     train_diffusion = subparsers.add_parser('train_diffusion', help='command for training diffusion models')
     diffusion_model_flags = train_diffusion.add_argument_group('model_flags')
     diffusion_data_flags = train_diffusion.add_argument_group('data_flags')
+
+    generate_imgs = subparsers.add_parser('generate_imgs', help='command for creating artificial positive samples')
 
     # preprocessing data args
     process_data.add_argument('--finalheight', default=128, type=int, help='final img height for processing')
@@ -53,6 +57,11 @@ if __name__ == '__main__':
     diffusion_data_flags.add_argument('--batch_size', default=32, type=int,help='batch size')
     diffusion_data_flags.add_argument('--loader_workers', default=32, type=int,help='num workers for data loader')
     diffusion_data_flags.add_argument('--target_col', default='cancer', type=str, help='target col')
+
+    generate_imgs.add_argument('--img_height', default=128, type=int, help='output img height')
+    generate_imgs.add_argument('--img_width', default=64, type=int, help='output img width')
+    generate_imgs.add_argument('--save_name', default='diff_cancer_model.pickle', type=str, help='name of stored state dict for diffusion model')
+    generate_imgs.add_argument('--num_samples', default=2000, type=int, help = 'num of samples to be generated')
     # training VAE args
 
 
@@ -95,4 +104,8 @@ if __name__ == '__main__':
 
 
 
+    elif args.command == 'generate_positive_examples':
+        os.makedirs('artificial_pos_samples', exist_ok = True)
+        diff_model = get_trained_diff_model(args)
+        create_save_artificial_samples(diff_model, args.num_samples, args.save_dir)
 

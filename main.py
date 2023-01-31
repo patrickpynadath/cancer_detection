@@ -62,6 +62,8 @@ if __name__ == '__main__':
     generate_imgs.add_argument('--img_width', default=64, type=int, help='input img width')
     generate_imgs.add_argument('--save_name', default='total_cancer_results/model-99.pt', type=str, help='name of stored state dict for diffusion model')
     generate_imgs.add_argument('--num_samples', default=2000, type=int, help = 'num of samples to be generated')
+    generate_imgs.add_argument('--batch_size', default=64, type=int, help = 'batch size for generating imgs')
+    generate_imgs.add_argument('--device', default='cpu', type=str, help = 'device to use')
     # training VAE args
 
 
@@ -107,5 +109,5 @@ if __name__ == '__main__':
     elif args.command == 'generate_imgs':
         os.makedirs('artificial_pos_samples', exist_ok = True)
         diff_model = get_trained_diff_model(args.save_name, (args.img_width, args.img_height))
-        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples')
+        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples', device=args.device, batch_size=args.batch_size)
 

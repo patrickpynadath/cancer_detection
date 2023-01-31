@@ -90,11 +90,12 @@ def get_trained_diff_model(file_name, img_size):
     return diffusion
 
 
-def create_save_artificial_samples(diff_model, num_samples, save_dir):
+def create_save_artificial_samples(diff_model, num_samples, save_dir, device, batch_size):
     pbar = tqdm(total=num_samples)
     i = 0
+    diff_model.to(device)
     while i < num_samples:
-        cur_sampled_batch = diff_model.sample()
+        cur_sampled_batch = diff_model.sample(batch_size=batch_size)
         for j in range(cur_sampled_batch.shape(0)):
             cur_img = cur_sampled_batch[j]
             file_name = f'{save_dir}/img{i}.png'

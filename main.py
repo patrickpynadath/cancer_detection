@@ -58,9 +58,7 @@ if __name__ == '__main__':
     diffusion_data_flags.add_argument('--loader_workers', default=32, type=int,help='num workers for data loader')
     diffusion_data_flags.add_argument('--target_col', default='cancer', type=str, help='target col')
 
-    generate_imgs.add_argument('--img_height', default=128, type=int, help='output img height')
-    generate_imgs.add_argument('--img_width', default=64, type=int, help='output img width')
-    generate_imgs.add_argument('--save_name', default='diff_cancer_model.pickle', type=str, help='name of stored state dict for diffusion model')
+    generate_imgs.add_argument('--save_name', default='total_cancer_results/model-99.pt', type=str, help='name of stored state dict for diffusion model')
     generate_imgs.add_argument('--num_samples', default=2000, type=int, help = 'num of samples to be generated')
     # training VAE args
 
@@ -106,6 +104,6 @@ if __name__ == '__main__':
 
     elif args.command == 'generate_imgs':
         os.makedirs('artificial_pos_samples', exist_ok = True)
-        diff_model = get_trained_diff_model(args)
-        create_save_artificial_samples(diff_model, args.num_samples, args.save_dir)
+        diff_model = get_trained_diff_model(args.save_name)
+        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples')
 

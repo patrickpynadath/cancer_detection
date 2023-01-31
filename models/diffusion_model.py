@@ -74,14 +74,8 @@ def unnormalize_to_zero_to_one(t):
     return (t + 1) * 0.5
 
 
-def get_trained_diff_model(args):
-    model = Unet(
-        channels=1,
-        dim=64,
-        dim_mults=(1, 2, 4, 8)
-    )
-    diff_model = GaussianDiffusionCustom(model, image_size = (args.img_width, args.img_height))
-    diff_model.load_state_dict(torch.load(args.save_name))
+def get_trained_diff_model(file_name):
+    diff_model = torch.jit.load(file_name)
     return diff_model
 
 

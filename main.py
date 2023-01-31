@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
 
 
-    elif args.command == 'generate_positive_examples':
+    elif args.command == 'generate_imgs':
         os.makedirs('artificial_pos_samples', exist_ok = True)
         diff_model = get_trained_diff_model(args)
         create_save_artificial_samples(diff_model, args.num_samples, args.save_dir)

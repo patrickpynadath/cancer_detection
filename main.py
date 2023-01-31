@@ -108,6 +108,6 @@ if __name__ == '__main__':
 
     elif args.command == 'generate_imgs':
         os.makedirs('artificial_pos_samples', exist_ok = True)
-        diff_model = get_trained_diff_model(args.save_name, (args.img_width, args.img_height))
+        diff_model = get_trained_diff_model(args.save_name, (args.img_height, args.img_width))
         create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples', device=args.device, batch_size=args.batch_size)
 

@@ -2,6 +2,7 @@ from denoising_diffusion_pytorch import Unet, GaussianDiffusion
 import torch
 from tqdm import tqdm
 from PIL import Image
+from torchvision import transforms as T, utils
 
 
 def get_diffusion_model_from_args(args):
@@ -99,9 +100,7 @@ def create_save_artificial_samples(diff_model, num_samples, save_dir, device, ba
         for j in range(batch_size):
             cur_img = cur_sampled_batch[j, :]
             file_name = f'{save_dir}/img{i}.png'
-            ndarray = cur_img.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
-            im = Image.fromarray(ndarray)
-            im.save(file_name, format=None)
+            utils.save_image(cur_img, file_name)
             i += 1
             pbar.update(1)
     return

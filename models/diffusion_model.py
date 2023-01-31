@@ -74,9 +74,20 @@ def unnormalize_to_zero_to_one(t):
     return (t + 1) * 0.5
 
 
-def get_trained_diff_model(file_name):
-    diff_model = torch.jit.load(file_name)
-    return diff_model
+def get_trained_diff_model(file_name, img_size):
+    data = torch.load(file_name)
+    unet = Unet(
+        channels=1,
+        dim=64,
+        dim_mults=(1, 2, 4, 8)
+    )
+    diffusion = GaussianDiffusionCustom(
+        unet,
+        image_size=img_size,
+    )
+    model_state_dct = data['model']
+    diffusion.load_state_dict(model_state_dct)
+    return diffusion
 
 
 def create_save_artificial_samples(diff_model, num_samples, save_dir):

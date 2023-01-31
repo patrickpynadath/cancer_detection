@@ -1,4 +1,4 @@
-from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, get_num_classes
+from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, get_num_classes, get_balanced_loaders
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args
 from pytorch_lightning import Trainer
@@ -68,9 +68,17 @@ if __name__ == '__main__':
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
     elif args.command == 'train_resnet':
-        train_loader, val_loader, test_loader = get_loaders_from_args(args)
+        print('testing with train_size = 250')
+
+        train_loader, val_loader, test_loader = get_balanced_loaders(args, 250, 100, 100)
         pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+        torch.save(pl_resnet.resnet.state_dict(), 'resnet_250samples.pickle')
+
+        train_loader, val_loader, test_loader = get_balanced_loaders(args, 500, 100, 100)
+        pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
+        resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+        torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
 
     elif args.command == 'train_diffusion':
         to_mimic = [('cancer', [1])]

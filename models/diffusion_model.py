@@ -96,8 +96,8 @@ def create_save_artificial_samples(diff_model, num_samples, save_dir, device, ba
     diff_model.to(device)
     while i < num_samples:
         cur_sampled_batch = diff_model.sample(batch_size=batch_size)
-        for j in range(cur_sampled_batch.shape(0)):
-            cur_img = cur_sampled_batch[j]
+        for j in range(batch_size):
+            cur_img = cur_sampled_batch[j, :]
             file_name = f'{save_dir}/img{i}.png'
             ndarray = cur_img.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
             im = Image.fromarray(ndarray)

@@ -2,6 +2,8 @@ from __future__ import absolute_import
 import pytorch_lightning as pl
 from torchmetrics import Accuracy
 import torch
+from pytorch_metric_learning import losses
+
 '''
 This file is from: https://raw.githubusercontent.com/bearpaw/pytorch-classification/master/models/cifar/resnet.py
 by Wei Yang
@@ -193,14 +195,33 @@ class ResNet(nn.Module):
         return x
 
 
+class SupervisedContrastiveLoss(nn.Module):
+    def __init__(self, temperature=0.1):
+        super(SupervisedContrastiveLoss, self).__init__()
+        self.temperature = temperature
+
+    def forward(self, feature_vectors, labels):
+        # Normalize feature vectors
+        feature_vectors_normalized = F.normalize(feature_vectors, p=2, dim=1)
+        # Compute logits
+        logits = torch.div(
+            torch.matmul(
+                feature_vectors_normalized, torch.transpose(feature_vectors_normalized, 0, 1)
+            ),
+            self.temperature,
+        )
+        return losses.NTXentLoss(temperature=0.07)(logits, torch.squeeze(labels))
+
+
 # wrapper lightning module class for resnet
 # TODO: need to add method for end of epoch metrics
 class PLResNet(pl.LightningModule):
-    def __init__(self, resnet, lr = 1e-3):
+    def __init__(self, resnet, lr = 1e-4):
         super().__init__()
         self.resnet = resnet
         self.lr = lr
-        self.criterion = nn.CrossEntropyLoss()
+        #self.criterion = nn.CrossEntropyLoss()
+        self.criterion = SupervisedContrastiveLoss()
 
     def forward(self, x):
         return self.resnet(x)

@@ -221,8 +221,9 @@ class PLResNet(pl.LightningModule):
         super().__init__()
         self.resnet = resnet
         self.lr = lr
-        #self.criterion = nn.CrossEntropyLoss()
-        self.criterion = SupervisedContrastiveLoss()
+        self.criterion = nn.CrossEntropyLoss()
+
+        #self.criterion = SupervisedContrastiveLoss()
 
     def forward(self, x):
         return self.resnet(x)

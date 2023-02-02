@@ -163,8 +163,13 @@ def over_sample_loader(args, train_size, val_size, test_size):
 
 
 def get_img_paths(img_idx, train_csv, base_dir):
-    to_img_path = lambda idx : f'''{base_dir}/'train_images'/{train_csv.iloc[img_idx]['patient_id']}/{train_csv.iloc[img_idx]['image_id']}.png'''
-    return [to_img_path(idx) for idx in img_idx]
+    paths = []
+    for idx in img_idx:
+        image_id = train_csv.iloc[idx]['image_id']
+        patient_id = train_csv.iloc[idx]['patient_id']
+        pth = f'{base_dir}/train_images/{patient_id}/{image_id}.png'
+        paths.append(pth)
+    return paths
 
 
 def get_artificial_loaders(base_dir, synthetic_dir, batch_size, train_size = 12000, val_size=500, test_size=500):

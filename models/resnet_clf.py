@@ -176,7 +176,8 @@ class PLResNet(pl.LightningModule):
         loss = self.criterion(logits, y)
         pred = torch.argmax(logits, dim=1)
         acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))]) / len(pred)
-        self.log('accuracy', acc, on_epoch=True)
+        self.log('train_accuracy', acc, on_epoch=True)
+        self.log('train_loss', loss, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -185,7 +186,8 @@ class PLResNet(pl.LightningModule):
         loss = self.criterion(logits, y)
         pred = torch.argmax(logits, dim=1)
         acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))])/len(pred)
-        self.log('accuracy', acc, on_epoch=True)
+        self.log('val_accuracy', acc, on_epoch=True)
+        self.log('val_loss', loss, on_epoch=True)
         return loss
 
     def configure_optimizers(self):

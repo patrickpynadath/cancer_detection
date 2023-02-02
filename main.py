@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     elif args.command == 'train_resnet':
         print('testing with train_size = 250')
-        train_loader, val_loader, test_loader = get_artificial_loaders(args.base_dir, args.synthetic_sir, batch_size=64)
+        train_loader, val_loader, test_loader = get_artificial_loaders(args.base_dir, args.synthetic_dir, batch_size=64)
         pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         resnet_training_loop(args, pl_resnet, train_loader, val_loader)
         torch.save(pl_resnet.resnet.state_dict(), 'resnet_synthetic.pickle')

@@ -172,12 +172,14 @@ def get_img_paths(img_idx, train_csv, base_dir):
     return paths
 
 
-def get_artificial_loaders(base_dir, synthetic_dir, batch_size, train_size = 12000, val_size=500, test_size=500):
+def get_artificial_loaders(base_dir, synthetic_dir, batch_size, val_size=500, test_size=500):
+    synthetic_paths = [f for f in os.listdir(synthetic_dir) if os.path.isfile(f'{synthetic_dir}/{f}')]
+    train_size = len(synthetic_paths) * 2
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
     index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
     index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
     sampled_pos = random.sample(index_pos, int(val_size + test_size)//2)
-    sampled_neg = random.sample(index_neg, int(train_size + val_size / 2 + test_size / 2))
+    sampled_neg = random.sample(index_neg, int(train_size /2 + val_size / 2 + test_size / 2))
     sampled_pos_paths = get_img_paths(sampled_pos, train_csv, base_dir)
     sampled_neg_paths = get_img_paths(sampled_neg, train_csv, base_dir)
     train_neg_paths = sampled_neg_paths[: train_size//2]
@@ -188,7 +190,6 @@ def get_artificial_loaders(base_dir, synthetic_dir, batch_size, train_size = 120
     test_pos_paths = sampled_pos_paths[val_size//2 : ]
 
     # get the paths for the real imgs
-    synthetic_paths = [f for f in os.listdir(synthetic_dir) if os.path.isfile(f)]
     train_paths = synthetic_paths + train_neg_paths
     val_paths = val_pos_paths + val_neg_paths
     test_paths = test_pos_paths + test_neg_paths

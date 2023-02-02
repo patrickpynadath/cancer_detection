@@ -14,7 +14,7 @@ from .normalization_layers import get_normalize_layer
 class PlCait(pl.LightningModule):
     def __init__(self, cait, lr = 1e-3):
         super().__init__()
-        self.resnet = cait
+        self.cait = cait
         self.lr = lr
         self.criterion = nn.CrossEntropyLoss()
 

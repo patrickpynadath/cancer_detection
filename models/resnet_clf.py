@@ -9,7 +9,6 @@ by Wei Yang
 import torch.nn as nn
 import math
 from .normalization_layers import get_normalize_layer
-from vit_pytorch.cait import CaiT
 
 
 class PlCait(pl.LightningModule):

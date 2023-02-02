@@ -194,6 +194,8 @@ def get_artificial_loaders(base_dir, synthetic_dir, batch_size, train_size = 120
     test_paths = test_pos_paths + test_neg_paths
 
     train_values = [1 for i in synthetic_paths] + [0 for i in train_neg_paths]
+    print('testing train values')
+    print(len(train_values))
     val_values = [1 for i in val_pos_paths] + [0 for i in val_neg_paths]
     test_values = [1 for i in test_pos_paths] + [0 for i in test_neg_paths]
 

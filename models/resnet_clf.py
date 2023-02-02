@@ -115,8 +115,8 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, n, stride=2)
         self.layer4 = self._make_layer(block, 512, n, stride=2)
         self.layer5 = self._make_layer(block, 1024, n, stride=2)
-        self.avgpool = nn.AvgPool2d(4)
-
+        self.avgpool = nn.AvgPool2d(32)
+        self.fc = nn.Linear(4096, num_classes)
         self.sigmoid = nn.Sigmoid()
 
         for m in self.modules():
@@ -158,11 +158,7 @@ class ResNet(nn.Module):
         print(x.shape)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-        x = self.fc_act(self.fc1(x))
-        x = self.fc_act(self.fc2(x))
-        x = self.fc_act(self.fc3(x))
-        x = self.fc_act(self.fc4(x))
-        x = self.fc5(x)
+        x = self.fc(x)
         x = self.sigmoid(x)
         return x
 

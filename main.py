@@ -1,6 +1,7 @@
 import os
 
-from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, get_num_classes, get_balanced_loaders, over_sample_loader
+from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, \
+    get_num_classes, get_balanced_loaders, over_sample_loader, get_artificial_loaders
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, create_save_artificial_samples
 from pytorch_lightning import Trainer
@@ -41,6 +42,7 @@ if __name__ == '__main__':
     resnet_data_flags.add_argument('--base_dir', help='base dir for data', default='data', type=str)
     resnet_data_flags.add_argument('--test_size', help='ratio for size of validation set', default=.25, type=float)
     resnet_data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
+    resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', type=str)
 
     trainer_flags = Trainer.add_argparse_args(train_resnet)
 
@@ -80,21 +82,25 @@ if __name__ == '__main__':
 
     elif args.command == 'train_resnet':
         print('testing with train_size = 250')
-
-        train_loader, val_loader, test_loader = over_sample_loader(args, 250, 100, 100)
+        train_loader, val_loader, test_loader = get_artificial_loaders(args.base_dir, args.synthetic_sir, batch_size=64)
         pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         resnet_training_loop(args, pl_resnet, train_loader, val_loader)
-        torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
+        torch.save(pl_resnet.resnet.state_dict(), 'resnet_synthetic.pickle')
 
-        train_loader, val_loader, test_loader = get_balanced_loaders(args, 250, 100, 100)
-        pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
-        resnet_training_loop(args, pl_resnet, train_loader, val_loader)
-        torch.save(pl_resnet.resnet.state_dict(), 'resnet_250samples.pickle')
-
-        train_loader, val_loader, test_loader = get_balanced_loaders(args, 500, 100, 100)
-        pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
-        resnet_training_loop(args, pl_resnet, train_loader, val_loader)
-        torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
+        # train_loader, val_loader, test_loader = over_sample_loader(args, 250, 100, 100)
+        # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
+        # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+        # torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
+        #
+        # train_loader, val_loader, test_loader = get_balanced_loaders(args, 250, 100, 100)
+        # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
+        # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+        # torch.save(pl_resnet.resnet.state_dict(), 'resnet_250samples.pickle')
+        #
+        # train_loader, val_loader, test_loader = get_balanced_loaders(args, 500, 100, 100)
+        # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
+        # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+        # torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
 
 
     elif args.command == 'train_diffusion':

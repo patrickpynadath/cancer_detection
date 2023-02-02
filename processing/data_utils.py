@@ -1,3 +1,5 @@
+import os
+
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 from PIL import Image
@@ -31,6 +33,7 @@ def get_paths(base_dir='data', train=True, target_col=None, target_val = None):
 
 # torch dataset class for mammographs
 # target col can be any column included in the given csv
+# TODO: make so that it samples from the file paths so I can include the directory to the artificial data as well
 class XRayDataset(Dataset):
     def __init__(self, base_dir, image_ids, target_col='cancer'):
 
@@ -60,7 +63,20 @@ class XRayDataset(Dataset):
         return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(label, dtype=torch.long)
 
 
-# TODO: need to explicitly control the size of the training set
+class ImgloaderDataSet(Dataset):
+    def __init__(self, paths, values):
+        self.paths = paths
+        self.values = values
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, i):
+        path = self.paths[i]
+        xray = Image.open(path)
+        return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(self.values[i], dtype=torch.long)
+
+
 def get_loaders_from_args(args, to_mimic=None):
     base_dir = args.base_dir
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
@@ -144,6 +160,47 @@ def over_sample_loader(args, train_size, val_size, test_size):
     return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
            DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \
            DataLoader(test_set, batch_size=batch_size, num_workers=args.loader_workers)
+
+
+def get_img_paths(img_idx, train_csv, base_dir):
+    to_img_path = lambda idx : f'''{base_dir}/'train_images'/{train_csv.iloc[img_idx]['patient_id']}/{train_csv.iloc[img_idx]['image_id']}.png'''
+    return [to_img_path(idx) for idx in img_idx]
+
+
+def get_artificial_loaders(base_dir, synthetic_dir, batch_size, train_size = 12000, val_size=500, test_size=500):
+    train_csv = pd.read_csv(f'{base_dir}/train.csv')
+    index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
+    index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
+    sampled_pos = random.sample(index_pos, int(val_size + test_size)//2)
+    sampled_neg = random.sample(index_neg, int(train_size + val_size / 2 + test_size / 2))
+    sampled_pos_paths = get_img_paths(sampled_pos, train_csv, base_dir)
+    sampled_neg_paths = get_img_paths(sampled_neg, train_csv, base_dir)
+    train_neg_paths = sampled_neg_paths[: train_size//2]
+    val_neg_paths = sampled_neg_paths[train_size//2 : train_size//2 + val_size // 2]
+    test_neg_paths = sampled_neg_paths[train_size//2 + val_size // 2 : ]
+
+    val_pos_paths = sampled_pos_paths[:val_size//2]
+    test_pos_paths = sampled_pos_paths[val_size//2 : ]
+
+    # get the paths for the real imgs
+    synthetic_paths = [f for f in os.listdir(synthetic_dir) if os.path.isfile(f)]
+    train_paths = synthetic_paths + train_neg_paths
+    val_paths = val_pos_paths + val_neg_paths
+    test_paths = test_pos_paths + test_neg_paths
+
+    train_values = [1 for i in synthetic_paths] + [0 for i in train_neg_paths]
+    val_values = [1 for i in val_pos_paths] + [0 for i in val_neg_paths]
+    test_values = [1 for i in test_pos_paths] + [0 for i in test_neg_paths]
+
+    train_set = ImgloaderDataSet(train_paths, train_values)
+    val_set = ImgloaderDataSet(val_paths, val_values)
+    test_set = ImgloaderDataSet(test_paths, test_values)
+
+    train_loader = DataLoader(train_set, shuffle=True, batch_size=batch_size)
+    val_loader = DataLoader(val_set, shuffle=True, batch_size=batch_size)
+    test_loader = DataLoader(test_set, shuffle=True, batch_size=batch_size)
+
+    return train_loader, val_loader, test_loader
 
 
 def get_num_classes(target_col, base_dir):

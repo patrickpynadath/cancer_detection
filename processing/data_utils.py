@@ -173,7 +173,7 @@ def get_img_paths(img_idx, train_csv, base_dir):
 
 
 def get_artificial_loaders(base_dir, synthetic_dir, batch_size, val_size=500, test_size=500):
-    synthetic_paths = [f for f in os.listdir(synthetic_dir) if os.path.isfile(f'{synthetic_dir}/{f}')]
+    synthetic_paths = [f'{synthetic_dir}/{f}' for f in os.listdir(synthetic_dir) if os.path.isfile(f'{synthetic_dir}/{f}')]
     train_size = len(synthetic_paths) * 2
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
     index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)

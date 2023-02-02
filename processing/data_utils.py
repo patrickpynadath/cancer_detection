@@ -74,7 +74,10 @@ class ImgloaderDataSet(Dataset):
     def __getitem__(self, i):
         path = self.paths[i]
         xray = Image.open(path)
-        return torch.tensor(np.array(xray) / 255, dtype=torch.float)[None, :], torch.tensor(self.values[i], dtype=torch.long)
+        img_array = np.array(xray)
+        if len(img_array.shape) == 3:
+            img_array = img_array[:, :, 0]
+        return torch.tensor(img_array / 255, dtype=torch.float)[None, :], torch.tensor(self.values[i], dtype=torch.long)
 
 
 def get_loaders_from_args(args, to_mimic=None):

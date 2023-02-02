@@ -86,7 +86,7 @@ if __name__ == '__main__':
         train_loader, val_loader, test_loader = get_artificial_loaders(args.base_dir, args.synthetic_dir, batch_size=64)
         print(len(train_loader.dataset))
 
-        cait = CaiT(image_size=128, patch_size=4, num_classes=2, depth=20,cls_depth=2, heads=16, mlp_dim=1024, dim=1024)
+        cait = CaiT(image_size=128, patch_size=16, num_classes=2, depth=20, cls_depth=2, heads=16, mlp_dim=1024, dim=1024)
         pl_cait = PlCait(cait)
         # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         resnet_training_loop(args, pl_cait, train_loader, val_loader)

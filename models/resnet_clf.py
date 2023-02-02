@@ -113,8 +113,6 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(block, 64, n)
         self.layer2 = self._make_layer(block, 128, n, stride=2)
         self.layer3 = self._make_layer(block, 256, n, stride=2)
-        self.layer4 = self._make_layer(block, 512, n, stride=2)
-        self.layer5 = self._make_layer(block, 1024, n, stride=2)
         self.avgpool = nn.AvgPool2d(4)
         self.fc = nn.Linear(4096 * 2, num_classes)
         self.sigmoid = nn.Sigmoid()

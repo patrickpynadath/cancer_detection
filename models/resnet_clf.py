@@ -105,22 +105,18 @@ class ResNet(nn.Module):
             raise ValueError('block_name shoule be Basicblock or Bottleneck')
         self.depth = depth
         self.norm_layer = get_normalize_layer()
-        self.inplanes = 16
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1,
+        self.inplanes = 64
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=4, padding=1,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
-        self.layer1 = self._make_layer(block, 16, n)
-        self.layer2 = self._make_layer(block, 32, n, stride=2)
-        self.layer3 = self._make_layer(block, 64, n, stride=2)
+        self.layer1 = self._make_layer(block, 64, n)
+        self.layer2 = self._make_layer(block, 128, n, stride=2)
+        self.layer3 = self._make_layer(block, 256, n, stride=2)
+        self.layer4 = self._make_layer(block, 512, n, stride=2)
+
         self.avgpool = nn.AvgPool2d(4)
-        self.fc1 = nn.Linear(128 * 16 * block.expansion, 128 * 8 * block.expansion)
-        self.fc2 = nn.Linear(128 * 8 * block.expansion, 128 * block.expansion)
-        self.fc3 = nn.Linear(128 * block.expansion, 128)
-        self.fc4 = nn.Linear(128, 64)
-        self.fc5 = nn.Linear(64, 32)
-        self.fc6 = nn.Linear(32, num_classes)
-        self.fc_act = nn.ELU()
+
         self.sigmoid = nn.Sigmoid()
 
         for m in self.modules():
@@ -157,8 +153,8 @@ class ResNet(nn.Module):
         x = self.layer1(x)  # 32x32
         x = self.layer2(x)  # 16x16
         x = self.layer3(x)  # 8x8
+        x = self.layer4(x)
         print(x.shape)
-
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc_act(self.fc1(x))

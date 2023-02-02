@@ -9,6 +9,42 @@ by Wei Yang
 import torch.nn as nn
 import math
 from .normalization_layers import get_normalize_layer
+from vit_pytorch.cait import CaiT
+
+
+class PlCait(pl.LightningModule):
+    def __init__(self, cait, lr = 1e-3):
+        super().__init__()
+        self.resnet = cait
+        self.lr = lr
+        self.criterion = nn.CrossEntropyLoss()
+
+    def forward(self, x):
+        return self.cait(x)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self.cait(x)
+        loss = self.criterion(logits, y)
+        pred = torch.argmax(logits, dim=1)
+        acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))]) / len(pred)
+        self.log('train_accuracy', acc, on_epoch=True)
+        self.log('train_loss', loss, on_epoch=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = self.criterion(logits, y)
+        pred = torch.argmax(logits, dim=1)
+        acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))])/len(pred)
+        self.log('val_accuracy', acc, on_epoch=True)
+        self.log('val_loss', loss, on_epoch=True)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        return optimizer
 
 
 def conv3x3(in_planes, out_planes, stride=1):

@@ -174,6 +174,9 @@ class PLResNet(pl.LightningModule):
         x, y = batch
         logits = self.resnet(x)
         loss = self.criterion(logits, y)
+        pred = torch.argmax(logits, dim=1)
+        acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))]) / len(pred)
+        self.log('accuracy', acc, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):

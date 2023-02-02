@@ -105,14 +105,14 @@ class ResNet(nn.Module):
             raise ValueError('block_name shoule be Basicblock or Bottleneck')
         self.depth = depth
         self.norm_layer = get_normalize_layer()
-        self.inplanes = 64
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=4, padding=1,
+        self.inplanes = 32
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=4, padding=1,
                                bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(32)
         self.relu = nn.ReLU(inplace=True)
-        self.layer1 = self._make_layer(block, 64, n)
-        self.layer2 = self._make_layer(block, 128, n, stride=2)
-        self.layer3 = self._make_layer(block, 256, n, stride=2)
+        self.layer1 = self._make_layer(block, 32, n)
+        self.layer2 = self._make_layer(block, 64, n, stride=2)
+        self.layer3 = self._make_layer(block, 128, n, stride=2)
         self.avgpool = nn.AvgPool2d(8)
         self.fc = nn.Linear(4096 * 2, num_classes)
         self.sigmoid = nn.Sigmoid()

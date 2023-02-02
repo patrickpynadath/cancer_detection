@@ -217,7 +217,7 @@ class SupervisedContrastiveLoss(nn.Module):
 # wrapper lightning module class for resnet
 # TODO: need to add method for end of epoch metrics
 class PLResNet(pl.LightningModule):
-    def __init__(self, resnet, lr = 1e-4):
+    def __init__(self, resnet, lr = 1e-6):
         super().__init__()
         self.resnet = resnet
         self.lr = lr

@@ -121,7 +121,6 @@ def get_loaders_from_args(args, to_mimic=None):
         total_ids = tmp['image_id']
     else:
         total_ids = train_csv['image_id']
-    print(list(total_ids.loc[train_idx]))
     train_idx = [idx for idx in train_idx if idx in total_ids.index]
     val_idx = [idx for idx in val_idx if idx in total_ids.index]
     test_idx = [idx for idx in test_idx if idx in total_ids.index]

@@ -103,14 +103,11 @@ def get_stored_splits(base_dir):
     total_ids = train_csv['image_id']
     with open(f'{base_dir}/test_idx.pickle', 'rb') as f:
         holdout_idx = pickle.load(f)
-        holdout_img_ids = total_ids.iloc[holdout_idx]
     with open(f'{base_dir}/train_idx.pickle', 'rb') as f:
         train_idx = pickle.load(f)
-        train_img_ids = total_ids.iloc[train_idx]
     with open(f'{base_dir}/val_idx.pickle', 'rb') as f:
         val_idx = pickle.load(f)
-        val_img_ids = total_ids.iloc[val_idx]
-    return train_img_ids, val_img_ids, holdout_img_ids
+    return train_idx, val_idx, holdout_idx
 
 
 def get_loaders_from_args(args, to_mimic=None):
@@ -126,9 +123,9 @@ def get_loaders_from_args(args, to_mimic=None):
     else:
         total_ids = train_csv['image_id']
 
-    train_idx = [idx for idx in train_idx if idx in total_ids]
-    val_idx = [idx for idx in val_idx if idx in total_ids]
-    test_idx = [idx for idx in test_idx if idx in total_ids]
+    train_idx = [idx for idx in train_idx if idx in total_ids.index]
+    val_idx = [idx for idx in val_idx if idx in total_ids.index]
+    test_idx = [idx for idx in test_idx if idx in total_ids.index]
     print(train_idx)
     target_col = args.target_col
     train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), target_col)

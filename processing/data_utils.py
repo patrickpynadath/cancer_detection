@@ -8,6 +8,7 @@ import random
 from sklearn.model_selection import ShuffleSplit
 import numpy as np
 import copy
+import pickle
 
 random.seed(1)
 
@@ -80,9 +81,37 @@ class ImgloaderDataSet(Dataset):
         return torch.tensor(img_array / 255, dtype=torch.float)[None, :], torch.tensor(self.values[i], dtype=torch.long)
 
 
+def split_data(test_size, base_dir):
+    train_csv = pd.read_csv(f'{base_dir}/train.csv')
+    total_ids = train_csv['image_id']
+    rs = ShuffleSplit(n_splits=1, test_size=test_size)
+    total_idx, holdout_idx = next(rs.split(total_ids))
+    train_idx, val_idx = next(rs.split(total_ids))
+    # writing the idx to file
+    with open(f'{base_dir}/test_idx.pickle', 'wb') as f:
+        pickle.dump(holdout_idx, f)
+    with open(f'{base_dir}/train_idx.pickle', 'wb') as f:
+        pickle.dump(train_idx, f)
+    with open(f'{base_dir}/test_idx.pickle', 'wb') as f:
+        pickle.dump(val_idx, f)
+    return
+
+
+def get_stored_splits(base_dir):
+    with open(f'{base_dir}/test_idx.pickle', 'rb') as f:
+        holdout_idx = pickle.load(f)
+    with open(f'{base_dir}/train_idx.pickle', 'rb') as f:
+        train_idx = pickle.load(f)
+    with open(f'{base_dir}/test_idx.pickle', 'rb') as f:
+        val_idx = pickle.load(f)
+    return train_idx, val_idx, holdout_idx
+
+
 def get_loaders_from_args(args, to_mimic=None):
     base_dir = args.base_dir
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
+    train_idx, val_idx, test_idx = get_stored_splits(base_dir)
+
     if to_mimic:
         tmp = train_csv
         for col_name, val in to_mimic:
@@ -90,9 +119,11 @@ def get_loaders_from_args(args, to_mimic=None):
         total_ids = tmp['image_id']
     else:
         total_ids = train_csv['image_id']
-    rs = ShuffleSplit(n_splits=1, test_size=args.test_size)
-    total_idx, test_idx = next(rs.split(total_ids))
-    train_idx, val_idx = next(rs.split(total_ids))
+
+    train_idx = [idx for idx in train_idx if idx in total_ids]
+    val_idx = [idx for idx in val_idx if idx in total_ids]
+    test_idx = [idx for idx in test_idx if idx in total_ids]
+
     target_col = args.target_col
     train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), target_col)
     val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), target_col)

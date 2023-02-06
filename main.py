@@ -1,7 +1,7 @@
 import os
 
 from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, \
-    get_num_classes, get_balanced_loaders, over_sample_loader, get_artificial_loaders
+    get_num_classes, get_balanced_loaders, over_sample_loader, get_artificial_loaders, split_data
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
     create_save_artificial_samples, PlCait
@@ -26,6 +26,10 @@ if __name__ == '__main__':
     diffusion_data_flags = train_diffusion.add_argument_group('data_flags')
 
     generate_imgs = subparsers.add_parser('generate_imgs', help='command for creating artificial positive samples')
+
+    generate_splits = subparsers.add_parser('generate_splits', help = 'generating the splits to use for resnet and diffusion')
+    generate_splits.add_argument('--test_size', default=.2, type=float, help='ratio to use for train-test splits')
+    generate_splits.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
 
     # preprocessing data args
     process_data.add_argument('--finalheight', default=128, type=int, help='final img height for processing')
@@ -68,7 +72,6 @@ if __name__ == '__main__':
     generate_imgs.add_argument('--num_samples', default=2000, type=int, help = 'num of samples to be generated')
     generate_imgs.add_argument('--batch_size', default=64, type=int, help = 'batch size for generating imgs')
     generate_imgs.add_argument('--device', default='cpu', type=str, help = 'device to use')
-    # training VAE args
 
 
     # training XGBoost args
@@ -91,6 +94,7 @@ if __name__ == '__main__':
         pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         resnet_training_loop(args, pl_resnet, train_loader, val_loader)
         torch.save(pl_resnet.resnet.state_dict(), 'pl_cait.pickle')
+
 
         # train_loader, val_loader, test_loader = over_sample_loader(args, 250, 100, 100)
         # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
@@ -122,3 +126,8 @@ if __name__ == '__main__':
         diff_model = get_trained_diff_model(args.save_name, (args.img_height, args.img_width))
         create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples', device=args.device, batch_size=args.batch_size)
 
+
+    elif args.command == 'generate_splits':
+        test_size = args.test_size
+        base_dir = args.base_data_dir
+        split_data(test_size, base_dir)

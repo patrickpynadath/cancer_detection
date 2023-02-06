@@ -117,7 +117,7 @@ def get_loaders_from_args(args, to_mimic=None):
     base_dir = args.base_dir
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
     train_idx, val_idx, test_idx = get_stored_splits(base_dir)
-
+    print(train_idx)
     if to_mimic:
         tmp = train_csv
         for col_name, val in to_mimic:
@@ -129,7 +129,7 @@ def get_loaders_from_args(args, to_mimic=None):
     train_idx = [idx for idx in train_idx if idx in total_ids]
     val_idx = [idx for idx in val_idx if idx in total_ids]
     test_idx = [idx for idx in test_idx if idx in total_ids]
-
+    print(train_idx)
     target_col = args.target_col
     train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), target_col)
     val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), target_col)

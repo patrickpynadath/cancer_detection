@@ -121,14 +121,14 @@ def get_loaders_from_args(args, to_mimic=None):
         total_ids = tmp['image_id']
     else:
         total_ids = train_csv['image_id']
-    print(list(total_ids.iloc[train_idx]))
+    print(list(total_ids.loc[train_idx]))
     train_idx = [idx for idx in train_idx if idx in total_ids.index]
     val_idx = [idx for idx in val_idx if idx in total_ids.index]
     test_idx = [idx for idx in test_idx if idx in total_ids.index]
     target_col = args.target_col
-    train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), target_col)
-    val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), target_col)
-    test_set = XRayDataset(base_dir, list(total_ids.iloc[test_idx]), target_col)
+    train_set = XRayDataset(base_dir, list(total_ids.loc[train_idx]), target_col)
+    val_set = XRayDataset(base_dir, list(total_ids.loc[val_idx]), target_col)
+    test_set = XRayDataset(base_dir, list(total_ids.loc[test_idx]), target_col)
     batch_size = args.batch_size
     return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
            DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \

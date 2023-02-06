@@ -9,7 +9,8 @@ from sklearn.model_selection import ShuffleSplit
 import numpy as np
 import copy
 import pickle
-
+import os
+os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
 
 def get_paths(base_dir='data', train=True, target_col=None, target_val = None):

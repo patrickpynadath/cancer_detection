@@ -25,7 +25,7 @@ class GaussianDiffusionCustom(GaussianDiffusion):
                  model,
                  *,
                  image_size):
-        GaussianDiffusion.__init__(self, model = model, image_size = image_size)
+        GaussianDiffusion.__init__(self, model = model, image_size = image_size, sampling_timesteps=1000)
 
     @torch.no_grad()
     def sample(self, batch_size=16, return_all_timesteps=False):

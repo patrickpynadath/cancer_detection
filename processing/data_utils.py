@@ -236,7 +236,7 @@ def get_artificial_loaders(base_dir, synthetic_dir, batch_size, val_size=500, te
     train_set = ImgloaderDataSet(train_paths, train_values)
     val_set = ImgloaderDataSet(val_paths, val_values)
     test_set = ImgloaderDataSet(test_paths, test_values)
-
+    print(train_set)
     train_loader = DataLoader(train_set, shuffle=True, batch_size=batch_size)
     val_loader = DataLoader(val_set, shuffle=True, batch_size=batch_size)
     test_loader = DataLoader(test_set, shuffle=True, batch_size=batch_size)

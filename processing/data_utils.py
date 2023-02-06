@@ -92,19 +92,24 @@ def split_data(test_size, base_dir):
         pickle.dump(holdout_idx, f)
     with open(f'{base_dir}/train_idx.pickle', 'wb') as f:
         pickle.dump(train_idx, f)
-    with open(f'{base_dir}/test_idx.pickle', 'wb') as f:
+    with open(f'{base_dir}/val_idx.pickle', 'wb') as f:
         pickle.dump(val_idx, f)
     return
 
 
 def get_stored_splits(base_dir):
+    train_csv = pd.read_csv(f'{base_dir}/train.csv')
+    total_ids = train_csv['image_id']
     with open(f'{base_dir}/test_idx.pickle', 'rb') as f:
         holdout_idx = pickle.load(f)
+        holdout_img_ids = total_ids.iloc[holdout_idx]
     with open(f'{base_dir}/train_idx.pickle', 'rb') as f:
         train_idx = pickle.load(f)
-    with open(f'{base_dir}/test_idx.pickle', 'rb') as f:
+        train_img_ids = total_ids.iloc[train_idx]
+    with open(f'{base_dir}/val_idx.pickle', 'rb') as f:
         val_idx = pickle.load(f)
-    return train_idx, val_idx, holdout_idx
+        val_img_ids = total_ids.iloc[val_idx]
+    return train_img_ids, val_img_ids, holdout_img_ids
 
 
 def get_loaders_from_args(args, to_mimic=None):

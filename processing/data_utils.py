@@ -94,13 +94,13 @@ def split_data(test_ratio, base_dir):
     pos_train, pos_test = next(rs.split(pos_df['image_id']))
 
     with open(f'{base_dir}/neg_train_imgid.pickle', 'wb') as f:
-        pickle.dump(neg_train, f)
+        pickle.dump(neg_df.iloc[neg_train], f)
     with open(f'{base_dir}/neg_test_imgid.pickle', 'wb') as f:
-        pickle.dump(neg_test, f)
+        pickle.dump(neg_df.iloc[neg_test], f)
     with open(f'{base_dir}/pos_train_imgid.pickle', 'wb') as f:
-        pickle.dump(pos_train, f)
+        pickle.dump(pos_df.iloc[pos_train], f)
     with open(f'{base_dir}/pos_test_imgid.pickle', 'wb') as f:
-        pickle.dump(pos_test, f)
+        pickle.dump(pos_df.iloc[pos_test], f)
     return
 
 

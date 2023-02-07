@@ -13,6 +13,7 @@ import os
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
 
+
 def get_paths(base_dir='data', train=True, target_col=None, target_val = None):
     if train:
         root_dir = f'{base_dir}/train_images'
@@ -82,166 +83,98 @@ class ImgloaderDataSet(Dataset):
         return torch.tensor(img_array / 255, dtype=torch.float)[None, :], torch.tensor(self.values[i], dtype=torch.long)
 
 
-def split_data(test_size, base_dir):
+def split_data(test_ratio, base_dir):
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    total_ids = train_csv['image_id']
-    rs = ShuffleSplit(n_splits=1, test_size=test_size)
-    total_idx, holdout_idx = next(rs.split(total_ids))
-    train_idx, val_idx = next(rs.split(total_ids))
-    # writing the idx to file
-    with open(f'{base_dir}/test_idx.pickle', 'wb') as f:
-        pickle.dump(holdout_idx, f)
-    with open(f'{base_dir}/train_idx.pickle', 'wb') as f:
-        pickle.dump(train_idx, f)
-    with open(f'{base_dir}/val_idx.pickle', 'wb') as f:
-        pickle.dump(val_idx, f)
+    neg_df = train_csv[train_csv['cancer'].isin([0])]
+    pos_df = train_csv[train_csv['cancer'].isin([1])]
+
+    rs = ShuffleSplit(n_splits=1, test_size=test_ratio)
+
+    neg_train, neg_test = next(rs.split(neg_df['image_id']))
+    pos_train, pos_test = next(rs.split(pos_df['image_id']))
+
+    with open(f'{base_dir}/neg_train_imgid.pickle', 'wb') as f:
+        pickle.dump(neg_train, f)
+    with open(f'{base_dir}/neg_test_imgid.pickle', 'wb') as f:
+        pickle.dump(neg_test, f)
+    with open(f'{base_dir}/pos_train_imgid.pickle', 'wb') as f:
+        pickle.dump(pos_train, f)
+    with open(f'{base_dir}/pos_test_imgig.pickle', 'wb') as f:
+        pickle.dump(pos_test, f)
     return
 
 
 def get_stored_splits(base_dir):
-    train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    total_ids = train_csv['image_id']
-    with open(f'{base_dir}/test_idx.pickle', 'rb') as f:
-        holdout_idx = pickle.load(f)
-    with open(f'{base_dir}/train_idx.pickle', 'rb') as f:
-        train_idx = pickle.load(f)
-    with open(f'{base_dir}/val_idx.pickle', 'rb') as f:
-        val_idx = pickle.load(f)
-    return train_idx, val_idx, holdout_idx
+    with open(f'{base_dir}/neg_train_imgid.pickle', 'rb') as f:
+        neg_train = pickle.load(f)
+    with open(f'{base_dir}/neg_test_imgid.pickle', 'rb') as f:
+        neg_test = pickle.load(f)
+    with open(f'{base_dir}/pos_train_imgid.pickle', 'rb') as f:
+        pos_train = pickle.load(f)
+    with open(f'{base_dir}/pos_test_imgid.pickle', 'rb') as f:
+        pos_test = pickle.load(f)
+    return {'train' : (neg_train, pos_train),
+            'test' : (neg_test, pos_test)}
 
 
-def get_loaders_from_args(args, to_mimic=None):
-    base_dir = args.base_dir
-    train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    train_idx, val_idx, test_idx = get_stored_splits(base_dir)
-    if to_mimic:
-        tmp = train_csv
-        for col_name, val in to_mimic:
-            tmp = tmp[tmp[col_name].isin(val)]
-        total_ids = tmp['image_id']
-    else:
-        total_ids = train_csv['image_id']
-    train_idx = [idx for idx in train_idx if idx in total_ids.index]
-    val_idx = [idx for idx in val_idx if idx in total_ids.index]
-    test_idx = [idx for idx in test_idx if idx in total_ids.index]
-    target_col = args.target_col
-    train_set = XRayDataset(base_dir, list(total_ids.loc[train_idx]), target_col)
-    val_set = XRayDataset(base_dir, list(total_ids.loc[val_idx]), target_col)
-    test_set = XRayDataset(base_dir, list(total_ids.loc[test_idx]), target_col)
-    batch_size = args.batch_size
-    return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
-           DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \
-           DataLoader(test_set, batch_size=batch_size, num_workers=args.loader_workers)
+def get_diffusion_dataloaders(base_dir, batch_size):
+    split_dct = get_stored_splits(base_dir)
+    total_df = pd.read_csv(f'{base_dir}/train.csv')
+    total_df.index = total_df['image_id']
+    train_paths = get_img_paths(split_dct['train'][1], total_df, base_dir)
+    test_paths = get_img_paths(split_dct['test'][1], total_df, base_dir)
 
+    train_set = ImgloaderDataSet(train_paths, values=[1 for _ in train_paths])
+    test_set = ImgloaderDataSet(test_paths, values=[1 for _ in test_paths])
 
-def get_balanced_loaders(args, train_size, val_size, test_size):
-    base_dir = args.base_dir
-    train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    total_ids = train_csv['image_id']
-    index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
-    index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
-    sampled_pos = random.sample(index_pos, (train_size + val_size + test_size)//2)
-    sampled_neg = random.sample(index_neg, (train_size + val_size + test_size)//2)
-
-    sampled_pos_train = sampled_pos[:train_size//2]
-    sampled_neg_train = sampled_neg[:train_size//2]
-
-    sampled_pos_val = sampled_pos[train_size//2 : (train_size + val_size)//2]
-    sampled_neg_val = sampled_neg[train_size // 2: (train_size + val_size) // 2]
-
-    sampled_pos_test = sampled_pos[(train_size + val_size)//2 :]
-    sampled_neg_test = sampled_neg[(train_size + val_size)//2 :]
-    batch_size = args.batch_size
-    train_idx = sampled_pos_train + sampled_neg_train
-    val_idx = sampled_pos_val + sampled_neg_val
-    test_idx = sampled_pos_test + sampled_neg_test
-
-    train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), 'cancer')
-    val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), 'cancer')
-    test_set = XRayDataset(base_dir, list(total_ids.iloc[test_idx]), 'cancer')
-    return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
-           DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \
-           DataLoader(test_set, batch_size=batch_size, num_workers=args.loader_workers)
-
-
-def over_sample_loader(args, train_size, val_size, test_size):
-    base_dir = args.base_dir
-    train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    total_ids = train_csv['image_id']
-    index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
-    index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
-    sampled_pos = random.sample(index_pos, int(train_size/2 + val_size/2 + test_size/2))
-    sampled_neg = random.sample(index_neg, int(train_size + val_size/2 + test_size/2))
-
-    sampled_pos_train_half = sampled_pos[:train_size // 2]
-    sampled_pos_train = sampled_pos_train_half + copy.deepcopy(sampled_pos_train_half)
-    sampled_neg_train = sampled_neg[:train_size]
-
-    sampled_pos_val = sampled_pos[train_size // 2: (train_size + val_size) // 2]
-    sampled_neg_val = sampled_neg[train_size: train_size + val_size//2]
-
-    sampled_pos_test = sampled_pos[(train_size + val_size) // 2:]
-    sampled_neg_test = sampled_neg[train_size + val_size//2:]
-
-    batch_size = args.batch_size
-    train_idx = sampled_pos_train + sampled_neg_train
-    val_idx = sampled_pos_val + sampled_neg_val
-    test_idx = sampled_pos_test + sampled_neg_test
-
-    train_set = XRayDataset(base_dir, list(total_ids.iloc[train_idx]), 'cancer')
-    val_set = XRayDataset(base_dir, list(total_ids.iloc[val_idx]), 'cancer')
-    test_set = XRayDataset(base_dir, list(total_ids.iloc[test_idx]), 'cancer')
-    return DataLoader(train_set, batch_size=batch_size, num_workers=args.loader_workers), \
-           DataLoader(val_set, batch_size=batch_size, num_workers=args.loader_workers), \
-           DataLoader(test_set, batch_size=batch_size, num_workers=args.loader_workers)
-
-
-def get_img_paths(img_idx, train_csv, base_dir):
-    paths = []
-    for idx in img_idx:
-        image_id = train_csv.iloc[idx]['image_id']
-        patient_id = train_csv.iloc[idx]['patient_id']
-        pth = f'{base_dir}/train_images/{patient_id}/{image_id}.png'
-        paths.append(pth)
-    return paths
-
-
-def get_artificial_loaders(base_dir, synthetic_dir, batch_size, val_size=500, test_size=500):
-    synthetic_paths = [f'{synthetic_dir}/{f}' for f in os.listdir(synthetic_dir) if os.path.isfile(f'{synthetic_dir}/{f}')]
-    train_size = len(synthetic_paths) * 2
-    train_csv = pd.read_csv(f'{base_dir}/train.csv')
-    index_neg = list(train_csv[train_csv['cancer'].isin([0])].index)
-    index_pos = list(train_csv[train_csv['cancer'].isin([1])].index)
-    sampled_pos = random.sample(index_pos, int(val_size + test_size)//2)
-    sampled_neg = random.sample(index_neg, int(train_size /2 + val_size / 2 + test_size / 2))
-    sampled_pos_paths = get_img_paths(sampled_pos, train_csv, base_dir)
-    sampled_neg_paths = get_img_paths(sampled_neg, train_csv, base_dir)
-    train_neg_paths = sampled_neg_paths[: train_size//2]
-    val_neg_paths = sampled_neg_paths[train_size//2 : train_size//2 + val_size // 2]
-    test_neg_paths = sampled_neg_paths[train_size//2 + val_size // 2 : ]
-
-    val_pos_paths = sampled_pos_paths[:val_size//2]
-    test_pos_paths = sampled_pos_paths[val_size//2 : ]
-
-    # get the paths for the real imgs
-    train_paths = synthetic_paths + train_neg_paths
-    val_paths = val_pos_paths + val_neg_paths
-    test_paths = test_pos_paths + test_neg_paths
-
-    train_values = [1 for i in synthetic_paths] + [0 for i in train_neg_paths]
-
-    val_values = [1 for i in val_pos_paths] + [0 for i in val_neg_paths]
-    test_values = [1 for i in test_pos_paths] + [0 for i in test_neg_paths]
-
-    train_set = ImgloaderDataSet(train_paths, train_values)
-    val_set = ImgloaderDataSet(val_paths, val_values)
-    test_set = ImgloaderDataSet(test_paths, test_values)
-    print(train_set)
     train_loader = DataLoader(train_set, shuffle=True, batch_size=batch_size)
-    val_loader = DataLoader(val_set, shuffle=True, batch_size=batch_size)
     test_loader = DataLoader(test_set, shuffle=True, batch_size=batch_size)
 
-    return train_loader, val_loader, test_loader
+    return train_loader, test_loader
+
+
+def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None):
+    split_dct = get_stored_splits(base_dir)
+    total_df = pd.read_csv(f'{base_dir}/train.csv')
+    total_df.index = total_df['image_id']
+
+    # getting the synthetic paths
+    pos_train_paths = []
+    if synthetic_dir:
+        for i in range(pos_size):
+            pos_train_paths.append(f'{synthetic_dir}/img{i}.png')
+    else:
+        # how many times to concat list
+        pos_train_imgids = split_dct['train'][1]
+        n = 1 + pos_size // len(pos_train_imgids)
+        pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
+        pos_train_paths = pos_train_paths[:pos_size]
+
+    num_pos_test = len(split_dct['test'][1])
+    neg_test_imgids = random.sample(split_dct['test'][0], num_pos_test)
+    neg_train_imgids = random.sample(split_dct['train'][0], pos_size)
+
+    neg_test_paths = get_img_paths(neg_test_imgids, total_df, base_dir)
+    pos_test_paths = get_img_paths(split_dct['test'][1], total_df, base_dir)
+    neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
+
+    train_set = ImgloaderDataSet(pos_train_paths + neg_train_paths,
+                                 [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
+    test_set = ImgloaderDataSet(pos_test_paths + neg_test_paths,
+                                [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
+
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
+    return train_loader, test_loader
+
+
+def get_img_paths(img_ids, train_csv, base_dir):
+    paths = []
+    for id in img_ids:
+        patient_id = train_csv.loc[id]['patient_id']
+        pth = f'{base_dir}/train_images/{patient_id}/{id}.png'
+        paths.append(pth)
+    return paths
 
 
 def get_num_classes(target_col, base_dir):

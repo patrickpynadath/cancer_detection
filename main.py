@@ -1,7 +1,6 @@
 import os
 
-from processing import MammographyPreprocessor, get_paths, get_loaders_from_args, \
-    get_num_classes, get_balanced_loaders, over_sample_loader, get_artificial_loaders, split_data
+from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders, split_data
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
     create_save_artificial_samples, PlCait
@@ -43,12 +42,11 @@ if __name__ == '__main__':
     resnet_model_flags.add_argument('--depth', help ='layers for resnet', default=56, type=int)
     resnet_model_flags.add_argument('--block_name', help ='block name to use for resnet', choices=['BasicBlock', 'BottleNeck'], default='BottleNeck')
 
-    resnet_data_flags.add_argument('--target_col', help='target column for training', default='cancer', type=str)
     resnet_data_flags.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
     resnet_data_flags.add_argument('--base_dir', help='base dir for data', default='data', type=str)
-    resnet_data_flags.add_argument('--test_size', help='ratio for size of validation set', default=.25, type=float)
+    resnet_data_flags.add_argument('--num_pos', help = 'number of positive samples for training', default = 8000)
     resnet_data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
-    resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', type=str)
+    resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
 
     trainer_flags = Trainer.add_argparse_args(train_resnet)
 
@@ -86,13 +84,13 @@ if __name__ == '__main__':
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
     elif args.command == 'train_resnet':
-        train_loader, val_loader, test_loader = get_artificial_loaders(args.base_dir, args.synthetic_dir, batch_size=64)
+        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size, args.synthetic_dir)
         print(len(train_loader.dataset))
 
         #cait = CaiT(image_size=128, patch_size=16, num_classes=2, depth=20, cls_depth=2, heads=32, mlp_dim=1024, dim=1024)
         #pl_cait = PlCait(cait)
-        pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
-        resnet_training_loop(args, pl_resnet, train_loader, val_loader)
+        pl_resnet = resnet_from_args(args, 2)
+        resnet_training_loop(args, pl_resnet, train_loader, test_loader)
         torch.save(pl_resnet.resnet.state_dict(), 'pl_cait.pickle')
 
 
@@ -113,8 +111,7 @@ if __name__ == '__main__':
 
 
     elif args.command == 'train_diffusion':
-        to_mimic = [('cancer', [1])]
-        train_loader, val_loader, test_loader = get_loaders_from_args(args, to_mimic)
+        train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)
         diffusion_model = get_diffusion_model_from_args(args)
         diffusion_training_loop(diffusion_model, train_loader, 'total_cancer_results')
         torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')

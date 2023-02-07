@@ -99,7 +99,7 @@ def split_data(test_ratio, base_dir):
         pickle.dump(neg_test, f)
     with open(f'{base_dir}/pos_train_imgid.pickle', 'wb') as f:
         pickle.dump(pos_train, f)
-    with open(f'{base_dir}/pos_test_imgig.pickle', 'wb') as f:
+    with open(f'{base_dir}/pos_test_imgid.pickle', 'wb') as f:
         pickle.dump(pos_test, f)
     return
 

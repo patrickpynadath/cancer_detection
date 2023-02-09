@@ -145,18 +145,17 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None):
             pos_train_paths.append(f'{synthetic_dir}/img{i}.png')
     else:
         # how many times to concat list
-        pos_train_imgids = split_dct['train'][1]
+        pos_train_imgids = list(split_dct['train'][1])
         n = 1 + pos_size // len(pos_train_imgids)
         pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
         pos_train_paths = pos_train_paths[:pos_size]
 
     num_pos_test = len(split_dct['test'][1])
-    print(split_dct['test'][0])
-    neg_test_imgids = random.sample(split_dct['test'][0], num_pos_test)
-    neg_train_imgids = random.sample(split_dct['train'][0], pos_size)
+    neg_test_imgids = random.sample(list(split_dct['test'][0]), num_pos_test)
+    neg_train_imgids = random.sample(list(split_dct['train'][0]), pos_size)
 
     neg_test_paths = get_img_paths(neg_test_imgids, total_df, base_dir)
-    pos_test_paths = get_img_paths(split_dct['test'][1], total_df, base_dir)
+    pos_test_paths = get_img_paths(list(split_dct['test'][1]), total_df, base_dir)
     neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
 
     train_set = ImgloaderDataSet(pos_train_paths + neg_train_paths,

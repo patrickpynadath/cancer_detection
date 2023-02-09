@@ -151,6 +151,7 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None):
         pos_train_paths = pos_train_paths[:pos_size]
 
     num_pos_test = len(split_dct['test'][1])
+    print(split_dct['test'][0])
     neg_test_imgids = random.sample(split_dct['test'][0], num_pos_test)
     neg_train_imgids = random.sample(split_dct['train'][0], pos_size)
 

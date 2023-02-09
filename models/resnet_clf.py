@@ -217,7 +217,7 @@ class SupervisedContrastiveLoss(nn.Module):
 # wrapper lightning module class for resnet
 # TODO: need to add method for end of epoch metrics
 class PLResNet(pl.LightningModule):
-    def __init__(self, resnet, lr = 1e-6):
+    def __init__(self, resnet, lr = .01):
         super().__init__()
         self.resnet = resnet
         self.lr = lr
@@ -249,7 +249,7 @@ class PLResNet(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.SGD(self.parameters(), lr=self.lr)
         return optimizer
     #
     # def training_epoch_end(self, outputs):

@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     resnet_data_flags.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
     resnet_data_flags.add_argument('--base_dir', help='base dir for data', default='data', type=str)
-    resnet_data_flags.add_argument('--num_pos', help = 'number of positive samples for training', default = 8000)
+    resnet_data_flags.add_argument('--num_pos', help = 'number of positive samples for training', default = 8000, type=int)
     resnet_data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
     resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
 

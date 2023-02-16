@@ -147,7 +147,7 @@ def get_diffusion_dataloaders(base_dir, batch_size):
     return train_loader, test_loader
 
 
-def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None):
+def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad_data=False):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -172,10 +172,16 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None):
     pos_test_paths = get_img_paths(list(split_dct['test'][1]), total_df, base_dir)
     neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
 
-    train_set = ImgloaderDataSet(pos_train_paths + neg_train_paths,
+    if grad_data:
+        train_set = GradImgDataset(pos_train_paths + neg_train_paths,
                                  [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
-    test_set = ImgloaderDataSet(pos_test_paths + neg_test_paths,
+        test_set = GradImgDataset(pos_test_paths + neg_test_paths,
                                 [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
+    else:
+        train_set = ImgloaderDataSet(pos_train_paths + neg_train_paths,
+                                     [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
+        test_set = ImgloaderDataSet(pos_test_paths + neg_test_paths,
+                                    [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)

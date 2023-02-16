@@ -11,7 +11,6 @@ import pickle
 from torchvision.transforms import Pad
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
-from torch.fft import fft2
 import os
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)

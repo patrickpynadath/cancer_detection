@@ -53,7 +53,10 @@ if __name__ == '__main__':
     train_window_model.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
     train_window_model.add_argument('--input_height', default = 128, type=int, help='input img height')
     train_window_model.add_argument('--input_width', default=64, type=int, help='input img width')
-
+    train_window_model.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
+    train_window_model.add_argument('--base_dir', help='base dir for data', default='data', type=str)
+    train_window_model.add_argument('--num_pos', help='number of positive samples for training', default=8000, type=int)
+    train_window_model.add_argument('--loader_workers', help='workers for dataloader', type=int, default=1)
     trainer_flags = Trainer.add_argparse_args(train_resnet)
 
     # training diffusion models args

@@ -206,7 +206,7 @@ def get_num_classes(target_col, base_dir):
 # given a tensor representing an image, return both the x-gradient and y-gradient
 def get_img_gradient(img):
     pad_img = Pad(padding=1)(img)
-    x_grad = pad_img[2:, 1:img.size(2)+1] - img
-    y_grad = pad_img[1:img.size(1)+1:, 2:] - img
+    x_grad = pad_img[2:, 1:img.size(1)+1] - img
+    y_grad = pad_img[1:img.size(0)+1:, 2:] - img
     return x_grad, y_grad
 

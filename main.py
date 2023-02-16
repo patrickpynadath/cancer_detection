@@ -15,8 +15,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Predicting Breast-Cancer based on Mammography")
     subparsers = parser.add_subparsers(dest='command')
     process_data = subparsers.add_parser('process_data', help = 'command for processing data')
-
     train_resnet = subparsers.add_parser('train_resnet', help = 'command to train resnet clf')
+    train_window_model = subparsers.add_parser('train_window_model', help = 'command to run training of window based model')
     resnet_model_flags = train_resnet.add_argument_group('model_flags')
     resnet_data_flags = train_resnet.add_argument_group('data_flags')
 
@@ -47,6 +47,12 @@ if __name__ == '__main__':
     resnet_data_flags.add_argument('--num_pos', help = 'number of positive samples for training', default = 8000, type=int)
     resnet_data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
     resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
+
+    train_window_model.add_argument('--window_size', help = 'window size to use for model', default = 16)
+    train_window_model = Trainer.add_argparse_args(train_window_model)
+    train_window_model.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
+    train_window_model.add_argument('--input_height', default = 128, type=int, help='input img height')
+    train_window_model.add_argument('--input_width', default=64, type=int, help='input img width')
 
     trainer_flags = Trainer.add_argparse_args(train_resnet)
 
@@ -108,7 +114,10 @@ if __name__ == '__main__':
         # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
         # torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
-
+    elif args.command == 'train_window_model':
+        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
+                                                        synthetic_dir=args.synthetic_dir, grad_data=True)
+        window_model = get
 
     elif args.command == 'train_diffusion':
         train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)

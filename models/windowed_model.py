@@ -4,6 +4,7 @@ from .resnet_clf import Bottleneck
 import math
 from torchvision.transforms import Pad
 from skimage.measure import shannon_entropy
+import pytorch_lightning as pl
 
 
 class WindowModel(nn.Module):
@@ -93,6 +94,45 @@ class EnsembleModel(nn.Module):
             for k in range(weights.size(1)):
                 final_out[batch_idx, :] += weights[batch_idx, k] * window_out[batch_idx, k, :]
         return torch.nn.functional.softmax(final_out)
+
+
+class PLWindowModel(pl.LightningModule):
+    def __init__(self, window_size, input_size, lr = 1e-5):
+        super().__init__()
+        self.model = EnsembleModel(window_size, input_size)
+        self.criterion = nn.CrossEntropyLoss()
+        self.lr = lr
+
+    def forward(self, x):
+        return self.model(x)
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = self.criterion(logits, y)
+        pred = torch.argmax(logits, dim=1)
+        acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))]) / len(pred)
+        self.log('train_accuracy', acc, on_epoch=True)
+        self.log('train_loss', loss, on_epoch=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = self.criterion(logits, y)
+        pred = torch.argmax(logits, dim=1)
+        acc = sum([1 if pred[i].item() == y[i].item() else 0 for i in range(len(pred))])/len(pred)
+        self.log('val_accuracy', acc, on_epoch=True)
+        self.log('val_loss', loss, on_epoch=True)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adagrad(self.model.parameters(), lr=self.lr)
+        return optimizer
+
+
+def get_window_model(window_size, input_size):
+    return PLWindowModel(window_size, input_size)
 
 
 

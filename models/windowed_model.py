@@ -45,23 +45,24 @@ class EnsembleModel(nn.Module):
     def __init__(self, window_size, input_size):
         super().__init__()
         img_ensemble_dct = {}
-        x_windows = math.ceil(input_size[0]/(2 * window_size))
-        y_windows = math.ceil(input_size[1]/(2 * window_size))
+        gap_size = window_size // 2
+        x_windows = math.ceil(input_size[0]/gap_size) - 1
+        y_windows = math.ceil(input_size[1]/gap_size) - 1
         for i in range(x_windows):
             for j in range(y_windows):
                 img_ensemble_dct[(i, j)] = WindowModel()
         self.window_size = window_size
         self.x_windows = x_windows
         self.y_windows = y_windows
-        x_pad = x_windows * window_size/2 - input_size[0]
-        y_pad = y_windows * window_size/2 - input_size[1]
+        x_pad = x_windows * gap_size - input_size[0]
+        y_pad = y_windows * gap_size - input_size[1]
+        self.gap_size = gap_size
         self.pad = Pad(padding=(x_pad, y_pad))
         self.network_ensemble = img_ensemble_dct
 
     def _get_window(self, img, x_idx, y_idx):
-        gap_size = self.window_size // 2
-        return img[:, :, x_idx * self.window_size:(x_idx + 1) * self.window_size,
-               y_idx * self.window_size: (y_idx + 1) * self.window_size]
+        return img[:, :, x_idx * self.gap_size:(x_idx * self.gap_size) + self.window_size,
+               y_idx * self.gap_size: (y_idx * self.gap_size) + self.window_size]
 
     def _get_entropy_weights(self, img):
         total_entropies = []
@@ -74,9 +75,7 @@ class EnsembleModel(nn.Module):
             total_entropies.append(tmp_entropies)
         return torch.tensor(total_entropies, device= img.device)
 
-    def _get_entropy_features(self, img):
-        return
-
+    # NOTE: the padding size is in the forward size because it depends on parameters of the model itself
     def forward(self, x: torch.Tensor):
         x = self.pad(x)
         window_out = []
@@ -86,8 +85,11 @@ class EnsembleModel(nn.Module):
                 out = self.network_ensemble[(i, j)](tmp_window)
                 window_out.append(out)
         window_out = torch.stack(window_out)
+        print(window_out.size())
         entropy = self._get_entropy_weights(x)
         weights = nn.functional.softmax(entropy, dim=1)
+        final_out = torch.zeros(x.size(0), 2)
+
         return torch.mul(window_out, weights)
 
 

@@ -93,7 +93,8 @@ if __name__ == '__main__':
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
     elif args.command == 'train_resnet':
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size, synthetic_dir=args.synthetic_dir)
+        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
+                                                        synthetic_dir=args.synthetic_dir, grad_data=True)
 
         pl_resnet = resnet_from_args(args, 2)
         clf_training_loop(args, pl_resnet, train_loader, test_loader)

@@ -144,7 +144,7 @@ class ResNet(nn.Module):
         self.depth = depth
         self.norm_layer = get_normalize_layer()
         self.inplanes = 32
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=4, padding=1,
+        self.conv1 = nn.Conv2d(5, 32, kernel_size=4, padding=1,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.relu = nn.ReLU(inplace=True)

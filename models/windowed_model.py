@@ -97,9 +97,12 @@ class EnsembleModel(nn.Module):
 
 
 class PLWindowModel(pl.LightningModule):
-    def __init__(self, window_size, input_size, lr = 1e-5):
+    def __init__(self, window_size, input_size, lr = 1e-5, num_channels = 5):
         super().__init__()
-        self.model = EnsembleModel(window_size, input_size)
+        model = EnsembleModel(window_size, input_size)
+        # initializing model by passing dummy batch
+        model(torch.zeros(size=(32, 5, input_size[0], input_size[1])))
+        self.model = model
         self.criterion = nn.CrossEntropyLoss()
         self.lr = lr
 

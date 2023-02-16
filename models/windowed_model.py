@@ -52,7 +52,7 @@ class EnsembleModel(nn.Module):
         y_windows = math.ceil(input_size[1]/gap_size) - 1
         for i in range(x_windows):
             for j in range(y_windows):
-                img_ensemble_dct[(i, j)] = WindowModel()
+                img_ensemble_dct[f'{i}_{j}'] = WindowModel()
         self.window_size = window_size
         self.x_windows = x_windows
         self.y_windows = y_windows
@@ -84,7 +84,7 @@ class EnsembleModel(nn.Module):
         for i in range(self.x_windows):
             for j in range(self.y_windows):
                 tmp_window = self._get_window(x, i, j)
-                out = self.network_ensemble[(i, j)](tmp_window)
+                out = self.network_ensemble[f'{i}_{j}'](tmp_window)
                 window_out.append(out)
         window_out = torch.stack(window_out, dim=1)
         entropy = self._get_entropy_weights(x)

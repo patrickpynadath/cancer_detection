@@ -84,6 +84,7 @@ class EnsembleModel(nn.Module):
                 tmp_window = self._get_window(x, i, j)
                 out = self.network_ensemble[(i, j)](tmp_window)
                 window_out.append(out)
+        print(window_out[0].size())
         window_out = torch.stack(window_out)
         print(window_out.size())
         entropy = self._get_entropy_weights(x)

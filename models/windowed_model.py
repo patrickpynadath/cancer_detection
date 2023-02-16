@@ -94,7 +94,7 @@ class EnsembleModel(nn.Module):
         for batch_idx in range(x.size(0)):
             for k in range(weights.size(1)):
                 final_out[batch_idx, :] += weights[batch_idx, k] * window_out[batch_idx, k, :]
-        return torch.mul(window_out, weights)
+        return final_out
 
 
 

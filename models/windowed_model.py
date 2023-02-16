@@ -74,7 +74,8 @@ class EnsembleModel(nn.Module):
         for i in range(self.x_windows):
             for j in range(self.y_windows):
                 tmp_window = self._get_window(x, i, j)
-                window_out.append(tmp_window)
+                out = self.network_ensemble[(i, j)](tmp_window)
+                window_out.append(out)
         window_out = torch.stack(window_out)
         entropy = self._get_entropy_features(x)
         weights = nn.functional.softmax(entropy, dim=1)

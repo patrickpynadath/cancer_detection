@@ -54,8 +54,8 @@ class EnsembleModel(nn.Module):
         self.window_size = window_size
         self.x_windows = x_windows
         self.y_windows = y_windows
-        x_pad = x_windows * gap_size - input_size[0]
-        y_pad = y_windows * gap_size - input_size[1]
+        x_pad = x_windows * (gap_size + 1) - input_size[0]
+        y_pad = y_windows * (gap_size + 1) - input_size[1]
         self.gap_size = gap_size
         self.pad = Pad(padding=(x_pad, y_pad))
         self.network_ensemble = img_ensemble_dct

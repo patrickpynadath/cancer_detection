@@ -85,13 +85,12 @@ class EnsembleModel(nn.Module):
                 tmp_window = self._get_window(x, i, j)
                 out = self.network_ensemble[(i, j)](tmp_window)
                 window_out.append(out)
-        print(window_out[0].size())
-        window_out = torch.stack(window_out)
-        print(window_out.size())
+        window_out = torch.stack(window_out, dim=1)
         entropy = self._get_entropy_weights(x)
         weights = nn.functional.softmax(entropy, dim=1)
         final_out = torch.zeros(x.size(0), 2)
-
+        for k in range(weights.size(1)):
+            final_out += weights[:, k] * window_out[:, k, :]
         return torch.mul(window_out, weights)
 
 

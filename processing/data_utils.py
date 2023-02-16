@@ -113,10 +113,9 @@ class AugmentedImgDataset(ImgloaderDataSet):
         img_array = np.array(xray)
         if len(img_array.shape) == 3:
             img_array = img_array[:, :, 0]
-        img_array = img_array / 255
         entropy_big = torch.tensor(get_img_entropy(img_array, 2), dtype=torch.float)
         entropy_small = torch.tensor(get_img_entropy(img_array, 8), dtype=torch.float)
-        img_array = torch.tensor(img_array, dtype=torch.float)
+        img_array = torch.tensor(img_array, dtype=torch.float) / 255
         x_grad, y_grad = get_img_gradient(img_array)
         final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
         return final_img, torch.tensor(self.values[i], dtype=torch.long)

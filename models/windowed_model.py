@@ -89,6 +89,8 @@ class EnsembleModel(nn.Module):
         entropy = self._get_entropy_weights(x)
         weights = nn.functional.softmax(entropy, dim=1)
         final_out = torch.zeros(x.size(0), 2)
+        print(weights.size())
+        print(window_out.size())
         for batch_idx in range(x.size(0)):
             for k in range(weights.size(1)):
                 final_out[batch_idx, :] += weights[batch_idx, k] * window_out[batch_idx, k, :]

@@ -110,9 +110,11 @@ class GradImgDataset(ImgloaderDataSet):
     def __getitem__(self, i):
         path = self.paths[i]
         xray = Image.open(path)
-        img_array=torch.tensor(np.array(xray), dtype=torch.float)
+        img_array = np.array(xray)
         if len(img_array.shape) == 3:
             img_array = torch.Tensor(img_array[:, :, 0] / 255, dtype=torch.float)
+        else:
+            img_array = torch.Tensor(img_array / 255, dtype=torch.float)
         x_grad, y_grad = get_img_gradient(img_array)
         final_img = torch.stack((img_array, x_grad, y_grad), dim=0)
         return final_img, torch.tensor(self.values[i], dtype=torch.long)

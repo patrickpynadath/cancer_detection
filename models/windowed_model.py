@@ -9,10 +9,11 @@ class WindowModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.input_conv = nn.LazyConv2d(out_channels=32, kernel_size=3)
+        self.inplanes = 32
         self.group1 = self._make_layer(planes=32, blocks=3)
         self.group2 = self._make_layer(planes=64, blocks=3)
         self.fc_out = nn.LazyLinear(2)
-        self.inplanes = 32
+
 
     def forward(self, x):
         x = self.input_conv(x)

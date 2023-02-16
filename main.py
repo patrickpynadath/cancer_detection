@@ -48,7 +48,7 @@ if __name__ == '__main__':
     resnet_data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
     resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
 
-    train_window_model.add_argument('--window_size', help = 'window size to use for model', default = 16)
+    train_window_model.add_argument('--window_size', help = 'window size to use for model', default = 16, type=int)
     train_window_model = Trainer.add_argparse_args(train_window_model)
     train_window_model.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
     train_window_model.add_argument('--input_height', default = 128, type=int, help='input img height')

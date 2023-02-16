@@ -9,6 +9,8 @@ from sklearn.model_selection import ShuffleSplit
 import numpy as np
 import copy
 import pickle
+from torchvision.transforms import Pad
+
 import os
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
@@ -104,6 +106,18 @@ def split_data(test_ratio, base_dir):
     return
 
 
+class GradImgDataset(ImgloaderDataSet):
+    def __getitem__(self, i):
+        path = self.paths[i]
+        xray = Image.open(path)
+        img_array = np.array(xray)
+        if len(img_array.shape) == 3:
+            img_array = torch.Tensor(img_array[:, :, 0] / 255, dtype=torch.float)
+        x_grad, y_grad = get_img_gradient(img_array)
+        final_img = torch.stack((img_array, x_grad, y_grad), dim=0)
+        return final_img, torch.tensor(self.values[i], dtype=torch.long)
+
+
 def get_stored_splits(base_dir):
     with open(f'{base_dir}/neg_train_imgid.pickle', 'rb') as f:
         neg_train = pickle.load(f)
@@ -179,3 +193,12 @@ def get_img_paths(img_ids, train_csv, base_dir):
 
 def get_num_classes(target_col, base_dir):
     return len(pd.unique(pd.read_csv(f'{base_dir}/train.csv')[target_col]))
+
+
+# given a tensor representing an image, return both the x-gradient and y-gradient
+def get_img_gradient(img):
+    pad_img = Pad(padding=1)(img)
+    x_grad = pad_img[2:, 1:img.size(2)+1] - img
+    y_grad = pad_img[1:img.size(1)+1:, 2:] - img
+    return x_grad, y_grad
+

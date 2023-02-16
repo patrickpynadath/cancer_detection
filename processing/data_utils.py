@@ -7,10 +7,11 @@ import torch
 import random
 from sklearn.model_selection import ShuffleSplit
 import numpy as np
-import copy
 import pickle
 from torchvision.transforms import Pad
-
+from skimage.filters.rank import entropy
+from skimage.morphology import disk
+from torch.fft import fft2
 import os
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
@@ -106,17 +107,19 @@ def split_data(test_ratio, base_dir):
     return
 
 
-class GradImgDataset(ImgloaderDataSet):
+class AugmentedImgDataset(ImgloaderDataSet):
     def __getitem__(self, i):
         path = self.paths[i]
         xray = Image.open(path)
         img_array = np.array(xray)
         if len(img_array.shape) == 3:
-            img_array = torch.tensor(img_array[:, :, 0] / 255, dtype=torch.float)
-        else:
-            img_array = torch.tensor(img_array / 255, dtype=torch.float)
+            img_array = img_array[:, :, 0]
+        img_array = img_array / 255
+        entropy_big = torch.tensor(get_img_entropy(img_array, 2), dtype=torch.float)
+        entropy_small = torch.tensor(get_img_entropy(img_array, 8), dtype=torch.float)
+        img_array = torch.tensor(img_array, dtype=torch.float)
         x_grad, y_grad = get_img_gradient(img_array)
-        final_img = torch.stack((img_array, x_grad, y_grad), dim=0)
+        final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
         return final_img, torch.tensor(self.values[i], dtype=torch.long)
 
 
@@ -175,10 +178,10 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
     neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
 
     if grad_data:
-        train_set = GradImgDataset(pos_train_paths + neg_train_paths,
-                                 [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
-        test_set = GradImgDataset(pos_test_paths + neg_test_paths,
-                                [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
+        train_set = AugmentedImgDataset(pos_train_paths + neg_train_paths,
+                                        [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
+        test_set = AugmentedImgDataset(pos_test_paths + neg_test_paths,
+                                       [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
     else:
         train_set = ImgloaderDataSet(pos_train_paths + neg_train_paths,
                                      [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
@@ -210,3 +213,7 @@ def get_img_gradient(img):
     y_grad = pad_img[1:img.size(0)+1:, 2:] - img
     return x_grad, y_grad
 
+
+# img needs to be in NUMPY format
+def get_img_entropy(img, rad):
+    return entropy(img, disk(rad))

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from .resnet_clf import Bottleneck
 import math
+from torchvision.transforms import Pad
 from skimage.measure import shannon_entropy
 
 
@@ -52,13 +53,17 @@ class EnsembleModel(nn.Module):
         self.window_size = window_size
         self.x_windows = x_windows
         self.y_windows = y_windows
+        x_pad = x_windows * window_size - input_size[0]
+        y_pad = y_windows * window_size - input_size[1 ]
+        self.pad = Pad(padding=(x_pad, y_pad))
         self.network_ensemble = img_ensemble_dct
 
     def _get_window(self, img, x_idx, y_idx):
+        img = self.pad(img)
         return img[:, :, x_idx * self.window_size:(x_idx + 1) * self.window_size,
                y_idx * self.window_size: (y_idx + 1) * self.window_size]
 
-    def _get_entropy_features(self, img):
+    def _get_entropy_weights(self, img):
         total_entropies = []
         for k in range(img.size(0)):
             tmp_entropies = []
@@ -69,6 +74,9 @@ class EnsembleModel(nn.Module):
             total_entropies.append(tmp_entropies)
         return torch.tensor(total_entropies, device= img.device)
 
+    def _get_entropy_features(self, img):
+        return
+
     def forward(self, x: torch.Tensor):
         window_out = []
         for i in range(self.x_windows):
@@ -77,7 +85,7 @@ class EnsembleModel(nn.Module):
                 out = self.network_ensemble[(i, j)](tmp_window)
                 window_out.append(out)
         window_out = torch.stack(window_out)
-        entropy = self._get_entropy_features(x)
+        entropy = self._get_entropy_weights(x)
         weights = nn.functional.softmax(entropy, dim=1)
         return torch.mul(window_out, weights)
 

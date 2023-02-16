@@ -3,9 +3,9 @@ import os
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders, split_data
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, PlCait
+    create_save_artificial_samples, get_window_model
 from pytorch_lightning import Trainer
-from training import resnet_training_loop, diffusion_training_loop
+from training import clf_training_loop, diffusion_training_loop
 import torch
 from vit_pytorch.cait import CaiT
 # data preprocessing
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size, synthetic_dir=args.synthetic_dir)
 
         pl_resnet = resnet_from_args(args, 2)
-        resnet_training_loop(args, pl_resnet, train_loader, test_loader)
+        clf_training_loop(args, pl_resnet, train_loader, test_loader)
         if args.synthetic_dir:
             torch.save(pl_resnet.resnet.state_dict(), 'pl_resnet_synthetic.pickle')
         else:
@@ -117,7 +117,9 @@ if __name__ == '__main__':
     elif args.command == 'train_window_model':
         train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
                                                         synthetic_dir=args.synthetic_dir, grad_data=True)
-        window_model = get
+        window_model = get_window_model(args.window_size, (args.input_height, args.input_width))
+        clf_training_loop(args, window_model, train_loader, test_loader)
+        torch.save(window_model.model.state_dict(), 'window model state dict')
 
     elif args.command == 'train_diffusion':
         train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)

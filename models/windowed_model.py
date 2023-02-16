@@ -56,7 +56,7 @@ class EnsembleModel(nn.Module):
 
     def _get_window(self, img, x_idx, y_idx):
         return img[:, :, x_idx * self.window_size:(x_idx + 1) * self.window_size,
-               y_idx * self.window_size, (y_idx + 1) * self.window_size]
+               y_idx * self.window_size: (y_idx + 1) * self.window_size]
 
     def _get_entropy_features(self, img):
         total_entropies = []

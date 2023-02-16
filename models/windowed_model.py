@@ -20,6 +20,7 @@ class WindowModel(nn.Module):
         x = self.input_conv(x)
         x = self.group1(x)
         x = self.group2(x)
+        x = torch.flatten(x, start_dim=1)
         out = self.fc_out(x)
         return out
 

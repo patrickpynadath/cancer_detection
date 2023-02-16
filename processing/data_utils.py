@@ -107,7 +107,10 @@ def split_data(test_ratio, base_dir):
 
 
 class AugmentedImgDataset(ImgloaderDataSet):
-    def __init__(self, paths, values, small_entropy_rad = 2, big_entropy_rad = 5):
+    def __init__(self, paths, values,
+                 small_entropy_rad = 2,
+                 big_entropy_rad = 5,
+                 pad_val=4):
         super().__init__(paths, values)
         self.small_entropy_rad = small_entropy_rad
         self.big_entropy_rad = big_entropy_rad
@@ -123,6 +126,7 @@ class AugmentedImgDataset(ImgloaderDataSet):
         img_array = torch.tensor(img_array, dtype=torch.float) / 255
         x_grad, y_grad = get_img_gradient(img_array)
         final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
+
         return final_img, torch.tensor(self.values[i], dtype=torch.long)
 
 

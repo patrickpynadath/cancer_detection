@@ -45,21 +45,21 @@ class EnsembleModel(nn.Module):
     def __init__(self, window_size, input_size):
         super().__init__()
         img_ensemble_dct = {}
-        x_windows = math.ceil(input_size[0]/window_size)
-        y_windows = math.ceil(input_size[1]/window_size)
+        x_windows = math.ceil(input_size[0]/(2 * window_size))
+        y_windows = math.ceil(input_size[1]/(2 * window_size))
         for i in range(x_windows):
             for j in range(y_windows):
                 img_ensemble_dct[(i, j)] = WindowModel()
         self.window_size = window_size
         self.x_windows = x_windows
         self.y_windows = y_windows
-        x_pad = x_windows * window_size - input_size[0]
-        y_pad = y_windows * window_size - input_size[1 ]
+        x_pad = x_windows * window_size/2 - input_size[0]
+        y_pad = y_windows * window_size/2 - input_size[1]
         self.pad = Pad(padding=(x_pad, y_pad))
         self.network_ensemble = img_ensemble_dct
 
     def _get_window(self, img, x_idx, y_idx):
-        img = self.pad(img)
+        gap_size = self.window_size // 2
         return img[:, :, x_idx * self.window_size:(x_idx + 1) * self.window_size,
                y_idx * self.window_size: (y_idx + 1) * self.window_size]
 
@@ -78,6 +78,7 @@ class EnsembleModel(nn.Module):
         return
 
     def forward(self, x: torch.Tensor):
+        x = self.pad(x)
         window_out = []
         for i in range(self.x_windows):
             for j in range(self.y_windows):

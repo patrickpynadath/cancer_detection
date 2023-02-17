@@ -12,7 +12,7 @@ class PLAutoEncoder(pl.LightningModule):
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size):
+                 latent_size, lr):
         super().__init__()
         self.res_layers = num_residual_layers
         self.latent_size = latent_size
@@ -29,6 +29,7 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_residual_layers,
                                 num_residual_hiddens)
         self.criterion = nn.MSELoss()
+        self.lr = lr
 
     def encode(self, x, qual_values):
         enc = self._encoder(x, qual_values)
@@ -85,9 +86,9 @@ def get_pl_ae(num_channels,
              num_hiddens,
              num_residual_layers,
              num_residual_hiddens,
-             latent_size):
+             latent_size, lr):
     return PLAutoEncoder(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size)
+                 latent_size, lr)

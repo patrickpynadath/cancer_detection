@@ -279,11 +279,11 @@ def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_s
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
 
-    train_img_ids = split_dct['train'][0] + split_dct['train'][1]
-    test_img_ids = split_dct['test'][0]  + split_dct['test'][1]
+    train_img_ids = list(split_dct['train'][0]) + list(split_dct['train'][1])
+    test_img_ids = list(split_dct['test'][0]) + list(split_dct['test'][1])
 
-    train_values = get_qual_values(total_df, train_img_ids)
-    test_values = get_qual_values(total_df, test_img_ids)
+    train_values = get_qual_values(total_df, list(train_img_ids))
+    test_values = get_qual_values(total_df, list(test_img_ids))
 
     train_paths = get_img_paths(train_img_ids, total_df, base_dir)
     test_paths = get_img_paths(test_img_ids, total_df, base_dir)

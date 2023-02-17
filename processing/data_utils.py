@@ -137,13 +137,15 @@ class AugmentedImgDataset(ImgloaderDataSet):
 class JigsawDataset(AugmentedImgDataset):
     def __init__(self, paths, values : pd.DataFrame,
                  tile_length,
-                 input_size):
+                 input_size,
+                 use_jigsaw = True):
         super().__init__(paths, values)
         self.tile_length = tile_length
         self.tiling = (math.ceil(input_size[0] / tile_length), math.ceil(input_size[1] / tile_length))
         self.pad_dim = (self.tiling[0] * self.tile_length - input_size[0],
                         self.tiling[1] * self.tile_length - input_size[1])
         self.pad = Pad(padding=self.pad_dim)
+        self.use_jigsaw = use_jigsaw
 
     def _make_jigsaw(self, img: torch.Tensor):
         img = self.pad(img)
@@ -175,7 +177,10 @@ class JigsawDataset(AugmentedImgDataset):
         img_array = torch.tensor(img_array, dtype=torch.float) / 255
         x_grad, y_grad = get_img_gradient(img_array)
         final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
-        jigsaw_img = self._make_jigsaw(final_img)
+        if self.use_jigsaw:
+            jigsaw_img = self._make_jigsaw(final_img)
+        else:
+            jigsaw_img = final_img
         # also get the labels
         return final_img, jigsaw_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float)
 

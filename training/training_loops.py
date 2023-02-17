@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from .diffusion_trainer_custom import DiffusionTrainer
 
 
-def clf_training_loop(args, pl_model, train_loader, val_loader):
+def generic_training_loop(args, pl_model, train_loader, val_loader):
     trainer = pl.Trainer.from_argparse_args(args)
     trainer.fit(pl_model, train_loader, val_loader)
     return

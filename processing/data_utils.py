@@ -274,7 +274,7 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
     return train_loader, test_loader
 
 
-def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_size=32):
+def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_size=32, learning_mode='normal'):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -288,8 +288,8 @@ def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_s
     train_paths = get_img_paths(train_img_ids, total_df, base_dir)
     test_paths = get_img_paths(test_img_ids, total_df, base_dir)
 
-    train_set = TransferLearningDataset(train_paths, train_values, tile_length, input_size)
-    test_set = TransferLearningDataset(test_paths, test_values, tile_length, input_size)
+    train_set = TransferLearningDataset(train_paths, train_values, tile_length, input_size, learning_mode=learning_mode)
+    test_set = TransferLearningDataset(test_paths, test_values, tile_length, input_size, learning_mode=learning_mode)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader

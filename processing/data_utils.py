@@ -135,7 +135,7 @@ class AugmentedImgDataset(ImgloaderDataSet):
 
 
 class JigsawDataset(AugmentedImgDataset):
-    def __init__(self, paths, values,
+    def __init__(self, paths, values : pd.DataFrame,
                  tile_length,
                  input_size):
         super().__init__(paths, values)
@@ -177,7 +177,7 @@ class JigsawDataset(AugmentedImgDataset):
         final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
         jigsaw_img = self._make_jigsaw(final_img)
         # also get the labels
-        return final_img, torch.tensor(self.values[i], dtype=torch.long)
+        return final_img, jigsaw_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float)
 
 
 def get_stored_splits(base_dir):

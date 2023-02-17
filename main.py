@@ -148,7 +148,7 @@ if __name__ == '__main__':
         torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
 
     elif args.command == 'train_transfer_learn_ae':
-        train_loader, test_loader = get_ae_loaders(args.base_dir, args.tile_length, (args.input_height, args.input_width), args.batch_size, args.learning_mode)
+        train_loader, test_loader = get_ae_loaders(args.base_dir, args.tile_size, (args.input_height, args.input_width), args.batch_size, args.learning_mode)
         ae = get_pl_ae(args.num_channels,
                  args.num_hiddens,
                  args.num_residual_layers,

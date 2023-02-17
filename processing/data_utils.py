@@ -1,3 +1,4 @@
+import math
 import os
 
 from torch.utils.data import Dataset, DataLoader
@@ -12,11 +13,12 @@ from torchvision.transforms import Pad
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
 import os
+
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
 
 
-def get_paths(base_dir='data', train=True, target_col=None, target_val = None):
+def get_paths(base_dir='data', train=True, target_col=None, target_val=None):
     if train:
         root_dir = f'{base_dir}/train_images'
     else:
@@ -108,8 +110,8 @@ def split_data(test_ratio, base_dir):
 
 class AugmentedImgDataset(ImgloaderDataSet):
     def __init__(self, paths, values,
-                 small_entropy_rad = 2,
-                 big_entropy_rad = 5,
+                 small_entropy_rad=2,
+                 big_entropy_rad=5,
                  pad_val=4):
         super().__init__(paths, values)
         self.small_entropy_rad = small_entropy_rad
@@ -130,6 +132,52 @@ class AugmentedImgDataset(ImgloaderDataSet):
         return final_img, torch.tensor(self.values[i], dtype=torch.long)
 
 
+class JigsawDataset(AugmentedImgDataset):
+    def __init__(self, paths, values,
+                 tile_length,
+                 input_size):
+        super().__init__(paths, values)
+        self.tile_length = tile_length
+        self.tiling = (math.ceil(input_size[0] / tile_length), math.ceil(input_size[1] / tile_length))
+        self.pad_dim = (self.tiling[0] * self.tile_length - input_size[0],
+                        self.tiling[1] * self.tile_length - input_size[1])
+        self.pad = Pad(padding=self.pad_dim)
+
+    def _make_jigsaw(self, img: torch.Tensor):
+        img = self.pad(img)
+        x_indices = [i for i in range(self.tiling[0])]
+        y_indices = [i for i in range(self.tiling[1])]
+        random.shuffle(x_indices)
+        random.shuffle(y_indices)
+        jigsaw_img = torch.zeros_like(img)
+        for out_x_idx, orig_x_idx in enumerate(x_indices):
+            for out_y_idx, orig_y_idx in enumerate(y_indices):
+                jigsaw_img[:,
+                out_x_idx * self.tile_length: (out_x_idx + 1) * self.tile_length,
+                out_y_idx * self.tile_length: (out_y_idx + 1) * self.tile_length] \
+                    = self._get_tile(img, orig_x_idx, orig_y_idx)
+        return jigsaw_img
+
+    def _get_tile(self, img, tile_x_idx, tile_y_idx):
+        return img[:, tile_x_idx * self.tile_length: (tile_x_idx + 1) * self.tile_length,
+               tile_y_idx * self.tile_length: (tile_y_idx + 1) * self.tile_length]
+
+    def __getitem__(self, i):
+        path = self.paths[i]
+        xray = Image.open(path)
+        img_array = np.array(xray)
+        if len(img_array.shape) == 3:
+            img_array = img_array[:, :, 0]
+        entropy_big = torch.tensor(get_img_entropy(img_array, self.big_entropy_rad), dtype=torch.float)
+        entropy_small = torch.tensor(get_img_entropy(img_array, self.small_entropy_rad), dtype=torch.float)
+        img_array = torch.tensor(img_array, dtype=torch.float) / 255
+        x_grad, y_grad = get_img_gradient(img_array)
+        final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
+        jigsaw_img = self._make_jigsaw(final_img)
+        # also get the labels
+        return final_img, torch.tensor(self.values[i], dtype=torch.long)
+
+
 def get_stored_splits(base_dir):
     with open(f'{base_dir}/neg_train_imgid.pickle', 'rb') as f:
         neg_train = pickle.load(f)
@@ -139,8 +187,8 @@ def get_stored_splits(base_dir):
         pos_train = pickle.load(f)
     with open(f'{base_dir}/pos_test_imgid.pickle', 'rb') as f:
         pos_test = pickle.load(f)
-    return {'train' : (neg_train, pos_train),
-            'test' : (neg_test, pos_test)}
+    return {'train': (neg_train, pos_train),
+            'test': (neg_test, pos_test)}
 
 
 def get_diffusion_dataloaders(base_dir, batch_size):
@@ -216,8 +264,8 @@ def get_num_classes(target_col, base_dir):
 # given a tensor representing an image, return both the x-gradient and y-gradient
 def get_img_gradient(img):
     pad_img = Pad(padding=1)(img)
-    x_grad = pad_img[2:, 1:img.size(1)+1] - img
-    y_grad = pad_img[1:img.size(0)+1:, 2:] - img
+    x_grad = pad_img[2:, 1:img.size(1) + 1] - img
+    y_grad = pad_img[1:img.size(0) + 1:, 2:] - img
     return x_grad, y_grad
 
 

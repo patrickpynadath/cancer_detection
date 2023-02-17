@@ -1,20 +1,21 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from .encoder import Encoder
 from .decoder import Decoder
+import pytorch_lightning as pl
+from torchvision.utils import make_grid
+import torch
 
 
-class AE(nn.Module):
+class PLAutoEncoder(pl.LightningModule):
     def __init__(self,
                  num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
                  latent_size):
-        super(AE, self).__init__()
+        super().__init__()
         self.res_layers = num_residual_layers
-        self.latent_size=latent_size
+        self.latent_size = latent_size
         self.num_hiddens = num_hiddens
         self._encoder = Encoder(num_channels, num_hiddens,
                                 num_residual_layers,
@@ -27,9 +28,10 @@ class AE(nn.Module):
                                 num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
+        self.criterion = nn.MSELoss()
 
-    def encode(self, x):
-        enc = self._encoder(x)
+    def encode(self, x, qual_values):
+        enc = self._encoder(x, qual_values)
         pre_latent = enc.flatten(start_dim=1)
         z = self._fc_latent(pre_latent)
         return z
@@ -40,16 +42,40 @@ class AE(nn.Module):
         x_recon = self._decoder(pre_recon)
         return x_recon
 
-    def forward(self, x):
-        z = self.encode(x)
+    def forward(self, x, qual_values):
+        z = self.encode(x, qual_values)
         return self.decode(z)
 
-    def generate(self, x):
-        return self.forward(x)
+    def generate(self, x, qual_values):
+        return self.forward(x, qual_values)
 
-    def get_encoding(self, x):
-        return self.encode(x)
+    def get_encoding(self, x, qual_values):
+        return self.encode(x, qual_values)
 
+    def training_step(self, batch, batch_idx):
+        orig_img, jigsaw_img, qual_labels = batch
+        recon = self.forward(jigsaw_img, qual_labels)
+        loss = self.criterion(recon, orig_img)
+        self.log('train_loss', loss, on_epoch=True)
+        tensorboard = self.logger.experiment
+        orig_grid = make_grid(orig_img[0, 0, :, :])
+        jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
+        tensorboard.add_image('train_jigsaw_images', jigsaw_grid, on_epoch=True)
+        tensorboard.add_image('train_orig_images', orig_grid, on_epoch=True)
+        return loss
 
-def get_latent_code_ae(ae: AE, x):
-    return ae.encode(x)
+    def validation_step(self, batch, batch_idx):
+        orig_img, jigsaw_img, qual_labels = batch
+        recon = self.forward(jigsaw_img, qual_labels)
+        loss = self.criterion(recon, orig_img)
+        self.log('val_loss', loss, on_epoch=True)
+        tensorboard = self.logger.experiment
+        orig_grid = make_grid(orig_img[0, 0, :, :])
+        jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
+        tensorboard.add_image('val_jigsaw_images', jigsaw_grid, on_epoch=True)
+        tensorboard.add_image('val_orig_images', orig_grid, on_epoch=True)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adagrad(self.parameters(), lr=self.lr)
+        return optimizer

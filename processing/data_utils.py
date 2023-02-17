@@ -134,18 +134,19 @@ class AugmentedImgDataset(ImgloaderDataSet):
         return final_img, torch.tensor(self.values[i], dtype=torch.long)
 
 
-class JigsawDataset(AugmentedImgDataset):
+class TransferLearningDataset(AugmentedImgDataset):
     def __init__(self, paths, values : pd.DataFrame,
                  tile_length,
                  input_size,
-                 use_jigsaw = True):
+                 learning_mode = 'normal'):
         super().__init__(paths, values)
         self.tile_length = tile_length
         self.tiling = (math.ceil(input_size[0] / tile_length), math.ceil(input_size[1] / tile_length))
         self.pad_dim = (self.tiling[0] * self.tile_length - input_size[0],
                         self.tiling[1] * self.tile_length - input_size[1])
         self.pad = Pad(padding=self.pad_dim)
-        self.use_jigsaw = use_jigsaw
+        self.learning_mode = learning_mode
+        self.input_size = input_size
 
     def _make_jigsaw(self, img: torch.Tensor):
         img = self.pad(img)
@@ -162,6 +163,22 @@ class JigsawDataset(AugmentedImgDataset):
                     = self._get_tile(img, orig_x_idx, orig_y_idx)
         return jigsaw_img
 
+    def _make_fillin(self, img: torch.Tensor):
+        img = self.pad(img.clone())
+        x_indices = [i for i in range(self.tiling[0])]
+        y_indices = [i for i in range(self.tiling[1])]
+        to_omit = torch.randint(low=1, high=self.tiling[0] * self.tiling[1] // 4)
+
+        to_omit_x= random.sample(x_indices, k=to_omit)
+        to_omit_y= random.sample(y_indices, k=to_omit)
+        for out_x_idx, orig_x_idx in enumerate(to_omit_x):
+            for out_y_idx, orig_y_idx in enumerate(to_omit_y):
+                img[:,
+                out_x_idx * self.tile_length: (out_x_idx + 1) * self.tile_length,
+                out_y_idx * self.tile_length: (out_y_idx + 1) * self.tile_length] \
+                    = torch.zeros(size=(img.size(0), self.tile_length, self.tile_length))
+        return img
+
     def _get_tile(self, img, tile_x_idx, tile_y_idx):
         return img[:, tile_x_idx * self.tile_length: (tile_x_idx + 1) * self.tile_length,
                tile_y_idx * self.tile_length: (tile_y_idx + 1) * self.tile_length]
@@ -177,12 +194,14 @@ class JigsawDataset(AugmentedImgDataset):
         img_array = torch.tensor(img_array, dtype=torch.float) / 255
         x_grad, y_grad = get_img_gradient(img_array)
         final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
-        if self.use_jigsaw:
-            jigsaw_img = self._make_jigsaw(final_img)
+        if self.learning_mode == 'jigsaw':
+            input_img = self._make_jigsaw(final_img)
+        elif self.learning_mode == 'fillin':
+            input_img = self._make_fillin(final_img)
         else:
-            jigsaw_img = final_img
+            input_img = final_img.clone()
         # also get the labels
-        return final_img, jigsaw_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float)
+        return final_img, input_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float)
 
 
 def get_stored_splits(base_dir):
@@ -269,8 +288,8 @@ def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_s
     train_paths = get_img_paths(train_img_ids, total_df, base_dir)
     test_paths = get_img_paths(test_img_ids, total_df, base_dir)
 
-    train_set = JigsawDataset(train_paths, train_values, tile_length, input_size)
-    test_set = JigsawDataset(test_paths, test_values, tile_length, input_size)
+    train_set = TransferLearningDataset(train_paths, train_values, tile_length, input_size)
+    test_set = TransferLearningDataset(test_paths, test_values, tile_length, input_size)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader

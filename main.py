@@ -1,11 +1,12 @@
 import os
 
-from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders, split_data
+from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
+    split_data, get_ae_loaders
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_window_model
+    create_save_artificial_samples, get_window_model, get_pl_ae
 from pytorch_lightning import Trainer
-from training import clf_training_loop, diffusion_training_loop
+from training import generic_training_loop, diffusion_training_loop
 import torch
 from vit_pytorch.cait import CaiT
 # data preprocessing
@@ -17,6 +18,7 @@ if __name__ == '__main__':
     process_data = subparsers.add_parser('process_data', help = 'command for processing data')
     train_resnet = subparsers.add_parser('train_resnet', help = 'command to train resnet clf')
     train_window_model = subparsers.add_parser('train_window_model', help = 'command to run training of window based model')
+    train_transfer_learn_ae = subparsers.add_parser('train_transfer_learn_ae', help='train transfer learning autoencoder')
     resnet_model_flags = train_resnet.add_argument_group('model_flags')
     resnet_data_flags = train_resnet.add_argument_group('data_flags')
 
@@ -59,6 +61,20 @@ if __name__ == '__main__':
     train_window_model.add_argument('--loader_workers', help='workers for dataloader', type=int, default=1)
     trainer_flags = Trainer.add_argparse_args(train_resnet)
 
+    # train jigsaw autoencoder args
+    train_transfer_learn_ae = Trainer.add_argparse_args(train_transfer_learn_ae)
+    train_transfer_learn_ae.add_argument('--input_height', default = 128, type=int, help='input img height')
+    train_transfer_learn_ae.add_argument('--input_width', default=64, type=int, help='input img width')
+    train_transfer_learn_ae.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
+    train_transfer_learn_ae.add_argument('--base_dir', help='base dir for data', default='data', type=str)
+    train_transfer_learn_ae.add_argument('--latent_size', help='size of latent dim', default = 200, type=int)
+    train_transfer_learn_ae.add_argument('--learning_mode', help='task to use for training', default='normal', type=str)
+    train_transfer_learn_ae.add_argument('--num_hiddens', help='num hiddens for resstack', default = 512, type=int)
+    train_transfer_learn_ae.add_argument('--num_residual_layers', help='num residual layers', default=20, type=int)
+    train_transfer_learn_ae.add_argument('--num_residual_hiddens', help='num hiddens for residuals', default=64, type=int)
+
+
+
     # training diffusion models args
     diffusion_model_flags.add_argument('--img_height', default = 128, type=int, help='input img height')
     diffusion_model_flags.add_argument('--img_width', default=64, type=int, help='input img width')
@@ -97,7 +113,7 @@ if __name__ == '__main__':
                                                         synthetic_dir=args.synthetic_dir, grad_data=True)
 
         pl_resnet = resnet_from_args(args, 2)
-        clf_training_loop(args, pl_resnet, train_loader, test_loader)
+        generic_training_loop(args, pl_resnet, train_loader, test_loader)
         if args.synthetic_dir:
             torch.save(pl_resnet.resnet.state_dict(), 'pl_resnet_synthetic.pickle')
         else:
@@ -122,7 +138,7 @@ if __name__ == '__main__':
         train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
                                                         synthetic_dir=args.synthetic_dir, grad_data=True)
         window_model = get_window_model(args.window_size, (args.input_height, args.input_width))
-        clf_training_loop(args, window_model, train_loader, test_loader)
+        generic_training_loop(args, window_model, train_loader, test_loader)
         torch.save(window_model.model.state_dict(), 'window model state dict')
 
     elif args.command == 'train_diffusion':
@@ -131,6 +147,15 @@ if __name__ == '__main__':
         diffusion_training_loop(diffusion_model, train_loader, 'total_cancer_results')
         torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
 
+    elif args.command == 'train_transfer_learn_ae':
+        train_loader, test_loader = get_ae_loaders(args.base_dir, args.tile_length, (args.input_height, args.input_width), args.batch_size, args.learning_mode)
+        ae = get_pl_ae(args.num_channels,
+                 args.num_hiddens,
+                 args.num_residual_layers,
+                 args.num_residual_hiddens,
+                 args.latent_size)
+        generic_training_loop(args, ae, train_loader, test_loader)
+        torch.save(ae.model.state_dict(), f'ae_tl_{args.learning_mode}.pickle')
 
 
     elif args.command == 'generate_imgs':

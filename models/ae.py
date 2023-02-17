@@ -79,3 +79,15 @@ class PLAutoEncoder(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adagrad(self.parameters(), lr=self.lr)
         return optimizer
+
+
+def get_pl_ae(num_channels,
+             num_hiddens,
+             num_residual_layers,
+             num_residual_hiddens,
+             latent_size):
+    return PLAutoEncoder(num_channels,
+                 num_hiddens,
+                 num_residual_layers,
+                 num_residual_hiddens,
+                 latent_size)

@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from Models.Generative.res_stack import ResidualStack
+from .res_stack import ResidualStack
 
 
 class Encoder(nn.Module):

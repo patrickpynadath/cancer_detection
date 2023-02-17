@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from Models.Generative.encoder import Encoder
-from Models.Generative.decoder import Decoder
-from Utils import timestamp
+from .encoder import Encoder
+from .decoder import Decoder
 
 
 class AE(nn.Module):
     def __init__(self,
+                 num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
@@ -16,17 +16,17 @@ class AE(nn.Module):
         self.res_layers = num_residual_layers
         self.latent_size=latent_size
         self.num_hiddens = num_hiddens
-        self._encoder = Encoder(3, num_hiddens,
+        self._encoder = Encoder(num_channels, num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
         self._fc_latent = nn.Linear(num_hiddens * 8 * 8, latent_size)
 
         self._fc_dec = nn.Linear(latent_size, num_hiddens * 8 * 8)
         self._decoder = Decoder(num_hiddens,
+                                num_channels,
                                 num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
-        self.label = f'AE_{timestamp()}'
 
     def encode(self, x):
         enc = self._encoder(x)

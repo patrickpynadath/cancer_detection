@@ -72,7 +72,7 @@ if __name__ == '__main__':
     train_transfer_learn_ae.add_argument('--num_hiddens', help='num hiddens for resstack', default = 512, type=int)
     train_transfer_learn_ae.add_argument('--num_residual_layers', help='num residual layers', default=20, type=int)
     train_transfer_learn_ae.add_argument('--num_residual_hiddens', help='num hiddens for residuals', default=64, type=int)
-
+    train_transfer_learn_ae.add_argument('--tile_size', help='size of tiles for fillin/jigsaw tasks', type=int, default=16)
 
 
     # training diffusion models args

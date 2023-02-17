@@ -17,6 +17,8 @@ import os
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
 
+QUAL_COL_NAMES = ['age', 'implant', 'laterality']
+
 
 def get_paths(base_dir='data', train=True, target_col=None, target_val=None):
     if train:
@@ -246,6 +248,40 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader
+
+
+def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_size=32):
+    split_dct = get_stored_splits(base_dir)
+    total_df = pd.read_csv(f'{base_dir}/train.csv')
+    total_df.index = total_df['image_id']
+
+    train_img_ids = split_dct['train'][0] + split_dct['train'][1]
+    test_img_ids = split_dct['test'][0]  + split_dct['test'][1]
+
+    train_values = get_qual_values(total_df, train_img_ids)
+    test_values = get_qual_values(total_df, test_img_ids)
+
+    train_paths = get_img_paths(train_img_ids, total_df, base_dir)
+    test_paths = get_img_paths(test_img_ids, total_df, base_dir)
+
+    train_set = JigsawDataset(train_paths, train_values, tile_length, input_size)
+    test_set = JigsawDataset(test_paths, test_values, tile_length, input_size)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
+    return train_loader, test_loader
+
+
+def get_qual_values(df, image_ids):
+    age = df.loc[image_ids]['age']
+    laterality_one_hot = pd.get_dummies(df.loc[image_ids]['laterality'], prefix='laterality_')
+    implant = df.loc[image_ids]['implant']
+    out = pd.DataFrame()
+    out.index = image_ids
+    out['age'] = age
+    for col_name in list(laterality_one_hot.columns):
+        out[col_name] = laterality_one_hot[col_name]
+    out['implant'] = implant
+    return out
 
 
 def get_img_paths(img_ids, train_csv, base_dir):

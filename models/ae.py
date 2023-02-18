@@ -54,8 +54,8 @@ class PLAutoEncoder(pl.LightningModule):
 
     def forward(self, x, qual_values):
        # print(torch.isnan(qual_values).any())
-        z = torch.nan_to_num(self.encode(x, qual_values))
-        out = torch.nan_to_num(self.decode(z))
+        z = self.encode(x, qual_values)
+        out = self.decode(z)
         return out
 
     def generate(self, x, qual_values):

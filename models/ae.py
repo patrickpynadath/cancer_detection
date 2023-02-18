@@ -71,6 +71,7 @@ class PLAutoEncoder(pl.LightningModule):
         tensorboard.add_image('train_jigsaw_images', jigsaw_grid)
         tensorboard.add_image('train_orig_images', orig_grid)
         tensorboard.add_image('train_recon_images', recon_grid)
+        print(loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -79,7 +80,6 @@ class PLAutoEncoder(pl.LightningModule):
         loss = self.criterion(recon, orig_img)
         self.log('val_loss', loss, on_epoch=True)
         tensorboard = self.logger.experiment
-        print(tensorboard)
         orig_grid = make_grid(orig_img[0, 0, :, :])
         jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
         recon_grid = make_grid(recon[0, 0, :, :])

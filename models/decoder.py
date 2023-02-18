@@ -48,4 +48,4 @@ class Decoder(nn.Module):
         x = self._conv_trans_3(x)
         #x = F.relu(x)
 
-        return x
+        return F.sigmoid(x)

@@ -67,8 +67,10 @@ class PLAutoEncoder(pl.LightningModule):
         tensorboard = self.logger.experiment
         orig_grid = make_grid(orig_img[0, 0, :, :])
         jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
+        recon_grid = make_grid(recon[0, 0, :, :])
         tensorboard.add_image('train_jigsaw_images', jigsaw_grid)
         tensorboard.add_image('train_orig_images', orig_grid)
+        tensorboard.add_image('train_recon_images', recon_grid)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -80,12 +82,14 @@ class PLAutoEncoder(pl.LightningModule):
         print(tensorboard)
         orig_grid = make_grid(orig_img[0, 0, :, :])
         jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
+        recon_grid = make_grid(recon[0, 0, :, :])
         tensorboard.add_image('val_jigsaw_images', jigsaw_grid)
         tensorboard.add_image('val_orig_images', orig_grid)
+        tensorboard.add_image('val_recon_images', recon_grid)
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adagrad(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.SGD(self.parameters(), lr=self.lr)
         return optimizer
 
 

@@ -189,11 +189,12 @@ class TransferLearningDataset(AugmentedImgDataset):
         img_array = np.array(xray)
         if len(img_array.shape) == 3:
             img_array = img_array[:, :, 0]
-        entropy_big = torch.tensor(get_img_entropy(img_array, self.big_entropy_rad), dtype=torch.float)
-        entropy_small = torch.tensor(get_img_entropy(img_array, self.small_entropy_rad), dtype=torch.float)
-        img_array = torch.tensor(img_array, dtype=torch.float) / 255
-        x_grad, y_grad = get_img_gradient(img_array)
-        final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
+        # entropy_big = torch.tensor(get_img_entropy(img_array, self.big_entropy_rad), dtype=torch.float)
+        # entropy_small = torch.tensor(get_img_entropy(img_array, self.small_entropy_rad), dtype=torch.float)
+        # img_array = torch.tensor(img_array, dtype=torch.float) / 255
+        # x_grad, y_grad = get_img_gradient(img_array)
+        # final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
+        final_img = torch.tensor(img_array, dtype=torch.float)[None, :]
         if self.learning_mode == 'jigsaw':
             input_img = self._make_jigsaw(final_img)
         elif self.learning_mode == 'fillin':

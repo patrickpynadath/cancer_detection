@@ -22,7 +22,7 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_residual_hiddens)
         self._fc_latent = nn.LazyLinear(latent_size)
         # initializing enc and lazy linear
-        dummy = torch.zeros(64, 5, input_size[0], input_size[1])
+        dummy = torch.zeros(64, 1, input_size[0], input_size[1])
         dummy = self._encoder(dummy)
         self.enc_dim = dummy.size()
         dummy = torch.flatten(dummy, start_dim=1)
@@ -92,7 +92,7 @@ class PLAutoEncoder(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
 
 
@@ -105,4 +105,4 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, (128, 64))
+                 latent_size, lr, (256, 128))

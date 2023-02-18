@@ -69,9 +69,9 @@ if __name__ == '__main__':
     train_transfer_learn_ae.add_argument('--base_dir', help='base dir for data', default='data', type=str)
     train_transfer_learn_ae.add_argument('--latent_size', help='size of latent dim', default = 200, type=int)
     train_transfer_learn_ae.add_argument('--learning_mode', help='task to use for training', default='normal', type=str)
-    train_transfer_learn_ae.add_argument('--num_hiddens', help='num hiddens for resstack', default = 512, type=int)
+    train_transfer_learn_ae.add_argument('--num_hiddens', help='num hiddens for resstack', default = 256, type=int)
     train_transfer_learn_ae.add_argument('--num_residual_layers', help='num residual layers', default=20, type=int)
-    train_transfer_learn_ae.add_argument('--num_residual_hiddens', help='num hiddens for residuals', default=64, type=int)
+    train_transfer_learn_ae.add_argument('--num_residual_hiddens', help='num hiddens for residuals', default=32, type=int)
     train_transfer_learn_ae.add_argument('--tile_size', help='size of tiles for fillin/jigsaw tasks', type=int, default=16)
     train_transfer_learn_ae.add_argument('--num_channels', help='num input channels', default=5, type=int)
     train_transfer_learn_ae.add_argument('--lr', help='lr for model', default=1e-3, type=float)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                  args.num_hiddens,
                  args.num_residual_layers,
                  args.num_residual_hiddens,
-                 args.latent_size)
+                 args.latent_size, args.lr)
         generic_training_loop(args, ae, train_loader, test_loader)
         torch.save(ae.model.state_dict(), f'ae_tl_{args.learning_mode}.pickle')
 

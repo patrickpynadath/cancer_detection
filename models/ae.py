@@ -12,7 +12,7 @@ class PLAutoEncoder(pl.LightningModule):
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr):
+                 latent_size, lr, input_size):
         super().__init__()
         self.res_layers = num_residual_layers
         self.latent_size = latent_size
@@ -20,7 +20,12 @@ class PLAutoEncoder(pl.LightningModule):
         self._encoder = Encoder(num_channels, num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
-        self._fc_latent = nn.Linear(num_hiddens * 8 * 8, latent_size)
+        self._fc_latent = nn.LazyLinear(latent_size)
+        # initializing enc and lazy linear
+        dummy_in = torch.zeros(64, 5, input_size[0], input_size[1])
+        dummy_out = torch.flatten(self._encoder(dummy_in), start_dim=1)
+        dummy_fc_in = torch.cat((dummy_out, torch.zeros(size=(64, 4))), dim=1)
+        self._fc_latent(dummy_fc_in)
 
         self._fc_dec = nn.Linear(latent_size, num_hiddens * 8 * 8)
         self._decoder = Decoder(num_hiddens,
@@ -32,8 +37,9 @@ class PLAutoEncoder(pl.LightningModule):
         self.lr = lr
 
     def encode(self, x, qual_values):
-        enc = self._encoder(x, qual_values)
+        enc = self._encoder(x)
         pre_latent = enc.flatten(start_dim=1)
+        pre_latent = torch.cat((pre_latent, qual_values), dim=1)
         z = self._fc_latent(pre_latent)
         return z
 
@@ -61,8 +67,8 @@ class PLAutoEncoder(pl.LightningModule):
         tensorboard = self.logger.experiment
         orig_grid = make_grid(orig_img[0, 0, :, :])
         jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
-        tensorboard.add_image('train_jigsaw_images', jigsaw_grid, on_epoch=True)
-        tensorboard.add_image('train_orig_images', orig_grid, on_epoch=True)
+        tensorboard.add_image('train_jigsaw_images', jigsaw_grid)
+        tensorboard.add_image('train_orig_images', orig_grid)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -71,10 +77,11 @@ class PLAutoEncoder(pl.LightningModule):
         loss = self.criterion(recon, orig_img)
         self.log('val_loss', loss, on_epoch=True)
         tensorboard = self.logger.experiment
+        print(tensorboard)
         orig_grid = make_grid(orig_img[0, 0, :, :])
         jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
-        tensorboard.add_image('val_jigsaw_images', jigsaw_grid, on_epoch=True)
-        tensorboard.add_image('val_orig_images', orig_grid, on_epoch=True)
+        tensorboard.add_image('val_jigsaw_images', jigsaw_grid)
+        tensorboard.add_image('val_orig_images', orig_grid)
         return loss
 
     def configure_optimizers(self):
@@ -91,4 +98,4 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr)
+                 latent_size, lr, (256, 128))

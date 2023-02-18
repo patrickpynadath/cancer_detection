@@ -74,7 +74,7 @@ if __name__ == '__main__':
     train_transfer_learn_ae.add_argument('--num_residual_hiddens', help='num hiddens for residuals', default=32, type=int)
     train_transfer_learn_ae.add_argument('--tile_size', help='size of tiles for fillin/jigsaw tasks', type=int, default=16)
     train_transfer_learn_ae.add_argument('--num_channels', help='num input channels', default=1, type=int)
-    train_transfer_learn_ae.add_argument('--lr', help='lr for model', default=1e-3, type=float)
+    train_transfer_learn_ae.add_argument('--lr', help='lr for model', default=1e-5, type=float)
 
 
     # training diffusion models args

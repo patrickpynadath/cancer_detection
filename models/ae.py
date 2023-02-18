@@ -89,9 +89,9 @@ class PLAutoEncoder(pl.LightningModule):
         return loss
 
     def validation_step_end(self, outputs):
-        orig_grid = make_grid(self.orig_img)
-        recon_grid = make_grid(self.recon)
-        jigsaw_grid = make_grid(self.recon)
+        orig_grid = make_grid(torch.clamp(self.orig_img, 0, 1))
+        recon_grid = make_grid(torch.clamp(self.recon, 0, 1))
+        jigsaw_grid = make_grid(torch.clamp(self.recon, 0, 1))
         tb = self.logger.experiment
         tb.add_image('val_end_orig_grid', orig_grid)
         tb.add_image('val_end_recon_grid', recon_grid)

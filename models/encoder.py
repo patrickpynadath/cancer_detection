@@ -8,7 +8,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
         self._conv_1 = nn.Conv2d(in_channels=in_channels,
-                                 out_channels=num_hiddens,
+                                 out_channels=num_hiddens // 2,
                                  kernel_size=4,
                                  stride=2, padding=1)
         self._conv_2 = nn.Conv2d(in_channels=num_hiddens // 2,

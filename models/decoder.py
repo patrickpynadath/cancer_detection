@@ -40,11 +40,11 @@ class Decoder(nn.Module):
 
 
     def forward(self, x):
-        #x = self._residual_stack(x)
+        x = self._residual_stack(x)
         x = self._conv_trans_1(x)
-        x = F.relu(x)
+        x = F.sigmoid(x)
         x = self._conv_trans_2(x)
-        x = F.relu(x)
+        x = F.sigmoid(x)
         x = self._conv_trans_3(x)
         x = F.sigmoid(x)
         return x

@@ -4,7 +4,6 @@ from .decoder import Decoder
 import pytorch_lightning as pl
 from torchvision.utils import make_grid
 import torch
-torch.autograd.set_detect_anomaly(True)
 
 class PLAutoEncoder(pl.LightningModule):
     def __init__(self,

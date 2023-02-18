@@ -194,7 +194,7 @@ class TransferLearningDataset(AugmentedImgDataset):
         # img_array = torch.tensor(img_array, dtype=torch.float) / 255
         # x_grad, y_grad = get_img_gradient(img_array)
         # final_img = torch.stack((img_array, x_grad, y_grad, entropy_big, entropy_small), dim=0)
-        final_img = torch.tensor(img_array, dtype=torch.float)[None, :] / 255
+        final_img = torch.tensor(img_array, dtype=torch.float32)[None, :] / 255
         if self.learning_mode == 'jigsaw':
             input_img = self._make_jigsaw(final_img)
         elif self.learning_mode == 'fillin':
@@ -202,7 +202,7 @@ class TransferLearningDataset(AugmentedImgDataset):
         else:
             input_img = final_img.clone()
         # also get the labels
-        return final_img, input_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float)
+        return final_img, input_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float32)
 
 
 def get_stored_splits(base_dir):

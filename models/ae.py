@@ -69,8 +69,8 @@ class PLAutoEncoder(pl.LightningModule):
         recon = self.forward(jigsaw_img, qual_labels)
         loss = self.criterion(recon, orig_img)
         self.log('train_loss', loss, on_epoch=True)
-        self.log('recon_pixel_max', recon.max(), on_epoch=True)
-        self.log('recon_pixel_min', recon.min(), on_epoch=True)
+        self.log('recon_pixel_max', recon[-1, :, :, :].max(), on_epoch=True)
+        self.log('recon_pixel_min', recon[-1, :, :, :].min(), on_epoch=True)
         tensorboard = self.logger.experiment
         orig_grid = make_grid(orig_img[0, 0, :, :])
         jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])

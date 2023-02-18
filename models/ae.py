@@ -54,6 +54,9 @@ class PLAutoEncoder(pl.LightningModule):
 
     def forward(self, x, qual_values):
         z = self.encode(x, qual_values)
+        print(z.max())
+        out = self.decode(z)
+        print(out.max())
         return self.decode(z)
 
     def generate(self, x, qual_values):

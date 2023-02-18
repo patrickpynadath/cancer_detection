@@ -47,4 +47,5 @@ class Decoder(nn.Module):
         x = F.relu(x)
         x = self._conv_trans_3(x)
         x = F.relu(x)
+        print(x.max)
         return x

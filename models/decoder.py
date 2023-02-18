@@ -34,17 +34,12 @@ class Decoder(nn.Module):
 
         self._conv_trans_3 = nn.ConvTranspose2d(in_channels=out_channels,
                                                 out_channels=out_channels,
-                                                kernel_size=4,
-                                                stride=(4, 2), padding=(0, 1))
+                                                kernel_size=3,
+                                                stride=1, padding=1)
 
-        self._conv_trans_4 = nn.ConvTranspose2d(in_channels=out_channels,
-                                                out_channels=out_channels,
-                                                kernel_size=4,
-                                                stride=(4, 2), padding=(0, 1))
 
-    def forward(self, inputs):
-        x = self._conv_1(inputs)
 
+    def forward(self, x):
         x = self._residual_stack(x)
         x = self._conv_trans_1(x)
         x = F.relu(x)
@@ -52,6 +47,4 @@ class Decoder(nn.Module):
         x = F.relu(x)
         x = self._conv_trans_3(x)
         x = F.relu(x)
-        # x = self._conv_trans_4(x)
-        # x = F.relu(x)
         return x

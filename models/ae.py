@@ -22,12 +22,15 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_residual_hiddens)
         self._fc_latent = nn.LazyLinear(latent_size)
         # initializing enc and lazy linear
-        dummy_in = torch.zeros(64, 5, input_size[0], input_size[1])
-        dummy_out = torch.flatten(self._encoder(dummy_in), start_dim=1)
-        dummy_fc_in = torch.cat((dummy_out, torch.zeros(size=(64, 4))), dim=1)
-        self._fc_latent(dummy_fc_in)
-
-        self._fc_dec = nn.Linear(latent_size, num_hiddens * 8 * 8)
+        dummy = torch.zeros(64, 5, input_size[0], input_size[1])
+        dummy = self._encoder(dummy)
+        self.enc_dim = dummy.size()
+        dummy = torch.flatten(dummy, start_dim=1)
+        pre_latent_dim = dummy.size(1)
+        dummy = torch.cat((dummy, torch.zeros(size=(64, 4))), dim=1)
+        self._fc_dec = nn.LazyLinear(pre_latent_dim)
+        dummy = self._fc_latent(dummy)
+        self._fc_dec(dummy)
         self._decoder = Decoder(num_hiddens,
                                 num_channels,
                                 num_hiddens,
@@ -45,7 +48,7 @@ class PLAutoEncoder(pl.LightningModule):
 
     def decode(self, z):
         dec = self._fc_dec(z)
-        pre_recon = dec.view(-1, self.num_hiddens, 8, 8)
+        pre_recon = dec.view(-1, self.enc_dim[1], self.enc_dim[2], self.enc_dim[3])
         x_recon = self._decoder(pre_recon)
         return x_recon
 
@@ -86,7 +89,6 @@ class PLAutoEncoder(pl.LightningModule):
         tensorboard.add_image('val_jigsaw_images', jigsaw_grid)
         tensorboard.add_image('val_orig_images', orig_grid)
         tensorboard.add_image('val_recon_images', recon_grid)
-        print(loss)
         return loss
 
     def configure_optimizers(self):
@@ -103,4 +105,4 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, (128, 64))
+                 latent_size, lr, (256, 128))

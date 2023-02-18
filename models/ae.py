@@ -95,6 +95,8 @@ class PLAutoEncoder(pl.LightningModule):
         recon_grid = make_grid(torch.clamp(self.recon, 0, 1))
         jigsaw_grid = make_grid(torch.clamp(self.recon, 0, 1))
         tb = self.logger.experiment
+        print(self.orig_img)
+        print(self.recon)
         tb.add_image('val_end_orig_grid', orig_grid)
         tb.add_image('val_end_recon_grid', recon_grid)
         tb.add_image('val_end_jigsaw_grid', jigsaw_grid)

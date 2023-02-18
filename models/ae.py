@@ -44,7 +44,7 @@ class PLAutoEncoder(pl.LightningModule):
         pre_latent = enc.flatten(start_dim=1)
         #pre_latent = torch.cat((pre_latent, qual_values), dim=1)
         z = self._fc_latent(pre_latent)
-        return nn.functional.relu(z)
+        return z
 
     def decode(self, z):
         dec = self._fc_dec(z)

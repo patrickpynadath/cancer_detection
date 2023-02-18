@@ -72,12 +72,13 @@ class PLAutoEncoder(pl.LightningModule):
         self.log('recon_pixel_max', recon[-1, :, :, :].max(), on_epoch=True)
         self.log('recon_pixel_min', recon[-1, :, :, :].min(), on_epoch=True)
         tensorboard = self.logger.experiment
-        orig_grid = make_grid(orig_img[0, 0, :, :])
-        jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
-        recon_grid = make_grid(recon[0, 0, :, :].detach())
-        tensorboard.add_image('train_jigsaw_images', jigsaw_grid)
-        tensorboard.add_image('train_orig_images', orig_grid)
-        tensorboard.add_image('train_recon_images', recon_grid)
+        if batch_idx % 20:
+            orig_grid = make_grid(orig_img[0, 0, :, :])
+            jigsaw_grid = make_grid(jigsaw_img[0, 0, :, :])
+            recon_grid = make_grid(torch.clamp(recon[0, 0, :, :].detach(), 0, 1))
+            tensorboard.add_image('train_jigsaw_images', jigsaw_grid)
+            tensorboard.add_image('train_orig_images', orig_grid)
+            tensorboard.add_image('train_recon_images', recon_grid)
         return loss
 
     def validation_step(self, batch, batch_idx):

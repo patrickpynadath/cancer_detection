@@ -53,11 +53,12 @@ class PLAutoEncoder(pl.LightningModule):
         return x_recon
 
     def forward(self, x, qual_values):
+        print(torch.isnan(x))
         z = self.encode(x, qual_values)
-        print(z.max())
+        print(torch.isnan(z))
         out = self.decode(z)
-        print(out.max())
-        return self.decode(z)
+        print(torch.isnan(out))
+        return out
 
     def generate(self, x, qual_values):
         return self.forward(x, qual_values)
@@ -77,7 +78,6 @@ class PLAutoEncoder(pl.LightningModule):
         tensorboard.add_image('train_jigsaw_images', jigsaw_grid)
         tensorboard.add_image('train_orig_images', orig_grid)
         tensorboard.add_image('train_recon_images', recon_grid)
-        print(loss)
         return loss
 
     def validation_step(self, batch, batch_idx):

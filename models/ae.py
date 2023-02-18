@@ -83,15 +83,15 @@ class PLAutoEncoder(pl.LightningModule):
         recon = self.forward(jigsaw_img, qual_labels)
         loss = self.criterion(recon, orig_img)
         self.log('val_loss', loss, on_epoch=True)
-        self.orig_img = orig_img
-        self.recon = recon
-        self.jigsaw_img = jigsaw_img
+        self.orig_img = orig_img[0, 0, :, :]
+        self.recon = recon[0, 0, :, :]
+        self.jigsaw_img = jigsaw_img[0, 0, :, :]
         return loss
 
     def validation_step_end(self, outputs):
-        orig_grid = make_grid(self.orig_img[0, 0, :, :])
-        recon_grid = make_grid(self.recon[0, 0, :, :])
-        jigsaw_grid = make_grid(self.recon[0, 0, :, :])
+        orig_grid = make_grid(self.orig_img)
+        recon_grid = make_grid(self.recon)
+        jigsaw_grid = make_grid(self.recon)
         tb = self.logger.experiment
         tb.add_image('val_end_orig_grid', orig_grid)
         tb.add_image('val_end_recon_grid', recon_grid)

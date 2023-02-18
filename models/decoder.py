@@ -35,7 +35,7 @@ class Decoder(nn.Module):
         self._conv_trans_3 = nn.ConvTranspose2d(in_channels=out_channels,
                                                 out_channels=out_channels,
                                                 kernel_size=4,
-                                                stride=2, padding=1)
+                                                stride=(4, 2), padding=(0, 1))
 
         self._conv_trans_4 = nn.ConvTranspose2d(in_channels=out_channels,
                                                 out_channels=out_channels,
@@ -52,6 +52,6 @@ class Decoder(nn.Module):
         x = F.relu(x)
         x = self._conv_trans_3(x)
         x = F.relu(x)
-        x = self._conv_trans_4(x)
-        x = F.relu(x)
+        # x = self._conv_trans_4(x)
+        # x = F.relu(x)
         return x

@@ -86,6 +86,7 @@ class PLAutoEncoder(pl.LightningModule):
         tensorboard.add_image('val_jigsaw_images', jigsaw_grid)
         tensorboard.add_image('val_orig_images', orig_grid)
         tensorboard.add_image('val_recon_images', recon_grid)
+        print(loss)
         return loss
 
     def configure_optimizers(self):

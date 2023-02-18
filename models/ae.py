@@ -27,7 +27,7 @@ class PLAutoEncoder(pl.LightningModule):
         self.enc_dim = dummy.size()
         dummy = torch.flatten(dummy, start_dim=1)
         pre_latent_dim = dummy.size(1)
-        dummy = torch.cat((dummy, torch.zeros(size=(64, 4))), dim=1)
+        #dummy = torch.cat((dummy, torch.zeros(size=(64, 4))), dim=1)
         self._fc_dec = nn.LazyLinear(pre_latent_dim)
         dummy = self._fc_latent(dummy)
         self._fc_dec(dummy)
@@ -42,7 +42,7 @@ class PLAutoEncoder(pl.LightningModule):
     def encode(self, x, qual_values):
         enc = self._encoder(x)
         pre_latent = enc.flatten(start_dim=1)
-        pre_latent = torch.cat((pre_latent, qual_values), dim=1)
+        #pre_latent = torch.cat((pre_latent, qual_values), dim=1)
         z = self._fc_latent(pre_latent)
         return nn.functional.relu(z)
 

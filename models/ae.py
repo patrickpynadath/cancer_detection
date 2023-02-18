@@ -2,6 +2,7 @@ import torch.nn as nn
 from .encoder import Encoder
 from .decoder import Decoder
 import pytorch_lightning as pl
+import torch.nn.functional as F
 from torchvision.utils import make_grid
 import torch
 
@@ -52,6 +53,7 @@ class PLAutoEncoder(pl.LightningModule):
         return x_recon
 
     def forward(self, x, qual_values):
+        print(torch.isnan(qual_values).any())
         z = torch.nan_to_num(self.encode(x, qual_values))
         out = torch.nan_to_num(self.decode(z))
         return out
@@ -105,3 +107,36 @@ def get_pl_ae(num_channels,
                  num_residual_layers,
                  num_residual_hiddens,
                  latent_size, lr, (128, 64))
+
+
+
+class BabyAutoEncoder(nn.Module):
+    def __init__(self, latent_size, input_size):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=4)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4)
+        self.fc_latent = nn.LazyLinear(latent_size)
+
+        dummy = torch.zeros(size=(64, 1, input_size[0], input_size[1]))
+        dummy = self.encode(dummy)
+        enc_dim = dummy.size(1)
+        self.fc_dec = nn.LazyLinear(enc_dim)
+        self.deconv1 = nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4)
+        self.deconv2 = nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=4)
+        self.deconv3 = nn.ConvTranspose2d(in_channels=32, out_channels=1, kernel_size=4)
+
+
+    def encode(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = torch.flatten(x, start_dim=1)
+        return x
+
+    def decode(self, x):
+        x = F.relu(self.deconv1(x))
+        x = F.relu(self.deconv2(x))
+        x = F.relu(self.deconv3(x))
+        return x
+

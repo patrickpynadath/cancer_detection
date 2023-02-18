@@ -28,8 +28,8 @@ class Encoder(nn.Module):
         x = self._conv_1(inputs)
         #x = F.relu(x)
         #
-        # x = self._conv_2(x)
+        x = self._conv_2(x)
         # #x = F.relu(x)
         #
-        # x = self._conv_3(x)
+        x = self._conv_3(x)
         return self._residual_stack(x)

@@ -98,4 +98,4 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, (256, 128))
+                 latent_size, lr, (128, 64))

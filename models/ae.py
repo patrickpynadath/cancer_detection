@@ -36,7 +36,7 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.HuberLoss(delta=5)
         self.lr = lr
 
     def encode(self, x, qual_values):

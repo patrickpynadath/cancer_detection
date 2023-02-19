@@ -36,7 +36,7 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_hiddens,
                                 num_residual_layers,
                                 num_residual_hiddens)
-        self.criterion = nn.HuberLoss(delta=5)
+        self.criterion = nn.MSELoss()
         self.lr = lr
 
     def encode(self, x, qual_values):
@@ -104,7 +104,7 @@ class PLAutoEncoder(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adagrad(self.parameters(), lr=self.lr)
         return optimizer
 
 

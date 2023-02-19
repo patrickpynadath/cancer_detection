@@ -20,17 +20,17 @@ class Decoder(nn.Module):
 
         self._conv_trans_1 = nn.ConvTranspose2d(in_channels=num_hiddens,
                                                 out_channels=num_hiddens,
-                                                kernel_size=4,
+                                                kernel_size=6,
                                                 stride=1, padding=0)
 
         self._conv_trans_2 = nn.ConvTranspose2d(in_channels=num_hiddens,
                                                 out_channels=num_hiddens // 2,
-                                                kernel_size=4,
-                                                stride=2, padding=1)
+                                                kernel_size=3,
+                                                stride=1, padding=1)
 
         self._conv_trans_3 = nn.ConvTranspose2d(in_channels=num_hiddens //2,
                                                 out_channels=out_channels,
-                                                kernel_size=5,
+                                                kernel_size=3,
                                                 stride=1, padding=1)
 
 

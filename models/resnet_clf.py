@@ -202,7 +202,7 @@ class PLResNet(pl.LightningModule):
         self.log('train_loss', loss, on_epoch=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch,  batch_idx):
         x, y = batch
         logits = self(x)
         loss = self.criterion(logits, y)
@@ -213,7 +213,7 @@ class PLResNet(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adagrad(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, eps=.01)
         return optimizer
     #
     # def training_epoch_end(self, outputs):

@@ -45,7 +45,6 @@ class PLAutoEncoder(pl.LightningModule):
 
     def encode(self, x, qual_values):
         enc = self._encoder(x)
-        print(enc.size())
         pre_latent = enc.flatten(start_dim=1)
         #pre_latent = torch.cat((pre_latent, qual_values), dim=1)
         z = self._fc_latent(pre_latent)
@@ -143,7 +142,7 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, (256, 64))
+                 latent_size, lr, (128, 64))
 
 
 

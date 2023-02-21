@@ -1,5 +1,7 @@
 import os
-
+from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd, \
+    config_data_processing_cmd, config_split_data_cmd, \
+    config_resnet_train_cmd, config_transfer_learn_ae
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
     split_data, get_ae_loaders
 import argparse
@@ -8,98 +10,30 @@ from models import resnet_from_args, get_diffusion_model_from_args, get_trained_
 from pytorch_lightning import Trainer
 from training import generic_training_loop, diffusion_training_loop
 import torch
-from vit_pytorch.cait import CaiT
 # data preprocessing
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Predicting Breast-Cancer based on Mammography")
     subparsers = parser.add_subparsers(dest='command')
+
     process_data = subparsers.add_parser('process_data', help = 'command for processing data')
+    process_data = config_data_processing_cmd(process_data)
+
     train_resnet = subparsers.add_parser('train_resnet', help = 'command to train resnet clf')
-    train_window_model = subparsers.add_parser('train_window_model', help = 'command to run training of window based model')
+    train_resnet = config_resnet_train_cmd(train_resnet)
+
     train_transfer_learn_ae = subparsers.add_parser('train_transfer_learn_ae', help='train transfer learning autoencoder')
-    resnet_model_flags = train_resnet.add_argument_group('model_flags')
-    resnet_data_flags = train_resnet.add_argument_group('data_flags')
+    train_transfer_learn_ae = config_transfer_learn_ae(train_transfer_learn_ae)
 
     train_diffusion = subparsers.add_parser('train_diffusion', help='command for training diffusion models')
-    diffusion_model_flags = train_diffusion.add_argument_group('model_flags')
-    diffusion_data_flags = train_diffusion.add_argument_group('data_flags')
+    train_diffusion = config_diffusion_train_cmd(train_diffusion)
 
     generate_imgs = subparsers.add_parser('generate_imgs', help='command for creating artificial positive samples')
+    generate_imgs = config_diffusion_generate_cmd(generate_imgs)
 
     generate_splits = subparsers.add_parser('generate_splits', help = 'generating the splits to use for resnet and diffusion')
-    generate_splits.add_argument('--test_size', default=.2, type=float, help='ratio to use for train-test splits')
-    generate_splits.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
-
-    # preprocessing data args
-    process_data.add_argument('--finalheight', default=128, type=int, help='final img height for processing')
-    process_data.add_argument('--finalwidth', default=64, type=int, help='final img width for processing')
-    process_data.add_argument('--par', help='run processing in parralel', action='store_true')
-    process_data.add_argument('--base_data_dir', help='base dir for data', type=str, default='data')
-
-    # training resnet data args
-    resnet_model_flags.add_argument('--device', help ='device to train model on', default='cpu', type=str)
-    resnet_model_flags.add_argument('--lr', help ='lr to use for adam optimizer', default = 1e-3, type=float)
-    resnet_model_flags.add_argument('--depth', help ='layers for resnet', default=56, type=int)
-    resnet_model_flags.add_argument('--block_name', help ='block name to use for resnet', choices=['BasicBlock', 'BottleNeck'], default='BottleNeck')
-
-    resnet_data_flags.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
-    resnet_data_flags.add_argument('--base_dir', help='base dir for data', default='data', type=str)
-    resnet_data_flags.add_argument('--num_pos', help = 'number of positive samples for training', default = 8000, type=int)
-    resnet_data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
-    resnet_data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
-
-    train_window_model.add_argument('--window_size', help = 'window size to use for model', default = 16, type=int)
-    train_window_model = Trainer.add_argparse_args(train_window_model)
-    train_window_model.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
-    train_window_model.add_argument('--input_height', default = 128, type=int, help='input img height')
-    train_window_model.add_argument('--input_width', default=64, type=int, help='input img width')
-    train_window_model.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
-    train_window_model.add_argument('--base_dir', help='base dir for data', default='data', type=str)
-    train_window_model.add_argument('--num_pos', help='number of positive samples for training', default=8000, type=int)
-    train_window_model.add_argument('--loader_workers', help='workers for dataloader', type=int, default=1)
-    trainer_flags = Trainer.add_argparse_args(train_resnet)
-
-    # train jigsaw autoencoder args
-    train_transfer_learn_ae = Trainer.add_argparse_args(train_transfer_learn_ae)
-    train_transfer_learn_ae.add_argument('--input_height', default = 128, type=int, help='input img height')
-    train_transfer_learn_ae.add_argument('--input_width', default=64, type=int, help='input img width')
-    train_transfer_learn_ae.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)
-    train_transfer_learn_ae.add_argument('--base_dir', help='base dir for data', default='data', type=str)
-    train_transfer_learn_ae.add_argument('--latent_size', help='size of latent dim', default = 200, type=int)
-    train_transfer_learn_ae.add_argument('--learning_mode', help='task to use for training', default='normal', type=str)
-    train_transfer_learn_ae.add_argument('--num_hiddens', help='num hiddens for resstack', default = 128, type=int)
-    train_transfer_learn_ae.add_argument('--num_residual_layers', help='num residual layers', default=10, type=int)
-    train_transfer_learn_ae.add_argument('--num_residual_hiddens', help='num hiddens for residuals', default=32, type=int)
-    train_transfer_learn_ae.add_argument('--tile_size', help='size of tiles for fillin/jigsaw tasks', type=int, default=16)
-    train_transfer_learn_ae.add_argument('--num_channels', help='num input channels', default=1, type=int)
-    train_transfer_learn_ae.add_argument('--lr', help='lr for model', default=1e-5, type=float)
-
-
-    # training diffusion models args
-    diffusion_model_flags.add_argument('--img_height', default = 128, type=int, help='input img height')
-    diffusion_model_flags.add_argument('--img_width', default=64, type=int, help='input img width')
-    diffusion_model_flags.add_argument('--timesteps', default=1000, type=int, help='timesteps for diffusion model')
-    diffusion_model_flags.add_argument('--loss_type', default='l2', choices=['l2', 'l1'], help='loss type for diffusion output')
-
-    diffusion_data_flags.add_argument('--mimic_col', default='cancer', type=str, help='target col to train diffusion model to generate')
-    diffusion_data_flags.add_argument('--mimic_val', default=1, help='the desired value the samples should mimic from target_col')
-    diffusion_data_flags.add_argument('--base_dir', default='data', type=str, help='base dir for data')
-    diffusion_data_flags.add_argument('--test_size', default=.1, type=float, help='test ratio size')
-    diffusion_data_flags.add_argument('--batch_size', default=32, type=int,help='batch size')
-    diffusion_data_flags.add_argument('--loader_workers', default=32, type=int,help='num workers for data loader')
-    diffusion_data_flags.add_argument('--target_col', default='cancer', type=str, help='target col')
-
-    generate_imgs.add_argument('--img_height', default=128, type=int, help='input img height')
-    generate_imgs.add_argument('--img_width', default=64, type=int, help='input img width')
-    generate_imgs.add_argument('--save_name', default='total_cancer_results/model-99.pt', type=str, help='name of stored state dict for diffusion model')
-    generate_imgs.add_argument('--num_samples', default=2000, type=int, help = 'num of samples to be generated')
-    generate_imgs.add_argument('--batch_size', default=64, type=int, help = 'batch size for generating imgs')
-    generate_imgs.add_argument('--device', default='cpu', type=str, help = 'device to use')
-
-
-    # training XGBoost args
+    generate_splits = config_split_data_cmd(generate_splits)
 
     args = parser.parse_args()
 

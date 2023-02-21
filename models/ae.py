@@ -2,8 +2,10 @@ import torch.nn as nn
 from .encoder import Encoder
 from .decoder import Decoder
 import pytorch_lightning as pl
-import torch.nn.functional as F
 from torchvision.utils import make_grid
+from torchvision.transforms import Pad
+from torch.nn import ModuleDict
+import math
 import torch
 
 class PLAutoEncoder(pl.LightningModule):
@@ -12,7 +14,9 @@ class PLAutoEncoder(pl.LightningModule):
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, input_size):
+                 latent_size,
+                 lr,
+                 input_size):
         super().__init__()
         self.res_layers = num_residual_layers
         self.latent_size = latent_size
@@ -41,6 +45,7 @@ class PLAutoEncoder(pl.LightningModule):
 
     def encode(self, x, qual_values):
         enc = self._encoder(x)
+        print(enc.size())
         pre_latent = enc.flatten(start_dim=1)
         #pre_latent = torch.cat((pre_latent, qual_values), dim=1)
         z = self._fc_latent(pre_latent)
@@ -108,6 +113,27 @@ class PLAutoEncoder(pl.LightningModule):
         return optimizer
 
 
+class PLWindowAE(pl.LightningModule):
+    def __init__(self,
+                 num_channels,
+                 num_hiddens,
+                 num_residual_layers,
+                 num_residual_hiddens,
+                 total_bottleneck_size,
+                 lr,
+                 input_size,
+                 tile_size=32):
+        super().__init__()
+        self.tile_length = tile_size
+        self.tiling = (math.ceil(input_size[0] / tile_size), math.ceil(input_size[1] / tile_size))
+        self.pad_dim = (self.tiling[0] * self.tile_length - input_size[0],
+                        self.tiling[1] * self.tile_length - input_size[1])
+        self.pad = Pad(padding=self.pad_dim)
+
+
+        # calculate window sizes and stuff
+        # make dict of fc layers for the window models
+
 def get_pl_ae(num_channels,
              num_hiddens,
              num_residual_layers,
@@ -117,7 +143,7 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, (128, 64))
+                 latent_size, lr, (256, 64))
 
 
 

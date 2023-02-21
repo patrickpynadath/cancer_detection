@@ -26,7 +26,7 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_residual_hiddens)
         self._fc_latent = nn.LazyLinear(latent_size)
         self.fc_rl = nn.ReLU()
-        self.fc_bn = nn.LazyBatchNorm2d()
+        self.fc_bn = nn.LazyBatchNorm1d()
 
         # initializing enc and lazy linear
         dummy = torch.zeros(64, 1, input_size[0], input_size[1])
@@ -37,7 +37,7 @@ class PLAutoEncoder(pl.LightningModule):
         #dummy = torch.cat((dummy, torch.zeros(size=(64, 4))), dim=1)
         self._fc_dec = nn.LazyLinear(pre_latent_dim)
         self.dec_rl = nn.ReLU()
-        self.dec_bn = nn.LazyBatchNorm2d()
+        self.dec_bn = nn.LazyBatchNorm1d()
 
         dummy = self._fc_latent(dummy)
         dummy = self.fc_rl(dummy)

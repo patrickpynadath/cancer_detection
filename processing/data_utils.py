@@ -135,7 +135,7 @@ class AugmentedImgDataset(ImgloaderDataSet):
 
 
 class TransferLearningDataset(AugmentedImgDataset):
-    def __init__(self, paths, values : pd.DataFrame,
+    def __init__(self, paths, values,
                  tile_length,
                  input_size,
                  learning_mode = 'normal'):
@@ -202,7 +202,7 @@ class TransferLearningDataset(AugmentedImgDataset):
         else:
             input_img = final_img.clone()
         # also get the labels
-        return final_img, input_img, torch.tensor(self.values.iloc[i].to_numpy(), dtype=torch.float32)
+        return final_img, input_img, torch.tensor(self.values[i], dtype=torch.long)
 
 
 def get_stored_splits(base_dir):
@@ -283,14 +283,17 @@ def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_s
     train_img_ids = list(split_dct['train'][0]) + list(split_dct['train'][1])
     test_img_ids = list(split_dct['test'][0]) + list(split_dct['test'][1])
 
+    train_labels = [0 for _ in split_dct['train'][0]] + [1 for _ in split_dct['train'][1]]
+    test_labels = [0 for _ in split_dct['test'][0]] + [1 for _ in split_dct['test'][1]]
+
     train_values = get_qual_values(total_df, list(train_img_ids))
     test_values = get_qual_values(total_df, list(test_img_ids))
 
     train_paths = get_img_paths(train_img_ids, total_df, base_dir)
     test_paths = get_img_paths(test_img_ids, total_df, base_dir)
 
-    train_set = TransferLearningDataset(train_paths, train_values, tile_length, input_size, learning_mode=learning_mode)
-    test_set = TransferLearningDataset(test_paths, test_values, tile_length, input_size, learning_mode=learning_mode)
+    train_set = TransferLearningDataset(train_paths, train_labels, tile_length, input_size, learning_mode=learning_mode)
+    test_set = TransferLearningDataset(test_paths, test_labels, tile_length, input_size, learning_mode=learning_mode)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader

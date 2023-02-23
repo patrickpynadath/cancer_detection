@@ -75,7 +75,8 @@ class RLTrainer:
     def timestep(self, state, current_timestep_count):
         env = self.env
         agent = self.agent
-        action = agent.select_action(state)
+        state_img = env.get_sample(state)
+        action = agent.select_action(state_img)
         observation, reward, terminated, truncated = env.step(action.item())
 
         reward = torch.tensor([reward], device=self.device)

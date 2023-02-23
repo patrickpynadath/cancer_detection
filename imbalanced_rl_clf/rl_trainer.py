@@ -75,7 +75,7 @@ class RLTrainer:
     def timestep(self, state, current_timestep_count):
         env = self.env
         agent = self.agent
-        state_img = env.get_sample(state)
+        state_img = env.get_sample(state)[1]
         action = agent.select_action(state_img)
         observation, reward, terminated, truncated = env.step(action.item())
 

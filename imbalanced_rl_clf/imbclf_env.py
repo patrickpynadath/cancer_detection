@@ -34,10 +34,8 @@ class ImbalancedClfEnv(gym.Env):
 
     def step(self, action):
         # making sure that this sample doesn't get drawn again
-        self.cur_state[self.cur_idx] = 0
         # the correction prediction
         env_action = self.dataset[self.cur_idx][-1]
-        print(env_action)
         done = False
         if action == env_action:
             if env_action == 1:
@@ -60,7 +58,8 @@ class ImbalancedClfEnv(gym.Env):
     def _sample_state(self):
         idx = self.observation_space.sample(mask = self.mask)
         self.mask[idx] = 0 # no repeats during an episode
-        return idx
+        self.cur_state = idx
+        return self.cur_state
 
     def _calc_lambda(self):
         num_pos = 0

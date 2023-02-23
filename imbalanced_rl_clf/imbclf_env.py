@@ -36,8 +36,6 @@ class ImbalancedClfEnv(gym.Env):
         # the correction prediction
         env_action = int(self.dataset[self.cur_idx][-1])
         terminated = not np.any(self.mask)
-        print(env_action)
-        print(terminated)
         if env_action == 1:
             print(f'pos sample, action = {action}')
             self.num_pos_total += 1

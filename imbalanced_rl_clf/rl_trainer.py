@@ -149,14 +149,17 @@ class RLTrainer:
             else:
                 display.display(plt.gcf())
 
-    def train_loop(self, num_episodes):
-        for episode in range(num_episodes):
+    def train_loop(self, model_updates):
+        episode = 0
+        model_update_val = 0
+        while model_update_val < model_updates:
             print(f"starting episode {episode}")
             state, info = self.env.reset()
             state = int(state)
             for time_step in count():
                 is_done = self.timestep(state, time_step)
                 if is_done:
+                    episode += 1
                     break
         print('Complete')
         torch.save(self.agent.policy_net.mp.state_dict(), 'rl_agent_policynet.pth')

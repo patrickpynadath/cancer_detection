@@ -6,9 +6,10 @@ from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloa
     split_data, get_ae_loaders
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_window_model, get_pl_ae
+    create_save_artificial_samples, get_window_model, get_pl_ae, PLAutoEncoder
 from pytorch_lightning import Trainer
 from training import generic_training_loop, diffusion_training_loop
+from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent
 import torch
 # data preprocessing
 
@@ -34,6 +35,8 @@ if __name__ == '__main__':
 
     generate_splits = subparsers.add_parser('generate_splits', help = 'generating the splits to use for resnet and diffusion')
     generate_splits = config_split_data_cmd(generate_splits)
+
+    train_rl = subparsers.add_parser('train_rl', help = 'train rl policy net')
 
     args = parser.parse_args()
 
@@ -104,3 +107,19 @@ if __name__ == '__main__':
         test_size = args.test_size
         base_dir = args.base_data_dir
         split_data(test_size, base_dir)
+
+    if args.command == 'train_rl':
+        device = 'cuda'
+        trained_jigsaw_ae = PLAutoEncoder.load_from_checkpoint(
+            'lightning_logs/version_188/checkpoints/epoch=168-step=115596.ckpt',
+            num_channels=1,
+            num_hiddens=256,
+            num_residual_layers=20,
+            num_residual_hiddens=256,
+            latent_size=1024, lr=.01, input_size=(128, 64))
+        trainloader, test_loader = get_ae_loaders('data', 32, (128, 64), 32, 'jigsaw')
+        trained_jigsaw_ae.to(device)
+        encoder = trained_jigsaw_ae.encode
+        env = ImbalancedClfEnv(trainloader.dataset, device)
+        agent = Agent(2, 0.05, 0.9, 1000, encoder, device, 10000, 64, .01)
+        trainer = RLTrainer(.99, .005, env, agent, device)

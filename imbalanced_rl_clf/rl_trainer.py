@@ -6,7 +6,12 @@ import torch
 import matplotlib.pyplot as plt
 import matplotlib
 from itertools import count
+from torch.utils.tensorboard import SummaryWriter
+import datetime
 
+
+def timestamp():
+    return datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
 
 class RLTrainer:
@@ -15,13 +20,15 @@ class RLTrainer:
                  tau : float,
                  env : ImbalancedClfEnv,
                  agent: Agent,
-                 device : str):
+                 device : str,
+                 log_dir = 'lightning_logs'):
         self.env = env
         self.device = device
         self.agent = agent
         self.gamma = gamma
         self.episode_durations = []
         self.tau = tau
+        #self.logger = SummaryWriter(log_dir=f"{log_dir}/rl_net_{timestamp()}")
 
 
     def optimize_model(self):
@@ -110,6 +117,7 @@ class RLTrainer:
                 print(f"{current_timestep_count} : {env.num_pos_right / env.num_pos_total}")
         if done:
             self.episode_durations.append(current_timestep_count + 1)
+            #self.logger.add_scalar('duration', scalar_value=current_timestep_count+1, global_step=1)
             #self.plot_durations()
         return done
 
@@ -151,6 +159,7 @@ class RLTrainer:
                 if is_done:
                     break
         print('Complete')
+        torch.save(self.agent.policy_net.mp.state_dict(), 'rl_agent_policynet.pth')
         self.plot_durations(show_result=True)
         plt.ioff()
         plt.show()

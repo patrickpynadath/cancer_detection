@@ -61,5 +61,8 @@ class Agent:
         self.mem.push(state, action, next_state, reward)
         return
 
+    def __len__(self):
+        return len(self.mem)
+
 
 

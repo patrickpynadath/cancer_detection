@@ -94,8 +94,8 @@ class RLTrainer:
         state = next_state
 
         # Perform one step of the optimization (on the policy network)
-
-        self.optimize_model()
+        if len(agent) >= agent.batch_size:
+            self.optimize_model()
 
         # Soft update of the target network's weights
         # θ′ ← τ θ + (1 −τ )θ′

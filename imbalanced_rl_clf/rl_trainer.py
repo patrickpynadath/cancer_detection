@@ -135,9 +135,10 @@ class RLTrainer:
 
         plt.pause(0.001)  # pause a bit so that plots are updated
         if is_ipython:
+            print('asd')
             if not show_result:
                 display.display(plt.gcf())
-                #display.clear_output(wait=True)
+                display.clear_output(wait=True)
             else:
                 display.display(plt.gcf())
 

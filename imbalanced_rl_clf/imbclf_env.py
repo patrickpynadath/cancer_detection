@@ -37,6 +37,8 @@ class ImbalancedClfEnv(gym.Env):
         # the correction prediction
         env_action = int(self.dataset[self.cur_idx][-1])
         done = False
+        print(env_action)
+        print(action)
         if action == env_action:
             if env_action == 1:
                 reward = 1

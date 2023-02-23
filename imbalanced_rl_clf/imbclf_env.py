@@ -35,10 +35,8 @@ class ImbalancedClfEnv(gym.Env):
     def step(self, action):
         # making sure that this sample doesn't get drawn again
         # the correction prediction
-        env_action = self.dataset[self.cur_idx][-1]
+        env_action = int(self.dataset[self.cur_idx][-1])
         done = False
-        print(action)
-        print(env_action)
         if action == env_action:
             if env_action == 1:
                 reward = 1

@@ -79,7 +79,7 @@ class RLTrainer:
     def get_agent_optimizer(self):
         return self.agent.get_optimizer()
 
-    def timestep(self, state, current_timestep_count):
+    def timestep(self, state, current_timestep_count, iter_val):
         env = self.env
         agent = self.agent
         state_img = env.get_sample(state)[1]
@@ -157,7 +157,8 @@ class RLTrainer:
             state, info = self.env.reset()
             state = int(state)
             for time_step in count():
-                is_done = self.timestep(state, time_step)
+                is_done = self.timestep(state, time_step, model_update_val)
+                model_update_val += 1
                 if is_done:
                     episode += 1
                     break

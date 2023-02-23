@@ -36,14 +36,15 @@ class ImbalancedClfEnv(gym.Env):
         # making sure that this sample doesn't get drawn again
         # the correction prediction
         env_action = int(self.dataset[self.cur_idx][-1])
-        done = False
+        terminated = not np.any(self.mask)
+
         if env_action == 1:
             self.num_pos_total += 1
             if action == env_action:
                 reward = 1
                 self.num_pos_right += 1
             else:
-                done = True
+                terminated = True
                 reward = 0
         else:
             if action == env_action:
@@ -53,7 +54,7 @@ class ImbalancedClfEnv(gym.Env):
 
         self.running_reward += reward
         state = self._sample_state()
-        return state, reward, done, {}
+        return state, reward, terminated, {}
 
     def _sample_state(self):
         idx = self.observation_space.sample(mask = self.mask)

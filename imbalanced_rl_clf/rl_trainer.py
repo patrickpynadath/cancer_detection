@@ -80,7 +80,7 @@ class RLTrainer:
         observation, reward, terminated, truncated = env.step(action.item())
 
         reward = torch.tensor([reward], device=self.device)
-        done = terminated or truncated
+        done = terminated
 
         if terminated:
             next_state = None

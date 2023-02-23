@@ -23,7 +23,7 @@ class ImbalancedClfEnv(gym.Env):
     def reset(self, **kwargs):
         self.cur_state = np.ones(shape=(len(self.dataset),), dtype=np.int8)
         self.running_reward = 0
-        self.cur_idx = self.observation_space.sample(mask=self.cur_state)
+        self.cur_idx = int(self.observation_space.sample(mask=self.cur_state))
         self.num_pos_total = 0
         self.num_pos_right = 0
         return self.cur_idx, {}
@@ -62,7 +62,7 @@ class ImbalancedClfEnv(gym.Env):
         idx = self.observation_space.sample(mask = self.mask)
         self.mask[idx] = 0 # no repeats during an episode
         self.cur_state = idx
-        return self.cur_state
+        return int(self.cur_state)
 
     def _calc_lambda(self):
         num_pos = 0

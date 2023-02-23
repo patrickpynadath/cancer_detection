@@ -104,13 +104,13 @@ class RLTrainer:
         for key in policy_net_state_dict:
             target_net_state_dict[key] = policy_net_state_dict[key] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         agent.target_net.load_state_dict(target_net_state_dict)
-        # if current_timestep_count % 25 == 0:
-        #     print(f"{current_timestep_count} : {env.running_reward}, cur_state: {state}")
-        #     if env.num_pos_total > 0:
-        #         print(f"{current_timestep_count} : {env.num_pos_right / env.num_pos_total}")
+        if current_timestep_count % 25 == 0:
+            print(f"{current_timestep_count} : {env.running_reward}, cur_state: {state}")
+            if env.num_pos_total > 0:
+                print(f"{current_timestep_count} : {env.num_pos_right / env.num_pos_total}")
         if done:
             self.episode_durations.append(current_timestep_count + 1)
-            self.plot_durations()
+            #self.plot_durations()
         return done
 
     def plot_durations(self, show_result=False):
@@ -135,7 +135,6 @@ class RLTrainer:
 
         plt.pause(0.001)  # pause a bit so that plots are updated
         if is_ipython:
-            print('asd')
             if not show_result:
                 display.display(plt.gcf())
                 display.clear_output(wait=True)
@@ -144,6 +143,7 @@ class RLTrainer:
 
     def train_loop(self, num_episodes):
         for episode in range(num_episodes):
+            print(f"starting episode {episode}")
             state, info = self.env.reset()
             state = int(state)
             for time_step in count():

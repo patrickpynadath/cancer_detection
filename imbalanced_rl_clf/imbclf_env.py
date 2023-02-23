@@ -39,6 +39,7 @@ class ImbalancedClfEnv(gym.Env):
         terminated = not np.any(self.mask)
 
         if env_action == 1:
+            print('pos sample')
             self.num_pos_total += 1
             if action == env_action:
                 reward = 1

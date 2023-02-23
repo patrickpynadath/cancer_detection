@@ -18,7 +18,7 @@ class ImbalancedClfEnv(gym.Env):
         self.num_pos_total = 0
         self.num_pos_right = 0
         self.observation_space = spaces.Discrete(len(dataset))
-        self.mask = np.ones(len(dataset))
+        self.mask = np.ones(len(dataset), dtype=np.int8)
 
     def reset(self, **kwargs):
         self.cur_state = np.ones(shape=(len(self.dataset),), dtype=np.int8)

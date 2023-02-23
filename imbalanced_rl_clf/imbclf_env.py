@@ -37,7 +37,6 @@ class ImbalancedClfEnv(gym.Env):
         env_action = int(self.dataset[self.cur_idx][-1])
         terminated = not np.any(self.mask)
         if env_action == 1:
-            print(f'pos sample, action = {action}')
             self.num_pos_total += 1
             if action == env_action:
                 reward = 1

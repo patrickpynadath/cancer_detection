@@ -137,7 +137,7 @@ class RLTrainer:
         if is_ipython:
             if not show_result:
                 display.display(plt.gcf())
-                display.clear_output(wait=True)
+                #display.clear_output(wait=True)
             else:
                 display.display(plt.gcf())
 

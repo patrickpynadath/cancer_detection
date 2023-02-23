@@ -104,10 +104,10 @@ class RLTrainer:
         for key in policy_net_state_dict:
             target_net_state_dict[key] = policy_net_state_dict[key] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         agent.target_net.load_state_dict(target_net_state_dict)
-        if current_timestep_count % 25 == 0:
-            print(f"{current_timestep_count} : {env.running_reward}, cur_state: {state}")
-            if env.num_pos_total > 0:
-                print(f"{current_timestep_count} : {env.num_pos_right / env.num_pos_total}")
+        # if current_timestep_count % 25 == 0:
+        #     print(f"{current_timestep_count} : {env.running_reward}, cur_state: {state}")
+        #     if env.num_pos_total > 0:
+        #         print(f"{current_timestep_count} : {env.num_pos_right / env.num_pos_total}")
         if done:
             self.episode_durations.append(current_timestep_count + 1)
             self.plot_durations()

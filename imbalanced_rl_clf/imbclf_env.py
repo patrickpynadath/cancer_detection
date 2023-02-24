@@ -18,6 +18,7 @@ class ImbalancedClfEnv(gym.Env):
         self.num_pos_right = 0
         self.observation_space = spaces.Discrete(len(dataset))
         self.mask = np.ones(len(dataset), dtype=np.int8)
+        self.rewards = []
 
     def reset(self, **kwargs):
         self.mask = np.ones(shape=(len(self.dataset),), dtype=np.int8)
@@ -25,6 +26,7 @@ class ImbalancedClfEnv(gym.Env):
         self.cur_idx = int(self.observation_space.sample(mask=self.mask))
         self.num_pos_total = 0
         self.num_pos_right = 0
+        self.rewards = []
         return self.cur_idx, {}
 
     # function for actually getting the image
@@ -50,7 +52,7 @@ class ImbalancedClfEnv(gym.Env):
             else:
                 reward = -1 * self.lmbda
 
-        self.running_reward += reward
+        self.rewards.append(reward)
         state = self._sample_state()
         return state, reward, terminated, {}
 
@@ -69,3 +71,6 @@ class ImbalancedClfEnv(gym.Env):
             else:
                 num_neg += 1
         return num_pos / num_neg
+
+    def get_reward_hist(self):
+        return np.array(self.rewards)

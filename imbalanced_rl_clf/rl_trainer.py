@@ -111,10 +111,7 @@ class RLTrainer:
         policy_net_state_dict = agent.policy_net.state_dict()
 
         agent.target_net.load_state_dict(policy_net_state_dict)
-        if current_timestep_count % 25 == 0:
-            print(f"{current_timestep_count} : {env.running_reward}, cur_state: {state}")
-            if env.num_pos_total > 0:
-                print(f"{current_timestep_count} : {env.num_pos_right / env.num_pos_total}")
+
         if done:
             self.episode_durations.append(current_timestep_count + 1)
             #self.logger.add_scalar('duration', scalar_value=current_timestep_count+1, global_step=1)
@@ -181,19 +178,22 @@ class RLTrainer:
                 orig, jigsaw, labels = batch
                 labels = labels.to(self.device)
                 jigsaw = jigsaw.to(self.device)
-
                 logits = self.agent.get_batch_pred(jigsaw.to(self.device))
                 total_loss += criteron(logits, labels).cpu().item()
-
                 labels = labels.cpu().numpy()
                 actual += [l.item() for l in labels]
                 tmp_pred = torch.argmax(logits, dim=1).cpu().numpy()
                 pred += [l for l in tmp_pred]
         f1 = f1_score(actual, pred)
         roc = roc_auc_score(actual, pred)
-        self.logger.add_scalar('f1_val', f1, step)
-        self.logger.add_scalar('roc_val', roc, step)
-        self.logger.add_scalar('loss_val', total_loss, step)
+        self.logger.add_scalar('val_f1', f1, step)
+        self.logger.add_scalar('val_roc', roc, step)
+        self.logger.add_scalar('val_loss', total_loss, step)
+        rewards = self.env.get_reward_hist()
+        self.logger.add_scalar('train_reward/mean', rewards.mean(), step)
+        self.logger.add_scalar('train_reward/var', rewards.var(), step)
+        self.logger.add_scalar('train_reward/max', rewards.max(), step)
+        self.logger.add_scalar('train_reward/min', rewards.min(), step)
         return
 
 

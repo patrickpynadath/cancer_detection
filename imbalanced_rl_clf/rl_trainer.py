@@ -78,6 +78,7 @@ class RLTrainer:
         self.agent.optimizer.zero_grad()
         loss.backward()
         self.agent.optimizer.step()
+        print(loss)
         self.logger.add_scalar('train_loss', loss.detach().cpu().item(), iter_val)
 
 

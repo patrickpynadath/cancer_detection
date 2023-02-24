@@ -73,10 +73,10 @@ class RLTrainer:
         criterion = nn.MSELoss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
         # Optimize the model
-        optimizer = self.get_agent_optimizer()
-        optimizer.zero_grad()
+
+        self.agent.optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        self.agent.optimizer.step()
 
 
     def get_agent_optimizer(self):
@@ -107,13 +107,10 @@ class RLTrainer:
         if len(agent) >= agent.batch_size:
             self.optimize_model()
 
-        # Soft update of the target network's weights
-        # θ′ ← τ θ + (1 −τ )θ′
-        target_net_state_dict = agent.target_net.state_dict()
+        # Hard update -- the policy is what ever maximizes the q value function
         policy_net_state_dict = agent.policy_net.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key] * self.tau + target_net_state_dict[key] * (1 - self.tau)
-        agent.target_net.load_state_dict(target_net_state_dict)
+
+        agent.target_net.load_state_dict(policy_net_state_dict)
         if current_timestep_count % 25 == 0:
             print(f"{current_timestep_count} : {env.running_reward}, cur_state: {state}")
             if env.num_pos_total > 0:

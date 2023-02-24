@@ -188,6 +188,8 @@ class RLTrainer:
                 actual += [l.item() for l in labels]
                 tmp_pred = torch.argmax(logits, dim=1).cpu().numpy()
                 pred += [l for l in tmp_pred]
+        print(len(actual))
+        print(len(pred))
         f1 = f1_score(actual, pred)
         roc = roc_auc_score(actual, pred)
         self.logger.add_scalar('val_f1', f1, step)

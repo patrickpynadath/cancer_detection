@@ -25,13 +25,13 @@ class Agent:
         self.num_classes = num_classes
         self.encoder = encoder
         self.device = device
-        self.policy_net = DQN(encoder).to(device)
+        self.q_network = DQN(encoder).to(device)
         self.steps_done = 0
         self.mem = ReplayMemory(mem_capacity)
         self.batch_size = batch_size
         self.lr = lr
         self.action_space = spaces.Discrete(num_classes)
-        self.optimizer = Adam(self.policy_net.mp.parameters(), lr=lr, eps=.001)
+        self.optimizer = Adam(self.q_network.mp.parameters(), lr=lr, eps=.001)
 
     def select_action(self, state_img):
         state_img = state_img.to(self.device)
@@ -39,7 +39,7 @@ class Agent:
         eps_threshold = self.calc_eps_threshold()
         if sample > eps_threshold:
             with no_grad():
-                return self.policy_net(state_img[None, :]).max(1)[1].view(1, 1)
+                return self.q_network(state_img[None, :]).max(1)[1].view(1, 1)
         else:
             return torch.tensor([[self.action_space.sample()]], device=self.device, dtype=torch.long)
 
@@ -63,7 +63,7 @@ class Agent:
         return len(self.mem)
 
     def get_batch_pred(self, batch):
-        return torch.nn.functional.softmax(self.policy_net(batch), dim=1)
+        return torch.nn.functional.softmax(self.q_network(batch), dim=1)
 
 
 

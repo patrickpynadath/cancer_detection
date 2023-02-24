@@ -56,7 +56,7 @@ class RLTrainer:
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-        state_action_values = self.agent.policy_net(state_batch).gather(1, action_batch)
+        state_action_values = self.agent.q_network(state_batch).gather(1, action_batch)
 
         # Compute V(s_{t+1}) for all next states.
         # Expected values of actions for non_final_next_states are computed based
@@ -66,7 +66,7 @@ class RLTrainer:
         next_state_values = torch.zeros(self.agent.batch_size, device=self.device)
 
         with torch.no_grad():
-            next_state_values[non_final_mask] = self.agent.target_net(non_final_next_states).max(1)[0]
+            next_state_values[non_final_mask] = self.agent.q_network(non_final_next_states).max(1)[0]
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.gamma) + reward_batch
 
@@ -160,7 +160,7 @@ class RLTrainer:
                     episode += 1
                     break
         print('Complete')
-        torch.save(self.agent.policy_net.mp.state_dict(), 'rl_agent_policynet.pth')
+        torch.save(self.agent.q_network.mp.state_dict(), 'rl_agent_policynet.pth')
         self.plot_durations(show_result=True)
         plt.ioff()
         plt.show()

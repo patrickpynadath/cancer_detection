@@ -122,5 +122,5 @@ if __name__ == '__main__':
         encoder = trained_jigsaw_ae.encode
         env = ImbalancedClfEnv(trainloader.dataset, device)
         agent = Agent(2, 0.05, 0.9, 1000, encoder, device, 10000, 64, .01)
-        trainer = RLTrainer(.99, .005, env, agent, device)
+        trainer = RLTrainer(.99, .005, env, agent, device, test_loader)
         trainer.train_loop(120000)

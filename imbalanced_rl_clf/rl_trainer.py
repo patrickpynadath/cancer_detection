@@ -192,7 +192,7 @@ class RLTrainer:
         self.logger.add_scalar('val_acc', acc, step)
         rewards = self.env.get_reward_hist()
         self.logger.add_scalar('train_reward/mean', rewards.mean(), step)
-        self.logger.add_scalar('train_reward/var', rewards.std(), step)
+        self.logger.add_scalar('train_reward/stdev', rewards.std(), step)
         self.logger.add_scalar('train_reward/total', rewards.sum(), step)
         return
 

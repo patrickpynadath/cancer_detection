@@ -234,7 +234,7 @@ def get_diffusion_dataloaders(base_dir, batch_size):
     return train_loader, test_loader
 
 
-def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad_data=False):
+def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad_data=False, oversample=False):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -245,11 +245,15 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
         for i in range(pos_size):
             pos_train_paths.append(f'{synthetic_dir}/img{i}.png')
     else:
-        # how many times to concat list
-        pos_train_imgids = list(split_dct['train'][1])
-        n = 1 + pos_size // len(pos_train_imgids)
-        pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
-        pos_train_paths = pos_train_paths[:pos_size]
+        if oversample:
+            # how many times to concat list
+            pos_train_imgids = list(split_dct['train'][1])
+            n = 1 + pos_size // len(pos_train_imgids)
+            pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
+            pos_train_paths = pos_train_paths[:pos_size]
+        else:
+            pos_train_imgids = list(split_dct['train'][1])
+            pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
 
     num_pos_test = len(split_dct['test'][1])
     neg_test_imgids = random.sample(list(split_dct['test'][0]), num_pos_test)

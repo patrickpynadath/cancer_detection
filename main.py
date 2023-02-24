@@ -7,11 +7,12 @@ from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloa
     split_data, get_ae_loaders
 import argparse
 from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_window_model, get_pl_ae, PLAutoEncoder
+    create_save_artificial_samples, get_window_model, get_pl_ae, PLAutoEncoder, MSFELoss
 from pytorch_lightning import Trainer
 from training import generic_training_loop, diffusion_training_loop
-from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent
+from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
 import torch
+from torch.nn import CrossEntropyLoss
 # data preprocessing
 
 TRAINED_JIGSAW_PATH = 'lightning_logs/version_188/checkpoints/epoch=168-step=115596.ckpt'
@@ -25,8 +26,8 @@ if __name__ == '__main__':
     process_data = subparsers.add_parser('process_data', help = 'command for processing data')
     process_data = config_data_processing_cmd(process_data)
 
-    train_resnet = subparsers.add_parser('train_resnet', help = 'command to train resnet clf')
-    train_resnet = config_resnet_train_cmd(train_resnet)
+    train_clf = subparsers.add_parser('train_clf', help ='command to train clf')
+    train_clf = config_resnet_train_cmd(train_clf)
 
     train_transfer_learn_ae = subparsers.add_parser('train_transfer_learn_ae', help='train transfer learning autoencoder')
     train_transfer_learn_ae = config_transfer_learn_ae(train_transfer_learn_ae)
@@ -52,16 +53,41 @@ if __name__ == '__main__':
         paths = get_paths()
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
-    elif args.command == 'train_resnet':
+    elif args.command == 'train_clf':
         train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
-                                                        synthetic_dir=args.synthetic_dir, grad_data=True)
+                                                        synthetic_dir=args.synthetic_dir, grad_data=False,
+                                                        oversample=args.over_sample)
+        tag = ''
+        if args.over_sample:
+            tag += 'oversample/'
 
-        pl_resnet = resnet_from_args(args, 2)
-        generic_training_loop(args, pl_resnet, train_loader, test_loader)
-        if args.synthetic_dir:
-            torch.save(pl_resnet.resnet.state_dict(), 'pl_resnet_synthetic.pickle')
-        else:
-            torch.save(pl_resnet.resnet.state_dict(), 'pl_resnet_oversample.pickle')
+        path = None
+        if args.training_mode == 'normal':
+            path = TRAINED_NORMAL_PATH
+            tag += 'normal/'
+        elif args.training_mode == 'jigsaw':
+            path = TRAINED_JIGSAW_PATH
+            tag += 'jigsaw/'
+        trained_ae = PLAutoEncoder.load_from_checkpoint(
+            path,
+            num_channels=1,
+            num_hiddens=256,
+            num_residual_layers=20,
+            num_residual_hiddens=256,
+            latent_size=1024, lr=.01, input_size=(128, 64))
+        encoder = trained_ae.encode
+        mlp = Generic_MLP(encoder)
+        criterion = None
+        if args.criterion == 'CE':
+            criterion = CrossEntropyLoss()
+            tag += 'CE/'
+        elif args.criterion == 'MSFE':
+            criterion = MSFELoss()
+            tag += 'MSFE/'
+        tag += 'mlp_clf'
+        clf = PL_MLP_clf(mlp, criterion)
+        generic_training_loop(args, clf, train_loader, test_loader)
+        torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
 
 
         # train_loader, val_loader, test_loader = over_sample_loader(args, 250, 100, 100)

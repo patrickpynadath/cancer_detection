@@ -4,7 +4,7 @@ from .utils import ReplayMemory
 import torch
 from torch.optim import Adam
 from gymnasium import spaces
-from .dqn import DQN
+from .generic_mlp import Generic_MLP
 from torch import no_grad
 
 
@@ -25,7 +25,7 @@ class Agent:
         self.num_classes = num_classes
         self.encoder = encoder
         self.device = device
-        self.q_network = DQN(encoder).to(device)
+        self.q_network = Generic_MLP(encoder).to(device)
         self.steps_done = 0
         self.mem = ReplayMemory(mem_capacity)
         self.batch_size = batch_size

@@ -101,9 +101,6 @@ class RLTrainer:
         # Store the transition in memory
         agent.store_memory(state, action, next_state, reward)
 
-        # Move to the next state
-        state = next_state
-
         # Perform one step of the optimization (on the policy network)
         if len(agent) >= agent.batch_size:
             self.optimize_model()
@@ -155,6 +152,7 @@ class RLTrainer:
             state, info = self.env.reset()
             state = int(state)
             for time_step in count():
+                print(state)
                 is_done = self.timestep(state, time_step, model_update_val)
                 model_update_val += 1
                 if model_update_val % 100 == 0:

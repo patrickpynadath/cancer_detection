@@ -35,7 +35,7 @@ class RLTrainer:
         self.logger = SummaryWriter(log_dir=f"{log_dir}/rl_net_{timestamp()}")
 
 
-    def optimize_model(self):
+    def optimize_model(self, iter_val):
         transitions = self.agent.remember_transitions()
 
         # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
@@ -78,6 +78,7 @@ class RLTrainer:
         self.agent.optimizer.zero_grad()
         loss.backward()
         self.agent.optimizer.step()
+        self.logger.add_scalar('train_loss', loss.detach().cpu().item(), iter_val)
 
 
     def get_agent_optimizer(self):
@@ -103,7 +104,7 @@ class RLTrainer:
 
         # Perform one step of the optimization (on the policy network)
         if len(agent) >= agent.batch_size:
-            self.optimize_model()
+            self.optimize_model(iter_val)
 
         # Hard update -- the policy is what ever maximizes the q value function
         policy_net_state_dict = agent.policy_net.state_dict()

@@ -96,13 +96,10 @@ class RLTrainer:
         if terminated:
             next_state = None
         else:
-            next_state = torch.tensor(observation, dtype=torch.float32, device=self.device).unsqueeze(0)
+            next_state = int(observation)
 
         # Store the transition in memory
         agent.store_memory(state, action, next_state, reward)
-
-        # Move to the next state
-        state = next_state
 
         # Perform one step of the optimization (on the policy network)
         if len(agent) >= agent.batch_size:

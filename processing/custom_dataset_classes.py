@@ -1,6 +1,6 @@
 import math
 import random
-
+from sklearn.cluster import MiniBatchKMeans
 import numpy as np
 import pandas as pd
 import torch
@@ -150,6 +150,72 @@ class TransferLearningDataset(AugmentedImgDataset):
             input_img = final_img.clone()
         # also get the labels
         return final_img, input_img, torch.tensor(self.values[i], dtype=torch.long)
+
+
+class DynamicDataset(TransferLearningDataset):
+    def __init__(self, paths, values,
+                 tile_length,
+                 input_size,
+                 class_map,
+                 learning_mode = 'normal',
+                 use_kmeans = False,
+                 kmeans_clusters=8,
+                 encoder = None,
+                 device='cpu'):
+        super().__init__(paths,
+                         values, tile_length,
+                         input_size,
+                         learning_mode)
+        self.class_map = class_map # dct with class_idx : sample_idx
+        self.orig_paths = paths
+        self.orig_values = values
+        if use_kmeans:
+            if encoder:
+                self.class_map = self._get_kmeans_class_dct(encoder, kmeans_clusters, device)
+            else:
+                raise Exception
+
+    def adjust_sample_size(self, f1_class_scores):
+        denom = 0
+        for i, score in enumerate(f1_class_scores):
+            denom += 1 - score
+
+        avg_size = len(self.orig_values) / len(self.class_map.keys())
+        sample_idx = []
+        for k in self.class_map.keys():
+            num_to_sample = int(avg_size * (1-f1_class_scores[k])/denom)
+            multiple = int(1 + num_to_sample / len(self.class_map[k]))
+            to_append = self.class_map[k] * multiple
+            sample_idx += to_append[:num_to_sample]
+        self.paths = [self.orig_paths[idx] for idx in sample_idx]
+        self.values = [self.orig_values[idx] for idx in sample_idx]
+        return
+
+    def _get_encoder_lv(self, encoder, device='cpu'):
+        to_stack = []
+        with torch.no_grad():
+            for i in range(len(self.paths)):
+                sample = self.__getitem__(i)[1][None, :].to(device)
+                lv = encoder(sample, None)[0, :].cpu().numpy()
+                to_stack.append(lv)
+        return np.stack(to_stack, axis=0)
+
+    def _get_kmeans_class_dct(self, encoder, num_clusters, device):
+        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128)
+        X = self._get_encoder_lv(encoder, device)
+        pred = kmeans.fit_predict(X)
+        class_map = {}
+        for i in range(num_clusters):
+            class_map[i] = []
+        for idx, cluster_idx in encoder(list(pred)):
+            class_map[cluster_idx].append(idx)
+        return class_map
+
+    def _get_label_dct(self):
+        class_map = {0 : [], 1 : []}
+        for idx, label in enumerate(self.values):
+            class_map[int(label)].append(idx)
+        return class_map
 
 
 def get_img_gradient(img):

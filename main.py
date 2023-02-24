@@ -6,8 +6,8 @@ from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd,
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
     split_data, get_ae_loaders
 import argparse
-from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_window_model, get_pl_ae, PLAutoEncoder, MSFELoss
+from models import get_diffusion_model_from_args, get_trained_diff_model, \
+    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss
 from pytorch_lightning import Trainer
 from training import generic_training_loop, diffusion_training_loop
 from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
@@ -104,12 +104,6 @@ if __name__ == '__main__':
         # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
         # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
         # torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
-    elif args.command == 'train_window_model':
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
-                                                        synthetic_dir=args.synthetic_dir, grad_data=True)
-        window_model = get_window_model(args.window_size, (args.input_height, args.input_width))
-        generic_training_loop(args, window_model, train_loader, test_loader)
-        torch.save(window_model.model.state_dict(), 'window model state dict')
 
     elif args.command == 'train_diffusion':
         train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)
@@ -131,7 +125,8 @@ if __name__ == '__main__':
     elif args.command == 'generate_imgs':
         os.makedirs('artificial_pos_samples', exist_ok = True)
         diff_model = get_trained_diff_model(args.save_name, (args.img_height, args.img_width))
-        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples', device=args.device, batch_size=args.batch_size)
+        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples',
+                                       device=args.device, batch_size=args.batch_size)
 
 
     elif args.command == 'generate_splits':

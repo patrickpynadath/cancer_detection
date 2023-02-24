@@ -26,8 +26,6 @@ class Agent:
         self.encoder = encoder
         self.device = device
         self.policy_net = DQN(encoder).to(device)
-        self.target_net = DQN(encoder).to(device)
-        self.target_net.load_state_dict(self.policy_net.state_dict())
         self.steps_done = 0
         self.mem = ReplayMemory(mem_capacity)
         self.batch_size = batch_size

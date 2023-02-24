@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 import matplotlib
 from itertools import count
 from torch.utils.tensorboard import SummaryWriter
@@ -107,11 +107,6 @@ class RLTrainer:
         if len(agent) >= agent.batch_size:
             self.optimize_model(iter_val)
 
-        # Hard update -- the policy is what ever maximizes the q value function
-        policy_net_state_dict = agent.policy_net.state_dict()
-
-        agent.target_net.load_state_dict(policy_net_state_dict)
-
         if done:
             self.episode_durations.append(current_timestep_count + 1)
             #self.logger.add_scalar('duration', scalar_value=current_timestep_count+1, global_step=1)
@@ -188,8 +183,8 @@ class RLTrainer:
                 actual += [l.item() for l in labels]
                 tmp_pred = torch.argmax(logits, dim=1).cpu().numpy()
                 pred += [l for l in tmp_pred]
-        print(len(actual))
-        print(len(pred))
+
+        acc = accuracy_score(actual, pred)
         f1 = f1_score(actual, pred)
         roc = roc_auc_score(actual, pred)
         self.logger.add_scalar('val_f1', f1, step)

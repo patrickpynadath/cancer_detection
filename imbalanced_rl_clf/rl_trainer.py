@@ -177,6 +177,9 @@ class RLTrainer:
             criteron = torch.nn.CrossEntropyLoss()
             for idx, batch in enumerate(val_loader):
                 orig, jigsaw, labels = batch
+                labels = labels.to(self.device)
+                jigsaw = jigsaw.to(self.device)
+
                 logits = self.agent.get_batch_pred(jigsaw.to(self.device))
                 total_loss += criteron(logits, labels).cpu().item()
 

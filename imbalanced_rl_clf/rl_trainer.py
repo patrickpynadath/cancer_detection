@@ -81,7 +81,7 @@ class RLTrainer:
         state_dict = self.agent.q_network.mp.state_dict()
         for key in state_dict:
             grad_val = torch.linalg.norm(state_dict[key], ord=2).item()
-            print(grad_val)
+            self.logger.add_scalar(f'train_gradient_tracking/{key}', grad_val, iter_val)
         self.agent.optimizer.step()
         self.logger.add_scalar('train_loss', loss.detach().cpu().item(), iter_val)
 

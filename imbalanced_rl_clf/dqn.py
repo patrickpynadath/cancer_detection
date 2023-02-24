@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 
 class DQN(nn.Module):
@@ -15,6 +16,8 @@ class DQN(nn.Module):
                                 nn.LazyBatchNorm1d(),
                                 nn.Linear(256, 2),
                                 nn.ReLU())
+        dummy = torch.zeros(size=(32, 1024))
+        dummy = self.mp(dummy)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).

@@ -114,7 +114,10 @@ class RLTrainer:
             self.episode_durations.append(current_timestep_count + 1)
             #self.logger.add_scalar('duration', scalar_value=current_timestep_count+1, global_step=1)
             #self.plot_durations()
-        return int(next_state), done
+            return None, done
+        else:
+            return int(next_state), done
+
 
     def plot_durations(self, show_result=False):
         is_ipython = 'inline' in matplotlib.get_backend()

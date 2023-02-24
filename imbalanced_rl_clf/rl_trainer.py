@@ -22,6 +22,7 @@ class RLTrainer:
                  env : ImbalancedClfEnv,
                  agent: Agent,
                  device : str,
+                 val_loader,
                  log_dir = 'lightning_logs'):
         self.env = env
         self.device = device
@@ -29,6 +30,7 @@ class RLTrainer:
         self.gamma = gamma
         self.episode_durations = []
         self.tau = tau
+        self.val_loader = val_loader
         self.logger = SummaryWriter(log_dir=f"{log_dir}/rl_net_{timestamp()}")
 
 
@@ -160,6 +162,8 @@ class RLTrainer:
             for time_step in count():
                 is_done = self.timestep(state, time_step, model_update_val)
                 model_update_val += 1
+                if model_update_val % 500:
+                    self.val_loop(time_step)
                 if is_done:
                     episode += 1
                     break
@@ -169,7 +173,8 @@ class RLTrainer:
         plt.ioff()
         plt.show()
 
-    def val_loop(self, val_loader, step):
+    def val_loop(self, step):
+        val_loader = self.val_loader
         total_loss = 0
         pred = []
         actual = []
@@ -187,14 +192,12 @@ class RLTrainer:
                 actual += [l.item() for l in labels]
                 tmp_pred = torch.argmax(logits, dim=1).cpu().numpy()
                 pred += [l for l in tmp_pred]
-
-        print(actual)
-        print(pred)
         f1 = f1_score(actual, pred)
         roc = roc_auc_score(actual, pred)
-        # self.logger.add_scalar('f1_val', f1, step)
-        # self.logger.add_scalar('roc_val', roc, step)
-        return f1, roc
+        self.logger.add_scalar('f1_val', f1, step)
+        self.logger.add_scalar('roc_val', roc, step)
+        self.logger.add_scalar('loss_val', total_loss, step)
+        return
 
 
 

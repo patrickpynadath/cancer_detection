@@ -4,6 +4,7 @@ from .utils import Transition
 import torch.nn as nn
 import torch
 import matplotlib.pyplot as plt
+from sklearn.metrics import f1_score, roc_auc_score
 import matplotlib
 from itertools import count
 from torch.utils.tensorboard import SummaryWriter
@@ -28,7 +29,7 @@ class RLTrainer:
         self.gamma = gamma
         self.episode_durations = []
         self.tau = tau
-        #self.logger = SummaryWriter(log_dir=f"{log_dir}/rl_net_{timestamp()}")
+        self.logger = SummaryWriter(log_dir=f"{log_dir}/rl_net_{timestamp()}")
 
 
     def optimize_model(self):
@@ -167,3 +168,30 @@ class RLTrainer:
         self.plot_durations(show_result=True)
         plt.ioff()
         plt.show()
+
+    def val_loop(self, val_loader, step):
+        total_loss = 0
+        pred = []
+        actual = []
+        with torch.no_grad():
+            criteron = torch.nn.BCELoss()
+            for idx, batch in enumerate(val_loader):
+                orig, jigsaw, labels = batch
+                logits = self.agent.get_batch_pred(jigsaw)
+                total_loss += criteron(logits, labels).cpu().item()
+
+                labels = labels.cpu().numpy()
+                actual += [l.item() for l in labels]
+                tmp_pred = torch.argmax(logits, dim=1).cpu().numpy()
+                pred += [l for l in tmp_pred]
+
+        f1 = f1_score(actual, pred)
+        roc = roc_auc_score(actual, pred)
+        # self.logger.add_scalar('f1_val', f1, step)
+        # self.logger.add_scalar('roc_val', roc, step)
+        return f1, roc
+
+
+
+
+

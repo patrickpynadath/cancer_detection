@@ -11,9 +11,8 @@ class ImbalancedClfEnv(gym.Env):
         self.dataset = dataset
         self.step_id = 0
         self.cur_idx = None
-        self.lmbda = self._calc_lambda()
-        print(self.lmbda)
-        #self.lmbda =.021616321957140857
+        #self.lmbda = self._calc_lambda()
+        self.lmbda = 1/8 # estimated chance of breast cancer
         self.device = device
         self.running_reward = 0
         self.num_pos_total = 0

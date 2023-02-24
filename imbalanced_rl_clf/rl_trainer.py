@@ -163,7 +163,7 @@ class RLTrainer:
                 is_done = self.timestep(state, time_step, model_update_val)
                 model_update_val += 1
                 if model_update_val % 500 == 0:
-                    self.val_loop(time_step)
+                    self.val_loop(model_update_val)
                 if is_done:
                     episode += 1
                     break

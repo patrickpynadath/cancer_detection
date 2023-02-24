@@ -9,8 +9,10 @@ class DQN(nn.Module):
 
         self.mp = nn.Sequential(nn.Linear(1024, 512),
                                 nn.ReLU(),
+                                nn.LazyBatchNorm1d(),
                                 nn.Linear(512, 256),
                                 nn.ReLU(),
+                                nn.LazyBatchNorm1d(),
                                 nn.Linear(256, 2),
                                 nn.ReLU())
 

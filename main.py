@@ -1,7 +1,8 @@
 import os
 from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd, \
     config_data_processing_cmd, config_split_data_cmd, \
-    config_resnet_train_cmd, config_transfer_learn_ae
+    config_resnet_train_cmd, config_transfer_learn_ae, \
+    config_rl_train_cmd
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
     split_data, get_ae_loaders
 import argparse
@@ -12,6 +13,9 @@ from training import generic_training_loop, diffusion_training_loop
 from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent
 import torch
 # data preprocessing
+
+TRAINED_JIGSAW_PATH = 'lightning_logs/version_188/checkpoints/epoch=168-step=115596.ckpt'
+TRAINED_NORMAL_PATH = 'lightning_logs/version_187/checkpoints/epoch=108-step=74556.ckpt'
 
 
 if __name__ == '__main__':
@@ -37,6 +41,7 @@ if __name__ == '__main__':
     generate_splits = config_split_data_cmd(generate_splits)
 
     train_rl = subparsers.add_parser('train_rl', help = 'train rl policy net')
+    train_rl = config_rl_train_cmd(train_rl)
 
     args = parser.parse_args()
 
@@ -110,17 +115,23 @@ if __name__ == '__main__':
 
     if args.command == 'train_rl':
         device = 'cuda'
+        path = None
+        if args.training_mode == 'normal':
+            path = TRAINED_NORMAL_PATH
+        elif args.training_mode == 'jigsaw':
+            path = TRAINED_JIGSAW_PATH
         trained_jigsaw_ae = PLAutoEncoder.load_from_checkpoint(
-            'lightning_logs/version_188/checkpoints/epoch=168-step=115596.ckpt',
+            path,
             num_channels=1,
             num_hiddens=256,
             num_residual_layers=20,
             num_residual_hiddens=256,
             latent_size=1024, lr=.01, input_size=(128, 64))
-        trainloader, test_loader = get_ae_loaders('data', 32, (128, 64), 32, 'jigsaw')
+        size = (args.input_height, args.input_width)
+        trainloader, test_loader = get_ae_loaders(args.base_dir, 32, size, args.batch_size, 'jigsaw')
         trained_jigsaw_ae.to(device)
         encoder = trained_jigsaw_ae.encode
         env = ImbalancedClfEnv(trainloader.dataset, device)
-        agent = Agent(2, 0.05, 0.9, 1000, encoder, device, 10000, 64, .00005)
-        trainer = RLTrainer(.99, .005, env, agent, device, test_loader)
-        trainer.train_loop(150000)
+        agent = Agent(2, args.eps_end, args.eps_start, args.eps_decay, encoder, device, 10000, args.batch_size, args.lr)
+        trainer = RLTrainer(args.gamma, args.tau, env, agent, device, test_loader)
+        trainer.train_loop(args.updates)

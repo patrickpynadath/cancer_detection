@@ -18,4 +18,5 @@ def config_resnet_train_cmd(args: ArgumentParser):
     data_flags.add_argument('--num_pos', help = 'number of positive samples for training', default = 8000, type=int)
     data_flags.add_argument('--loader_workers', help='workers for dataloader', type = int, default = 1)
     data_flags.add_argument('--synthetic_dir', help='dir for synthetic data', default=None)
+
     return args

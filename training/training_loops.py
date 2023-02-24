@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
-
+from pytorch_lightning.callbacks import Callback
+from pytorch_lightning import Trainer
 from .diffusion_trainer_custom import DiffusionTrainer
 
 
@@ -15,3 +16,4 @@ def diffusion_training_loop(model, train_loader, results_folder):
     trainer = DiffusionTrainer(model, train_loader, results_folder=results_folder)
     trainer.train()
     return
+

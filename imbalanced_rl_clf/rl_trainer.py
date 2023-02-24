@@ -174,7 +174,7 @@ class RLTrainer:
         pred = []
         actual = []
         with torch.no_grad():
-            criteron = torch.nn.BCELoss()
+            criteron = torch.nn.CrossEntropyLoss()
             for idx, batch in enumerate(val_loader):
                 orig, jigsaw, labels = batch
                 logits = self.agent.get_batch_pred(jigsaw.to(self.device))

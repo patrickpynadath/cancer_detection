@@ -101,6 +101,9 @@ class RLTrainer:
         # Store the transition in memory
         agent.store_memory(state, action, next_state, reward)
 
+        # Move to the next state
+        state = next_state
+
         # Perform one step of the optimization (on the policy network)
         if len(agent) >= agent.batch_size:
             self.optimize_model()
@@ -114,7 +117,7 @@ class RLTrainer:
             self.episode_durations.append(current_timestep_count + 1)
             #self.logger.add_scalar('duration', scalar_value=current_timestep_count+1, global_step=1)
             #self.plot_durations()
-        return done
+        return next_state, done
 
     def plot_durations(self, show_result=False):
         is_ipython = 'inline' in matplotlib.get_backend()
@@ -153,7 +156,7 @@ class RLTrainer:
             state = int(state)
             for time_step in count():
                 print(state)
-                is_done = self.timestep(state, time_step, model_update_val)
+                state, is_done = self.timestep(state, time_step, model_update_val)
                 model_update_val += 1
                 if model_update_val % 100 == 0:
                     self.val_loop(model_update_val)

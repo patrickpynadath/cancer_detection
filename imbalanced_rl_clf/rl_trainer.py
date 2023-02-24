@@ -76,7 +76,12 @@ class RLTrainer:
         # Optimize the model
 
         self.agent.optimizer.zero_grad()
+        # logging grad means for sanity check
         loss.backward()
+        state_dict = self.agent.q_network.mp.state_dict()
+        for key in state_dict:
+            grad_val = state_dict[key]
+            print(grad_val)
         self.agent.optimizer.step()
         self.logger.add_scalar('train_loss', loss.detach().cpu().item(), iter_val)
 

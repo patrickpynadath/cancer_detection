@@ -45,7 +45,7 @@ class ImbalancedClfEnv(gym.Env):
                 self.num_pos_right += 1
             else:
                 terminated = True
-                reward = 0
+                reward = -10
         else:
             if action == env_action:
                 reward = self.lmbda

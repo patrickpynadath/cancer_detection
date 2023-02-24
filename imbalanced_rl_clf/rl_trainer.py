@@ -177,7 +177,7 @@ class RLTrainer:
             criteron = torch.nn.BCELoss()
             for idx, batch in enumerate(val_loader):
                 orig, jigsaw, labels = batch
-                logits = self.agent.get_batch_pred(jigsaw)
+                logits = self.agent.get_batch_pred(jigsaw.to(self.device))
                 total_loss += criteron(logits, labels).cpu().item()
 
                 labels = labels.cpu().numpy()

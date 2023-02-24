@@ -11,11 +11,8 @@ class DQN(nn.Module):
 
         self.l1 = nn.Linear(1024, 512)
         self.l2 = nn.Linear(512, 256)
-        self.l3 = nn.Linear(512, 256)
         self.l4 = nn.Linear(256, 2)
         self.mp = nn.Sequential(self.l1, nn.ReLU(), self.l2, nn.ReLU(), self.l3, nn.ReLU(), self.l4)
-        dummy = torch.zeros(size=(32, 1024))
-        dummy = self.mp(dummy)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).

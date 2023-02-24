@@ -172,7 +172,7 @@ class RLTrainer:
         actual = []
         with torch.no_grad():
             criteron = torch.nn.CrossEntropyLoss()
-            pg = tqdm(enumerate(val_loader), total=len(val_loader))
+            pg = tqdm(enumerate(val_loader), total=len(val_loader), desc=f'Validation loop {step}')
             for idx, batch in pg:
                 orig, jigsaw, labels = batch
                 labels = labels.to(self.device)

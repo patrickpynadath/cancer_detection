@@ -186,14 +186,19 @@ class RLTrainer:
         acc = accuracy_score(actual, pred)
         f1 = f1_score(actual, pred)
         roc = roc_auc_score(actual, pred)
+        num_pos_total = sum(actual)
+        num_pos_pred = sum(pred)
         self.logger.add_scalar('val_f1', f1, step)
         self.logger.add_scalar('val_roc', roc, step)
         self.logger.add_scalar('val_loss', total_loss, step)
         self.logger.add_scalar('val_acc', acc, step)
+        self.logger.add_scalar('val_pos_total', num_pos_total, step)
+        self.logger.add_scalar('val_pos_pred', num_pos_pred, step)
         rewards = self.env.get_reward_hist()
         self.logger.add_scalar('train_reward/mean', rewards.mean(), step)
         self.logger.add_scalar('train_reward/stdev', rewards.std(), step)
         self.logger.add_scalar('train_reward/total', rewards.sum(), step)
+        # sanity checking: how many pos pred are there?
         return
 
 

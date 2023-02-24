@@ -12,7 +12,7 @@ class ImbalancedClfEnv(gym.Env):
         self.step_id = 0
         self.cur_idx = None
         #self.lmbda = self._calc_lambda()
-        self.lmbda = .01
+        self.lmbda = .03
         self.device = device
         self.running_reward = 0
         self.num_pos_total = 0

@@ -191,7 +191,6 @@ class RLTrainer:
         acc = accuracy_score(actual, pred)
         f1 = f1_score(actual, pred)
         roc = roc_auc_score(actual, pred)
-        num_pos_total = sum(actual)
         num_pos_pred = sum(pred)
         self.logger.add_scalar('val_f1', f1, step)
         self.logger.add_scalar('val_roc', roc, step)

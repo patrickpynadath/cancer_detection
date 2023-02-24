@@ -190,11 +190,11 @@ class RLTrainer:
         self.logger.add_scalar('val_f1', f1, step)
         self.logger.add_scalar('val_roc', roc, step)
         self.logger.add_scalar('val_loss', total_loss, step)
+        self.logger.add_scalar('val_acc', acc, step)
         rewards = self.env.get_reward_hist()
         self.logger.add_scalar('train_reward/mean', rewards.mean(), step)
         self.logger.add_scalar('train_reward/var', rewards.var(), step)
-        self.logger.add_scalar('train_reward/max', rewards.max(), step)
-        self.logger.add_scalar('train_reward/min', rewards.min(), step)
+        self.logger.add_scalar('train_reward/total', rewards.sum(), step)
         return
 
 

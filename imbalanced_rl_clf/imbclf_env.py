@@ -11,8 +11,9 @@ class ImbalancedClfEnv(gym.Env):
         self.dataset = dataset
         self.step_id = 0
         self.cur_idx = None
-        #self.lmbda = self._calc_lambda()
-        self.lmbda = .03
+        self.lmbda = self._calc_lambda()
+        print(self.lmbda)
+        #self.lmbda =.021616321957140857
         self.device = device
         self.running_reward = 0
         self.num_pos_total = 0

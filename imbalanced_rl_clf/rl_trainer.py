@@ -152,7 +152,6 @@ class RLTrainer:
             state, info = self.env.reset()
             state = int(state)
             for time_step in count():
-                print(state)
                 state, is_done = self.timestep(state, time_step, model_update_val)
                 model_update_val += 1
                 if model_update_val % 100 == 0:

@@ -65,7 +65,7 @@ class Agent:
         return len(self.mem)
 
     def get_batch_pred(self, batch):
-        return torch.nn.functional.softmax(self.policy_net(batch))
+        return torch.nn.functional.softmax(self.policy_net(batch), dim=1)
 
 
 

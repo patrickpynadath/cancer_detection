@@ -96,7 +96,7 @@ class RLTrainer:
         if terminated:
             next_state = None
         else:
-            next_state = int(observation)
+            next_state = torch.tensor(observation, dtype=torch.long, device=self.device).unsqueeze(0)
 
         # Store the transition in memory
         agent.store_memory(state, action, next_state, reward)
@@ -114,7 +114,7 @@ class RLTrainer:
             self.episode_durations.append(current_timestep_count + 1)
             #self.logger.add_scalar('duration', scalar_value=current_timestep_count+1, global_step=1)
             #self.plot_durations()
-        return next_state, done
+        return int(next_state), done
 
     def plot_durations(self, show_result=False):
         is_ipython = 'inline' in matplotlib.get_backend()

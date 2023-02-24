@@ -3,6 +3,7 @@ from .agent import Agent
 from .utils import Transition
 import torch.nn as nn
 import torch
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score, roc_auc_score
 import matplotlib
@@ -156,7 +157,7 @@ class RLTrainer:
             for time_step in count():
                 is_done = self.timestep(state, time_step, model_update_val)
                 model_update_val += 1
-                if model_update_val % 500 == 0:
+                if model_update_val % 100 == 0:
                     self.val_loop(model_update_val)
                 if is_done:
                     episode += 1
@@ -174,7 +175,8 @@ class RLTrainer:
         actual = []
         with torch.no_grad():
             criteron = torch.nn.CrossEntropyLoss()
-            for idx, batch in enumerate(val_loader):
+            pg = tqdm(enumerate(val_loader), total=len(val_loader))
+            for idx, batch in pg:
                 orig, jigsaw, labels = batch
                 labels = labels.to(self.device)
                 jigsaw = jigsaw.to(self.device)

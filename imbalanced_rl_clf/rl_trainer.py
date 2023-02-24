@@ -197,11 +197,8 @@ class RLTrainer:
         self.logger.add_scalar('val_roc', roc, step)
         self.logger.add_scalar('val_loss', total_loss, step)
         self.logger.add_scalar('val_acc', acc, step)
-        self.logger.add_scalar('val_pos_total', num_pos_total, step)
-        self.logger.add_scalar('val_pos_pred', num_pos_pred, step)
+        self.logger.add_scalar('val_pos_pred', num_pos_pred/len(actual), step)
         rewards = self.env.get_reward_hist()
-        self.logger.add_scalar('train_reward/mean', rewards.mean(), step)
-        self.logger.add_scalar('train_reward/stdev', rewards.std(), step)
         self.logger.add_scalar('train_reward/total', rewards.sum(), step)
         # sanity checking: how many pos pred are there?
         return

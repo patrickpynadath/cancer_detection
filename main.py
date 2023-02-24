@@ -6,10 +6,9 @@ from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd,
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
     split_data, get_ae_loaders
 import argparse
-from models import resnet_from_args, get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_window_model, get_pl_ae, PLAutoEncoder, MSFELoss
-from pytorch_lightning import Trainer
-from training import generic_training_loop, diffusion_training_loop
+from models import get_diffusion_model_from_args, get_trained_diff_model, \
+    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss
+from training import generic_training_loop, diffusion_training_loop, DynamicSamplingTrainer
 from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
 import torch
 from torch.nn import CrossEntropyLoss
@@ -17,6 +16,7 @@ from torch.nn import CrossEntropyLoss
 
 TRAINED_JIGSAW_PATH = 'lightning_logs/version_188/checkpoints/epoch=168-step=115596.ckpt'
 TRAINED_NORMAL_PATH = 'lightning_logs/version_187/checkpoints/epoch=108-step=74556.ckpt'
+LOG_DIR = 'lightning_logs/'
 
 
 if __name__ == '__main__':
@@ -54,14 +54,13 @@ if __name__ == '__main__':
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
     elif args.command == 'train_clf':
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
-                                                        synthetic_dir=args.synthetic_dir, grad_data=False,
-                                                        oversample=args.over_sample)
-        tag = ''
-        if args.over_sample:
-            tag += 'oversample/'
+        assert args.oversample_method in ['none', 'normal_ros', 'dynamic_ros', 'dynamic_kmeans_ros']
+        input_size = (args.input_height, args.input_width)
+
+        tag = '' + args.oversample_method
 
         path = None
+
         if args.training_mode == 'normal':
             path = TRAINED_NORMAL_PATH
             tag += 'normal/'
@@ -84,32 +83,24 @@ if __name__ == '__main__':
         elif args.criterion == 'MSFE':
             criterion = MSFELoss()
             tag += 'MSFE/'
+        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
+                                                        tile_length=args.tile_size,
+
+                                                        synthetic_dir=args.synthetic_dir,
+                                                        oversample=args.oversample_method,
+                                                        input_size=input_size,
+                                                        device=args.device,
+                                                        learning_mode=args.learning_mode,
+                                                        kmeans_clusters=args.kmeans_clusters,
+                                                        encoder=encoder)
         tag += 'mlp_clf'
         clf = PL_MLP_clf(mlp, criterion)
-        generic_training_loop(args, clf, train_loader, test_loader)
+        if 'dynamic' in args.oversample_method:
+            trainer = DynamicSamplingTrainer(mlp, args.device, tag, train_loader, test_loader, LOG_DIR, args.lr)
+            trainer.training_loop(args.epochs)
+
+        generic_training_loop(args, clf, train_loader, test_loader, tag)
         torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
-
-
-        # train_loader, val_loader, test_loader = over_sample_loader(args, 250, 100, 100)
-        # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
-        # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
-        # torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
-        #
-        # train_loader, val_loader, test_loader = get_balanced_loaders(args, 250, 100, 100)
-        # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
-        # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
-        # torch.save(pl_resnet.resnet.state_dict(), 'resnet_250samples.pickle')
-        #
-        # train_loader, val_loader, test_loader = get_balanced_loaders(args, 500, 100, 100)
-        # pl_resnet = resnet_from_args(args, get_num_classes(args.target_col, args.base_dir))
-        # resnet_training_loop(args, pl_resnet, train_loader, val_loader)
-        # torch.save(pl_resnet.resnet.state_dict(), 'resnet_500samples.pickle')
-    elif args.command == 'train_window_model':
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
-                                                        synthetic_dir=args.synthetic_dir, grad_data=True)
-        window_model = get_window_model(args.window_size, (args.input_height, args.input_width))
-        generic_training_loop(args, window_model, train_loader, test_loader)
-        torch.save(window_model.model.state_dict(), 'window model state dict')
 
     elif args.command == 'train_diffusion':
         train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)
@@ -131,7 +122,8 @@ if __name__ == '__main__':
     elif args.command == 'generate_imgs':
         os.makedirs('artificial_pos_samples', exist_ok = True)
         diff_model = get_trained_diff_model(args.save_name, (args.img_height, args.img_width))
-        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples', device=args.device, batch_size=args.batch_size)
+        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples',
+                                       device=args.device, batch_size=args.batch_size)
 
 
     elif args.command == 'generate_splits':

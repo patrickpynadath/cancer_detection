@@ -1,11 +1,15 @@
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import Callback
-from pytorch_lightning import Trainer
 from .diffusion_trainer_custom import DiffusionTrainer
+from .dynamic_trainer import DynamicSamplingTrainer
 
 
-def generic_training_loop(args, pl_model, train_loader, val_loader, model_name):
+def generic_training_loop(args,
+                          pl_model,
+                          train_loader,
+                          val_loader,
+                          model_name,
+                          dynamic = False):
     tb_logger = TensorBoardLogger(save_dir='lightning_logs', name=model_name)
     trainer = pl.Trainer.from_argparse_args(args, logger=tb_logger)
     trainer.fit(pl_model, train_loader, val_loader)

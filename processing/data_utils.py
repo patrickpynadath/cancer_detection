@@ -5,8 +5,7 @@ from sklearn.model_selection import ShuffleSplit
 import pickle
 import os
 
-from processing import TransferLearningDataset
-from processing.custom_dataset_classes import ImgloaderDataSet, AugmentedImgDataset
+from .custom_dataset_classes import ImgloaderDataSet, DynamicDataset, TransferLearningDataset
 
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
@@ -88,7 +87,17 @@ def get_diffusion_dataloaders(base_dir, batch_size):
     return train_loader, test_loader
 
 
-def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad_data=False, oversample=False):
+def get_clf_dataloaders(base_dir,
+                        pos_size,
+                        batch_size,
+                        tile_length,
+                        input_size,
+                        kmeans_clusters=None,
+                        device=None,
+                        encoder=None,
+                        synthetic_dir=None,
+                        learning_mode='normal',
+                        oversample='none'):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -99,7 +108,7 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
         for i in range(pos_size):
             pos_train_paths.append(f'{synthetic_dir}/img{i}.png')
     else:
-        if oversample:
+        if oversample == 'normal_ros':
             # how many times to concat list
             pos_train_imgids = list(split_dct['train'][1])
             n = 1 + pos_size // len(pos_train_imgids)
@@ -108,6 +117,12 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
         else:
             pos_train_imgids = list(split_dct['train'][1])
             pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
+    if oversample == 'none' or oversample == 'normal_ros':
+        Dataset = TransferLearningDataset
+    else:
+        Dataset = lambda p, v: DynamicDataset(p, v, tile_length, input_size, learning_mode,
+                                               use_kmeans=oversample=='dynamic_kmeans_ros',kmeans_clusters=kmeans_clusters,
+                                               encoder=encoder, device=device)
 
     num_pos_test = len(split_dct['test'][1])
     neg_test_imgids = random.sample(list(split_dct['test'][0]), num_pos_test)
@@ -117,15 +132,9 @@ def get_clf_dataloaders(base_dir, pos_size, batch_size, synthetic_dir=None, grad
     pos_test_paths = get_img_paths(list(split_dct['test'][1]), total_df, base_dir)
     neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
 
-    if grad_data:
-        train_set = AugmentedImgDataset(pos_train_paths + neg_train_paths,
-                                        [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
-        test_set = AugmentedImgDataset(pos_test_paths + neg_test_paths,
-                                       [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
-    else:
-        train_set = ImgloaderDataSet(pos_train_paths + neg_train_paths,
-                                     [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
-        test_set = ImgloaderDataSet(pos_test_paths + neg_test_paths,
+    train_set = Dataset(pos_train_paths + neg_train_paths,
+                                 [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
+    test_set = Dataset(pos_test_paths + neg_test_paths,
                                     [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)

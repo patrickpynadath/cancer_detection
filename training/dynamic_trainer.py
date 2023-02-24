@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
-from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -11,16 +10,15 @@ class DynamicSamplingTrainer:
     def __init__(self, model: nn.Module,
                  device: str,
                  tag: str,
-                 batch_size : int,
-                 train_set,
-                 test_set,
+                 train_loader,
+                 test_loader,
                  log_dir,
-                 lr: float,):
+                 lr: float):
 
         self.tag = tag
         self.model = model.to(device)
-        self.train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
-        self.test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
+        self.train_loader = train_loader
+        self.test_loader = test_loader
         self.device = device
         self.log_dir = log_dir
         self.optimizer = Adam(self.model.parameters(),
@@ -49,7 +47,6 @@ class DynamicSamplingTrainer:
         optimizer.zero_grad()
         outputs = self.model(inputs)
         pred = torch.argmax(outputs, dim=1)
-        batch_score = sum([1 if pred[i].item() == labels[i].item() else 0 for i in range(len(inputs))])
 
         batch_loss = criterion(outputs, labels)
         batch_loss.backward()
@@ -117,6 +114,20 @@ class DynamicSamplingTrainer:
         for k in metric_dct.keys():
             self.logger.add_scalar(f'val/{k}', metric_dct[k], self.epoch_val)
         return
+
+
+# because I want to extend the resampling to be based on k-means as well, the class_map is needed
+# just a list that has what the classes for the i-th sample is
+def get_class_f1_scores(true, pred, class_map):
+    f1_dct = {}
+    for k in class_map.keys():
+        tmp_pred = []
+        tmp_actual = []
+        for idx in class_map[k]:
+            tmp_pred.append(pred[idx])
+            tmp_actual.append(true[idx])
+        f1_dct[k] = f1_score(tmp_actual, tmp_pred)
+    return f1_dct
 
 
 def get_metrics(true, pred):

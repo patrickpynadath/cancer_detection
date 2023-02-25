@@ -52,6 +52,7 @@ class DynamicSamplingTrainer:
         batch_loss = criterion(outputs, labels)
         batch_loss.backward()
         optimizer.step()
+
         self.train_actual += [labels[j].item() for j in range(len(labels))]
         self.train_pred += [pred[j].item() for j in range(len(labels))]
 

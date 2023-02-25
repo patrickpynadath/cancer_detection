@@ -116,15 +116,14 @@ class DynamicSamplingTrainer:
 # because I want to extend the resampling to be based on k-means as well, the class_map is needed
 # just a list that has what the classes for the i-th sample is
 def get_class_f1_scores(true, pred, class_map):
-    print(class_map)
     f1_dct = {}
     for k in class_map.keys():
+        print(k)
         tmp_pred = []
         tmp_actual = []
         for idx in class_map[k]:
             tmp_pred.append(pred[idx])
             tmp_actual.append(true[idx])
-        print(tmp_pred)
         if tmp_pred:
             f1_dct[k] = f1_score(tmp_actual, tmp_pred)
         else:

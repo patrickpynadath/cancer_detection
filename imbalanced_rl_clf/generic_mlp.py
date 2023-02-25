@@ -38,12 +38,12 @@ class PL_MLP_clf(pl.LightningModule):
         self.val_pred = []
         self.val_actual = []
 
+    def forward(self, x):
+        return self.softmax(self.model(x))
+
     def training_step(self, batch, batch_idx):
         orig, jigsaw, y = batch
-        z = self.model.encoder(jigsaw, None)
-        out = self.model.mp(z)
-
-        logits = self.softmax(out)
+        logits = self.forward(jigsaw)
         loss = self.criterion(logits, y)
 
         pred = torch.argmax(logits, dim=1)

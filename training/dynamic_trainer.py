@@ -57,14 +57,9 @@ class DynamicSamplingTrainer:
         return
 
     def val_loop(self):
-        """
-
-        :return: dictionary where key, value pairs are metrics for validation step to be stored
-        """
-
-
         with torch.no_grad():
             loss = 0
+            pg = tqdm(enumerate(self.test_loader), total=len(self.test_loader), desc='val loop running')
             for i, data in enumerate(self.test_loader):
                 orig, jigsaw, labels = data
                 orig, jigsaw, labels = orig.to(self.device), jigsaw.to(self.device), labels.to(self.device)
@@ -97,6 +92,8 @@ class DynamicSamplingTrainer:
                         f"Epoch {epoch + 1} / {epochs} | Iteration {i + 1} / {len(self.train_loader)}")
             self.on_train_epoch_end()
             self.val_loop()
+            for k in self.train_loader.dataset.class_ratios.keys():
+                self.logger.add_scalar(f'class_{k}_sample_ratio', self.train_loader.dataset.class_ratios[k], self.epoch_val)
             self.epoch_val += 1
 
         return

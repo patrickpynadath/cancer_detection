@@ -168,12 +168,17 @@ class DynamicDataset(TransferLearningDataset):
 
         self.orig_paths = paths
         self.orig_values = values
+
         self.class_map = get_label_idx_dct(values)  # dct with class_idx : sample_idx
         if use_kmeans:
             if encoder:
                 self.class_map = self._get_kmeans_class_dct(encoder, kmeans_clusters, device)
             else:
                 raise Exception
+        class_ratios = {}
+        for k in self.class_map.keys():
+            class_ratios[k] = .5
+        self.class_ratios = class_ratios
 
     def adjust_sample_size(self, f1_class_scores):
         denom = 0

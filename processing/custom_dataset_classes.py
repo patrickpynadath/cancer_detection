@@ -1,11 +1,11 @@
 import math
 import random
-from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans, KMeans
 import numpy as np
 import pandas as pd
 import torch
 from tqdm import tqdm, trange
-from sklearn.decomposition import IncrementalPCA
+from sklearn.decomposition import IncrementalPCA,PCA
 from PIL import Image
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
@@ -216,29 +216,34 @@ class DynamicDataset(TransferLearningDataset):
             pg = trange(len(self.paths))
             for i in pg:
                 sample = self.__getitem__(i)[1][None, :].to(device)
-                lv = encoder(sample, None)[0, :].cpu().numpy()
-                to_stack.append(lv)
+                lv = encoder(sample, None)[0, :]
+                #lv = lv / torch.linalg.norm(lv, ord=2)
+                to_stack.append(lv.cpu().numpy())
         return np.stack(to_stack, axis=0)
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
         X = self._get_encoder_lv(encoder, device)
-        X_normalized = normalize(X)
-        pca = IncrementalPCA(n_components=100)
+        # X_normalized = normalize(X)
+        pca = PCA(n_components=20)
         print("fitting pca")
-        pca.fit(X_normalized)
+        pca.fit(X)
+
         X_reduced = pca.transform(X)
         print(X_reduced)
-        # print("fitting kmeans")
-        # kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=1024, verbose=1)
-        # kmeans.fit(X_reduced)
+        print("fitting kmeans")
+        kmeans = KMeans(n_clusters=num_clusters, verbose=1)
+        kmeans.fit(X_reduced)
+
         print("runnign hdbscan ")
         clutering_alg = hdbscan.HDBSCAN(min_cluster_size=20)
         clutering_alg.fit(X_reduced)
 
-        #pred = kmeans.predict(X_reduced)
-        pred = clutering_alg.labels_
-        class_map = {}
+        pred = kmeans.predict(X_reduced)
         print(np.unique(pred, return_counts=True))
+        #pred = clutering_alg.labels_
+        print(np.unique(pred, return_counts=True))
+        class_map = {}
+        #print(np.unique(pred, return_counts=True))
         for i in list(np.unique(pred)):
             class_map[i] = []
         for idx, cluster_idx in enumerate(list(pred)):

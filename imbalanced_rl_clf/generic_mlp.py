@@ -39,7 +39,7 @@ class PL_MLP_clf(pl.LightningModule):
         self.val_actual = []
 
     def forward(self, x):
-        return self.softmax(self.model(x))
+        return self.softmax(self.model(x), dim=1)
 
     def training_step(self, batch, batch_idx):
         orig, jigsaw, y = batch

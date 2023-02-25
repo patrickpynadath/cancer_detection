@@ -99,21 +99,6 @@ def get_clf_dataloaders(base_dir,
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
-
-    # getting the synthetic paths
-    pos_train_paths = []
-    if 'dynamic' in sample_strat:
-        Dataset = lambda p, v: DynamicDataset(p, v, tile_length=tile_length, input_size=input_size,
-                                              learning_mode=learning_mode,
-                                              use_kmeans=sample_strat == 'dynamic_kmeans_ros',
-                                              kmeans_clusters=kmeans_clusters,
-                                              encoder=encoder, device=device)
-    else:
-        Dataset = lambda p, v: TransferLearningDataset(p, v,
-                                                       tile_length=tile_length,
-                                                       input_size=input_size,
-                                                       learning_mode=learning_mode)
-
     if sample_strat == 'ros':
         # how many times to concat list
         pos_size = len(split_dct['train'][0])
@@ -139,10 +124,28 @@ def get_clf_dataloaders(base_dir,
     neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
     pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
 
-    train_set = Dataset(pos_train_paths + neg_train_paths,
-                                 [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])
-    test_set = Dataset(pos_test_paths + neg_test_paths,
-                                    [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths])
+    train_paths = pos_train_paths + neg_train_paths
+    train_values = [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths]
+
+    test_paths = pos_test_paths + neg_test_paths
+    test_values = [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths]
+
+    if 'dynamic' in sample_strat:
+        train_set = DynamicDataset(train_paths, train_values, tile_length=tile_length, input_size=input_size,
+                                                              learning_mode=learning_mode,
+                                                              use_kmeans=sample_strat == 'dynamic_kmeans_ros',
+                                                              kmeans_clusters=kmeans_clusters,
+                                                              encoder=encoder, device=device)
+    else:
+        train_set = TransferLearningDataset(train_paths, train_values,
+                                           tile_length=tile_length,
+                                           input_size=input_size,
+                                           learning_mode=learning_mode)
+
+    test_set = TransferLearningDataset(test_paths, test_values,
+                                       tile_length=tile_length,
+                                       input_size=input_size,
+                                       learning_mode=learning_mode)
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)

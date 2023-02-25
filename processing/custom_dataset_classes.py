@@ -161,7 +161,8 @@ class DynamicDataset(TransferLearningDataset):
                  use_kmeans = False,
                  kmeans_clusters=8,
                  encoder = None,
-                 device='cpu'):
+                 device='cpu',
+                 trained_kmeans=None):
         super().__init__(paths,
                          values, tile_length,
                          input_size,
@@ -169,7 +170,7 @@ class DynamicDataset(TransferLearningDataset):
 
         self.orig_paths = paths
         self.orig_values = values
-
+        self.trained_kmeans = trained_kmeans
         self.class_map = get_label_idx_dct(values)  # dct with class_idx : sample_idx
         if use_kmeans:
             if encoder:
@@ -219,9 +220,13 @@ class DynamicDataset(TransferLearningDataset):
         return np.stack(to_stack, axis=0)
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
-        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128)
         X = self._get_encoder_lv(encoder, device)
-        pred = kmeans.fit_predict(X)
+        if not self.trained_kmeans:
+            kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128)
+            kmeans.fit(X)
+        else:
+            kmeans = self.trained_kmeans
+        pred = kmeans.predict(X)
         class_map = {}
         for i in range(num_clusters):
             class_map[i] = []

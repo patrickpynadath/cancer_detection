@@ -11,6 +11,7 @@ from skimage.filters.rank import entropy
 from skimage.morphology import disk
 from torch.utils.data import Dataset
 from torchvision.transforms import Pad
+from sklearn.preprocessing import normalize
 
 
 class XRayDataset(Dataset):
@@ -220,11 +221,12 @@ class DynamicDataset(TransferLearningDataset):
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
         X = self._get_encoder_lv(encoder, device)
-        print(X.shape)
+        X_normalized = normalize(X)
         pca = IncrementalPCA(n_components=100)
         print("fitting pca")
-        pca.fit(X)
+        pca.fit(X_normalized)
         X_reduced = pca.transform(X)
+        print("fitting kmeans")
         kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128, verbose=1)
         kmeans.fit(X_reduced)
 

@@ -240,7 +240,7 @@ class DynamicDataset(TransferLearningDataset):
 
         pred = kmeans.predict(X_reduced)
         print(np.unique(pred, return_counts=True))
-        #pred = clutering_alg.labels_
+        pred = clutering_alg.labels_
         print(np.unique(pred, return_counts=True))
         class_map = {}
         #print(np.unique(pred, return_counts=True))

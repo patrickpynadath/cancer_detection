@@ -23,7 +23,7 @@ def config_resnet_train_cmd(args: ArgumentParser):
     data_flags.add_argument('--tile_size', help='tile size for jigsaw', type=int, default=32)
     data_flags.add_argument('--input_height', default=128, type=int, help='input img height')
     data_flags.add_argument('--input_width', default=64, type=int, help='input img width')
-    data_flags.add_argument('--sample_method', help='flag for sampling strat', default='none')
+    data_flags.add_argument('--sample_strat', help='flag for sampling strat', default='none')
     data_flags.add_argument('--learning_mode', help='training mode for clf', type=str, default='normal')
     data_flags.add_argument('--kmeans_clusters', help='number of clusters for kmeans', default=20)
     return args

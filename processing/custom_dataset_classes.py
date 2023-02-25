@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 from tqdm import tqdm, trange
+from sklearn.decomposition import IncrementalPCA
 from PIL import Image
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
@@ -220,10 +221,14 @@ class DynamicDataset(TransferLearningDataset):
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
         X = self._get_encoder_lv(encoder, device)
         print(X.shape)
+        pca = IncrementalPCA(n_components=100)
+        print("fitting pca")
+        pca.fit(X)
+        X_reduced = pca.transform(X)
         kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128, verbose=1)
-        kmeans.fit(X)
+        kmeans.fit(X_reduced)
 
-        pred = kmeans.predict(X)
+        pred = kmeans.predict(X_reduced)
         class_map = {}
         for i in range(num_clusters):
             class_map[i] = []

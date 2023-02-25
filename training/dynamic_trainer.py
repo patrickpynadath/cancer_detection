@@ -51,8 +51,8 @@ class DynamicSamplingTrainer:
         batch_loss = criterion(outputs, labels)
         batch_loss.backward()
         optimizer.step()
-        self.train_actual += [labels[i].item() for i in range(len(inputs))]
-        self.train_pred += [pred[i].item() for i in range(len(inputs))]
+        self.train_actual += [labels[j].item() for j in range(len(labels))]
+        self.train_pred += [pred[j].item() for j in range(len(labels))]
 
         return
 
@@ -78,8 +78,8 @@ class DynamicSamplingTrainer:
                 # get accuracy values
                 pred = torch.argmax(outputs, dim=1)
 
-                self.val_actual += [labels[j].item() for j in range(len(inputs))]
-                self.val_pred += [pred[j].item() for j in range(len(inputs))]
+                self.val_actual += [labels[j].item() for j in range(len(labels))]
+                self.val_pred += [pred[j].item() for j in range(len(labels))]
                 # update statistics
                 batch_loss = loss.item()
                 total_loss += batch_loss

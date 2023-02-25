@@ -55,10 +55,7 @@ class PL_MLP_clf(pl.LightningModule):
 
     def validation_step(self, batch,  batch_idx):
         orig, jigsaw, y = batch
-        z = self.model.encoder(jigsaw, None)
-        out = self.model.mp(z)
-
-        logits = self.softmax(out)
+        logits = self.forward(jigsaw)
         loss = self.criterion(logits, y)
 
         pred = torch.argmax(logits, dim=1)

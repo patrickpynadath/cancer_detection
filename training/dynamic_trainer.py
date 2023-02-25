@@ -125,6 +125,8 @@ def get_class_f1_scores(true, pred, class_map):
             tmp_pred.append(pred[idx])
             tmp_actual.append(true[idx])
         if tmp_pred:
+            score = f1_score(tmp_actual, tmp_pred)
+            print(score)
             f1_dct[k] = f1_score(tmp_actual, tmp_pred)
         else:
             f1_dct[k] = 0

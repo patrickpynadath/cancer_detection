@@ -85,6 +85,7 @@ if __name__ == '__main__':
             tag += 'CE/'
         elif args.criterion == 'MSFE':
             criterion = MSFELoss()
+            print("asd")
             print(criterion)
             tag += 'MSFE/'
         train_loader, test_loader = get_clf_dataloaders(args.base_dir,

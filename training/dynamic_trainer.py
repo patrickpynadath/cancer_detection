@@ -95,10 +95,11 @@ class DynamicSamplingTrainer:
         for epoch in range(epochs):  # loop over the dataset multiple times
             with tqdm(enumerate(self.train_loader), total=len(self.train_loader)) as datastream:
                 for i, data in datastream:
+                    self.train_step(data)
                     datastream.set_description(
                         f"Epoch {epoch + 1} / {epochs} | Iteration {i + 1} / {len(self.train_loader)}")
-
             self.on_train_epoch_end()
+            self.val_loop()
             self.epoch_val += 1
 
         return

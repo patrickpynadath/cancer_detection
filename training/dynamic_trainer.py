@@ -37,15 +37,15 @@ class DynamicSamplingTrainer:
         :param data: torch.Tensor of [batch_size x channel x height x width]
         :return: dictionary where key, value pairs are metrics to be stored for batch step
         """
-        inputs, labels = data
-        inputs, labels = inputs.to(self.device), labels.to(self.device)
+        orig, jigsaw, labels = data
+        orig, jigsaw, labels = orig.to(self.device), jigsaw.to(self.device), labels.to(self.device)
 
         self.model.train()
         optimizer = self.optimizer
         criterion = self.criterion
 
         optimizer.zero_grad()
-        outputs = self.model(inputs)
+        outputs = self.model(jigsaw)
         pred = torch.argmax(outputs, dim=1)
 
         batch_loss = criterion(outputs, labels)
@@ -61,28 +61,25 @@ class DynamicSamplingTrainer:
 
         :return: dictionary where key, value pairs are metrics for validation step to be stored
         """
-        total_loss = 0
-        total_correct = 0
-        total_samples = 0
+
 
         with torch.no_grad():
+            loss = 0
             for i, data in enumerate(self.test_loader):
-                inputs, labels = data[0].to(self.device), data[1].to(self.device)
-                total_samples += len(inputs)
+                orig, jigsaw, labels = data
+                orig, jigsaw, labels = orig.to(self.device), jigsaw.to(self.device), labels.to(self.device)
                 self.model.eval()
                 criterion = self.criterion
 
-                outputs = self.model(inputs)
-                loss = criterion(outputs, labels)
+                outputs = self.model(jigsaw)
+                loss += criterion(outputs, labels).item()
 
                 # get accuracy values
                 pred = torch.argmax(outputs, dim=1)
 
                 self.val_actual += [labels[j].item() for j in range(len(labels))]
                 self.val_pred += [pred[j].item() for j in range(len(labels))]
-                # update statistics
-                batch_loss = loss.item()
-                total_loss += batch_loss
+            self.logger.add_scalar('val/loss', loss/len(self.test_loader), self.epoch_val)
         self.on_val_epoch_end()
         return
 

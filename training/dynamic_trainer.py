@@ -78,8 +78,8 @@ class DynamicSamplingTrainer:
                 # get accuracy values
                 pred = torch.argmax(outputs, dim=1)
 
-                self.val_actual += [labels[i].item() for i in range(len(inputs))]
-                self.val_pred += [pred[i].item() for i in range(len(inputs))]
+                self.val_actual += [labels[j].item() for j in range(len(inputs))]
+                self.val_pred += [pred[j].item() for j in range(len(inputs))]
                 # update statistics
                 batch_loss = loss.item()
                 total_loss += batch_loss

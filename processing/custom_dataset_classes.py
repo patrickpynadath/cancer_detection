@@ -99,7 +99,7 @@ class TransferLearningDataset(AugmentedImgDataset):
         self.pad = Pad(padding=self.pad_dim)
         self.learning_mode = learning_mode
         self.input_size = input_size
-        self.label_dtype = torch.long
+        self.label_dtype = label_dtype
 
     def _make_jigsaw(self, img: torch.Tensor):
         img = self.pad(img)
@@ -162,12 +162,12 @@ class DynamicDataset(TransferLearningDataset):
     def __init__(self, paths, values,
                  tile_length,
                  input_size,
+                 label_dtype,
                  learning_mode = 'normal',
                  use_kmeans = False,
                  kmeans_clusters=8,
                  encoder = None,
-                 device='cpu',
-                 label_dtype=torch.long):
+                 device='cpu'):
         super().__init__(paths,
                          values, tile_length,
                          input_size,

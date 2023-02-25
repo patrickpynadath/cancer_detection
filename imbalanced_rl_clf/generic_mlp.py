@@ -51,6 +51,8 @@ class PL_MLP_clf(pl.LightningModule):
         # appending pred and actual values to field for access at epoch end
         self.train_pred += [pred[i].item() for i in range(len(pred))]
         self.train_actual += [y[i].item() for i in range(len(pred))]
+        tb = self.logger.experiment
+        tb.add_scalar(f'train/loss', loss.item(), self.epoch_val)
         return loss
 
     def validation_step(self, batch,  batch_idx):
@@ -62,6 +64,8 @@ class PL_MLP_clf(pl.LightningModule):
 
         self.val_pred += [pred[i].item() for i in range(len(pred))]
         self.val_actual += [y[i].item() for i in range(len(pred))]
+        tb = self.logger.experiment
+        tb.add_scalar(f'val/loss', loss.item(), self.epoch_val)
         return loss
 
     def configure_optimizers(self):

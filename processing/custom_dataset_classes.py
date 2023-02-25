@@ -231,14 +231,15 @@ class DynamicDataset(TransferLearningDataset):
         # print("fitting kmeans")
         # kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=1024, verbose=1)
         # kmeans.fit(X_reduced)
+        print("runnign hdbscan ")
         clutering_alg = hdbscan.HDBSCAN(min_samples=50)
         clutering_alg.fit(X_reduced)
 
         #pred = kmeans.predict(X_reduced)
         pred = clutering_alg.labels_
-        num_clusters = len(np.unique(pred))
         class_map = {}
-        for i in range(num_clusters):
+        print(np.unique(pred, return_counts=True))
+        for i in list(np.unique(pred)):
             class_map[i] = []
         for idx, cluster_idx in enumerate(list(pred)):
             class_map[cluster_idx].append(idx)

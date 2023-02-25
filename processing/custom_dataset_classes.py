@@ -188,7 +188,12 @@ class DynamicDataset(TransferLearningDataset):
         avg_size = len(self.orig_values) / len(self.class_map.keys())
         sample_idx = []
         for k in self.class_map.keys():
-            num_to_sample = int(avg_size * (1-f1_class_scores[k])/denom)
+            print(f"adjusting class size: {k}")
+            ratio = (1-f1_class_scores[k])/denom
+            num_to_sample = int(avg_size * ratio)
+            print(f"ratio: {ratio}")
+            print(f"num to sample: {num_to_sample}")
+            print(f"orig: {len(self.class_map[k])}")
             multiple = int(1 + num_to_sample / len(self.class_map[k]))
             to_append = self.class_map[k] * multiple
             sample_idx += to_append[:num_to_sample]

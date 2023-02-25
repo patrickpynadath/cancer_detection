@@ -123,7 +123,6 @@ def get_class_f1_scores(true, pred, class_map, use_true_classes=True):
     else:
         f1_dct = {}
         for k in class_map.keys():
-            print(k)
             tmp_pred = []
             tmp_actual = []
             for idx in class_map[k]:
@@ -131,8 +130,7 @@ def get_class_f1_scores(true, pred, class_map, use_true_classes=True):
                 tmp_actual.append(true[idx])
             if tmp_pred:
                 score = f1_score(tmp_actual, tmp_pred)
-                print(score)
-                f1_dct[k] = f1_score(tmp_actual, tmp_pred)
+                f1_dct[k] = score
             else:
                 f1_dct[k] = 0
         return f1_dct

@@ -188,7 +188,7 @@ class DynamicDataset(TransferLearningDataset):
     def adjust_sample_size(self, f1_class_scores):
         denom = 0
         for i, score in enumerate(f1_class_scores):
-            denom += 1 - score
+            denom += (1 - score)
         avg_size = len(self.orig_values) / len(self.class_map.keys())
         sample_idx = []
         print(f'initial size: {len(self.paths)}')
@@ -231,17 +231,12 @@ class DynamicDataset(TransferLearningDataset):
         X_reduced = pca.transform(X)
         print(X_reduced)
         print("fitting kmeans")
-        kmeans = KMeans(n_clusters=num_clusters, verbose=1)
+        kmeans = KMeans(n_clusters=20, verbose=1)
         kmeans.fit(X_reduced)
-
-        print("runnign hdbscan ")
-        clutering_alg = hdbscan.HDBSCAN(min_cluster_size=20)
-        clutering_alg.fit(X_reduced)
 
         pred = kmeans.predict(X_reduced)
         print(np.unique(pred, return_counts=True))
-        pred = clutering_alg.labels_
-        print(np.unique(pred, return_counts=True))
+
         class_map = {}
         #print(np.unique(pred, return_counts=True))
         for i in list(np.unique(pred)):

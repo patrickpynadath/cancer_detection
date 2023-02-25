@@ -226,6 +226,7 @@ class DynamicDataset(TransferLearningDataset):
         print("fitting pca")
         pca.fit(X_normalized)
         X_reduced = pca.transform(X)
+        print(X_reduced)
         print("fitting kmeans")
         kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=1024, verbose=1)
         kmeans.fit(X_reduced)

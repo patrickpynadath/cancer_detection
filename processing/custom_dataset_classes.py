@@ -172,6 +172,7 @@ class DynamicDataset(TransferLearningDataset):
         self.class_map = get_label_idx_dct(values)  # dct with class_idx : sample_idx
         if use_kmeans:
             if encoder:
+                print("training kmeans")
                 self.class_map = self._get_kmeans_class_dct(encoder, kmeans_clusters, device)
             else:
                 raise Exception

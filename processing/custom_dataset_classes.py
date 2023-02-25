@@ -178,6 +178,7 @@ class DynamicDataset(TransferLearningDataset):
         class_ratios = {}
         for k in self.class_map.keys():
             class_ratios[k] = .5
+        self.use_kmeans= use_kmeans
         self.class_ratios = class_ratios
 
     def adjust_sample_size(self, f1_class_scores):

@@ -30,6 +30,7 @@ class DynamicSamplingTrainer:
         self.val_pred = []
         self.val_actual = []
         self.epoch_val = 0
+        self.use_true_labels = self.train_loader.dataset.use_kmeans
         self.logger = SummaryWriter(log_dir=f'{self.log_dir}/{tag}')
 
     def train_step(self, data: torch.Tensor):
@@ -115,22 +116,25 @@ class DynamicSamplingTrainer:
 
 # because I want to extend the resampling to be based on k-means as well, the class_map is needed
 # just a list that has what the classes for the i-th sample is
-def get_class_f1_scores(true, pred, class_map):
-    f1_dct = {}
-    for k in class_map.keys():
-        print(k)
-        tmp_pred = []
-        tmp_actual = []
-        for idx in class_map[k]:
-            tmp_pred.append(pred[idx])
-            tmp_actual.append(true[idx])
-        if tmp_pred:
-            score = f1_score(tmp_actual, tmp_pred)
-            print(score)
-            f1_dct[k] = f1_score(tmp_actual, tmp_pred)
-        else:
-            f1_dct[k] = 0
-    return f1_dct
+def get_class_f1_scores(true, pred, class_map, use_true_classes=True):
+    if use_true_classes:
+        return f1_score(true, pred, average=None)
+    else:
+        f1_dct = {}
+        for k in class_map.keys():
+            print(k)
+            tmp_pred = []
+            tmp_actual = []
+            for idx in class_map[k]:
+                tmp_pred.append(pred[idx])
+                tmp_actual.append(true[idx])
+            if tmp_pred:
+                score = f1_score(tmp_actual, tmp_pred)
+                print(score)
+                f1_dct[k] = f1_score(tmp_actual, tmp_pred)
+            else:
+                f1_dct[k] = 0
+        return f1_dct
 
 
 def get_metrics(true, pred):

@@ -192,6 +192,7 @@ class DynamicDataset(TransferLearningDataset):
         avg_size = len(self.orig_values) / len(self.class_map.keys())
         sample_idx = []
         print(f'initial size: {len(self.paths)}')
+        print(f1_class_scores)
         for k in self.class_map.keys():
             print(f"adjusting class size: {k}")
             ratio = (1-f1_class_scores[k])/denom

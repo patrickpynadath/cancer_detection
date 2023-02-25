@@ -216,7 +216,7 @@ class DynamicDataset(TransferLearningDataset):
         return np.stack(to_stack, axis=0)
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
-        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128)
+        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128, verbose=1)
         X = self._get_encoder_lv(encoder, device)
         pred = kmeans.fit_predict(X)
         class_map = {}

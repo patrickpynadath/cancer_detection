@@ -109,7 +109,10 @@ def get_clf_dataloaders(base_dir,
                                               kmeans_clusters=kmeans_clusters,
                                               encoder=encoder, device=device)
     else:
-        Dataset = lambda p, v: TransferLearningDataset(p, v, tile_length=tile_length, input_size=input_size, learning_mode=learning_mode)
+        Dataset = lambda p, v: TransferLearningDataset(p, v,
+                                                       tile_length=tile_length,
+                                                       input_size=input_size,
+                                                       learning_mode=learning_mode)
 
     if sample_strat == 'ros':
         # how many times to concat list

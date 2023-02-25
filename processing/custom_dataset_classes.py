@@ -4,6 +4,7 @@ from sklearn.cluster import MiniBatchKMeans
 import numpy as np
 import pandas as pd
 import torch
+from tqdm import tqdm, trange
 from PIL import Image
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
@@ -208,21 +209,23 @@ class DynamicDataset(TransferLearningDataset):
 
     def _get_encoder_lv(self, encoder, device='cpu'):
         to_stack = []
+        print('getting encoded lv')
         with torch.no_grad():
-            for i in range(len(self.paths)):
+            pg = trange(len(self.paths))
+            for i in pg:
                 sample = self.__getitem__(i)[1][None, :].to(device)
                 lv = encoder(sample, None)[0, :].cpu().numpy()
                 to_stack.append(lv)
         return np.stack(to_stack, axis=0)
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
-        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128, verbose=1)
+        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128)
         X = self._get_encoder_lv(encoder, device)
         pred = kmeans.fit_predict(X)
         class_map = {}
         for i in range(num_clusters):
             class_map[i] = []
-        for idx, cluster_idx in encoder(list(pred)):
+        for idx, cluster_idx in enumerate(list(pred)):
             class_map[cluster_idx].append(idx)
         return class_map
 

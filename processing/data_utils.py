@@ -88,49 +88,53 @@ def get_diffusion_dataloaders(base_dir, batch_size):
 
 
 def get_clf_dataloaders(base_dir,
-                        pos_size,
                         batch_size,
                         tile_length,
                         input_size,
                         kmeans_clusters=None,
                         device=None,
                         encoder=None,
-                        synthetic_dir=None,
                         learning_mode='normal',
-                        oversample='none'):
+                        sample_strat='none'):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
 
     # getting the synthetic paths
     pos_train_paths = []
-    if synthetic_dir:
-        for i in range(pos_size):
-            pos_train_paths.append(f'{synthetic_dir}/img{i}.png')
+    if 'dynamic' in sample_strat:
+        Dataset = lambda p, v: DynamicDataset(p, v, tile_length=tile_length, input_size=input_size,
+                                              learning_mode=learning_mode,
+                                              use_kmeans=sample_strat == 'dynamic_kmeans_ros',
+                                              kmeans_clusters=kmeans_clusters,
+                                              encoder=encoder, device=device)
     else:
-        if oversample == 'normal_ros':
-            # how many times to concat list
-            pos_train_imgids = list(split_dct['train'][1])
-            n = 1 + pos_size // len(pos_train_imgids)
-            pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
-            pos_train_paths = pos_train_paths[:pos_size]
-        else:
-            pos_train_imgids = list(split_dct['train'][1])
-            pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
-    if oversample == 'none' or oversample == 'normal_ros':
         Dataset = lambda p, v: TransferLearningDataset(p, v, tile_length=tile_length, input_size=input_size, learning_mode=learning_mode)
-    else:
-        Dataset = lambda p, v: DynamicDataset(p, v, tile_length=tile_length, input_size=input_size, learning_mode=learning_mode,
-                                               use_kmeans=oversample=='dynamic_kmeans_ros',kmeans_clusters=kmeans_clusters,
-                                               encoder=encoder, device=device)
 
-    num_pos_test = len(split_dct['test'][1])
-    neg_test_imgids = random.sample(list(split_dct['test'][0]), num_pos_test)
-    neg_train_imgids = random.sample(list(split_dct['train'][0]), pos_size)
+    if sample_strat == 'ros':
+        # how many times to concat list
+        pos_size = len(split_dct['train'][0])
+        pos_train_imgids = list(split_dct['train'][1])
+        n = 1 + pos_size// len(pos_train_imgids)
+        pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
+        pos_train_paths = pos_train_paths[:pos_size]
+        neg_train_imgids = list(split_dct['train'][0])
+    elif sample_strat == 'rus':
+        pos_size = len(split_dct['train'][1])
+        pos_train_imgids = list(split_dct['train'][1])
+        pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
+        neg_train_imgids = random.sample(list(split_dct['train'][0]), pos_size)
+    else:
+        pos_train_imgids = list(split_dct['train'][1])
+        neg_train_imgids = list(split_dct['train'][0])
+
+    neg_test_imgids = list(split_dct['test'][0])
+    pos_test_imgids = list(split_dct['test'][1])
 
     neg_test_paths = get_img_paths(neg_test_imgids, total_df, base_dir)
-    pos_test_paths = get_img_paths(list(split_dct['test'][1]), total_df, base_dir)
+    pos_test_paths = get_img_paths(pos_test_imgids, total_df, base_dir)
     neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
+    pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
 
     train_set = Dataset(pos_train_paths + neg_train_paths,
                                  [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths])

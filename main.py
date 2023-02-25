@@ -54,13 +54,13 @@ if __name__ == '__main__':
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
     elif args.command == 'train_clf':
-        assert args.oversample_method in ['none', 'normal_ros', 'dynamic_ros', 'dynamic_kmeans_ros']
+        assert args.sample_method in ['none', 'rus', 'ros', 'dynamic_ros', 'dynamic_kmeans_ros']
         input_size = (args.input_height, args.input_width)
         device = 'cpu'
         if args.accelerator == 'gpu':
             device = 'cuda'
 
-        tag = 'oversample_' + args.oversample_method + '/'
+        tag = 'oversample_' + args.sample_method + '/'
 
         path = None
 
@@ -86,18 +86,17 @@ if __name__ == '__main__':
         elif args.criterion == 'MSFE':
             criterion = MSFELoss()
             tag += 'MSFE/'
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir, args.num_pos, args.batch_size,
+        train_loader, test_loader = get_clf_dataloaders(args.base_dir,
+                                                        args.batch_size,
                                                         tile_length=args.tile_size,
-
-                                                        synthetic_dir=args.synthetic_dir,
-                                                        oversample=args.oversample_method,
+                                                        sample_strat=args.sample_method,
                                                         input_size=input_size,
                                                         device=args.device,
                                                         learning_mode=args.learning_mode,
                                                         kmeans_clusters=args.kmeans_clusters,
                                                         encoder=encoder)
         tag += 'mlp_clf'
-        if 'dynamic' in args.oversample_method:
+        if 'dynamic' in args.sample_method:
             trainer = DynamicSamplingTrainer(mlp, device, tag, train_loader, test_loader, LOG_DIR, args.lr)
             trainer.training_loop(args.epochs)
         else:

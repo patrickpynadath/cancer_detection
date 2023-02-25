@@ -196,6 +196,7 @@ class DynamicDataset(TransferLearningDataset):
             print(f"orig: {len(self.class_map[k])}")
             multiple = int(1 + num_to_sample / len(self.class_map[k]))
             to_append = self.class_map[k] * multiple
+            print(len(to_append))
             sample_idx += to_append[:num_to_sample]
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]

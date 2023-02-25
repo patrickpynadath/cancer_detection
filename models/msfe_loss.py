@@ -11,6 +11,8 @@ class MSFELoss(_Loss):
         super(MSFELoss, self).__init__(size_average, reduce, reduction)
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
+        # making target into batch x 1 x 2
+        print(input)
         neg_idx = (target == 0).nonzero()
         pos_idx = (target == 1).nonzero()
         FPE = F.mse_loss(input[pos_idx], target[pos_idx])

@@ -30,7 +30,7 @@ class DynamicSamplingTrainer:
         self.val_pred = []
         self.val_actual = []
         self.epoch_val = 0
-        self.use_true_labels = self.train_loader.dataset.use_kmeans
+        self.use_true_labels = not self.train_loader.dataset.use_kmeans
         self.logger = SummaryWriter(log_dir=f'{self.log_dir}/{tag}')
 
     def train_step(self, data: torch.Tensor):
@@ -103,7 +103,8 @@ class DynamicSamplingTrainer:
         metric_dct = get_metrics(self.train_actual, self.train_pred)
         for k in metric_dct.keys():
             self.logger.add_scalar(f'train/{k}', metric_dct[k], self.epoch_val)
-        f1_scores = get_class_f1_scores(self.train_actual, self.train_pred, self.train_loader.dataset.class_map)
+        f1_scores = get_class_f1_scores(self.train_actual, self.train_pred,
+                                        self.train_loader.dataset.class_map, self.use_true_labels)
         self.train_loader.dataset.adjust_sample_size(f1_scores)
         return
 

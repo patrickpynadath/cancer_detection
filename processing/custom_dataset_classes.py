@@ -223,7 +223,7 @@ class DynamicDataset(TransferLearningDataset):
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
         X = self._get_encoder_lv(encoder, device)
-        # X_normalized = normalize(X)
+        X = normalize(X)
         pca = PCA(n_components=20)
         print("fitting pca")
         pca.fit(X)

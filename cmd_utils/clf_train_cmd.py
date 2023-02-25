@@ -24,5 +24,5 @@ def config_resnet_train_cmd(args: ArgumentParser):
     data_flags.add_argument('--input_height', default=128, type=int, help='input img height')
     data_flags.add_argument('--input_width', default=64, type=int, help='input img width')
     data_flags.add_argument('--oversample_method', help='flag for ROS', default='normal_ros')
-    data_flags.add_argument('--training_mode', help='training mode for clf', type=str, default='normal')
+    data_flags.add_argument('--learning_mode', help='training mode for clf', type=str, default='normal')
     return args

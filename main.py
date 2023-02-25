@@ -61,10 +61,10 @@ if __name__ == '__main__':
 
         path = None
 
-        if args.training_mode == 'normal':
+        if args.learning_mode == 'normal':
             path = TRAINED_NORMAL_PATH
             tag += 'normal/'
-        elif args.training_mode == 'jigsaw':
+        elif args.learning_mode == 'jigsaw':
             path = TRAINED_JIGSAW_PATH
             tag += 'jigsaw/'
         trained_ae = PLAutoEncoder.load_from_checkpoint(

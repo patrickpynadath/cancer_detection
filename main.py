@@ -56,8 +56,11 @@ if __name__ == '__main__':
     elif args.command == 'train_clf':
         assert args.oversample_method in ['none', 'normal_ros', 'dynamic_ros', 'dynamic_kmeans_ros']
         input_size = (args.input_height, args.input_width)
+        device = 'cpu'
+        if args.accelerator == 'gpu':
+            device = 'cuda'
 
-        tag = '' + args.oversample_method
+        tag = 'oversample_' + args.oversample_method + '/'
 
         path = None
 
@@ -73,7 +76,7 @@ if __name__ == '__main__':
             num_hiddens=256,
             num_residual_layers=20,
             num_residual_hiddens=256,
-            latent_size=1024, lr=.01, input_size=(128, 64)).to(args.device)
+            latent_size=1024, lr=.01, input_size=(128, 64)).to(device)
         encoder = trained_ae.encode
         mlp = Generic_MLP(encoder)
         criterion = None
@@ -95,7 +98,7 @@ if __name__ == '__main__':
                                                         encoder=encoder)
         tag += 'mlp_clf'
         if 'dynamic' in args.oversample_method:
-            trainer = DynamicSamplingTrainer(mlp, args.device, tag, train_loader, test_loader, LOG_DIR, args.lr)
+            trainer = DynamicSamplingTrainer(mlp, device, tag, train_loader, test_loader, LOG_DIR, args.lr)
             trainer.training_loop(args.epochs)
         else:
             clf = PL_MLP_clf(mlp, criterion, args.lr)

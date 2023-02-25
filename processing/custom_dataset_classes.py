@@ -12,6 +12,7 @@ from skimage.morphology import disk
 from torch.utils.data import Dataset
 from torchvision.transforms import Pad
 from sklearn.preprocessing import normalize
+import hdbscan
 
 
 class XRayDataset(Dataset):
@@ -227,11 +228,15 @@ class DynamicDataset(TransferLearningDataset):
         pca.fit(X_normalized)
         X_reduced = pca.transform(X)
         print(X_reduced)
-        print("fitting kmeans")
-        kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=1024, verbose=1)
-        kmeans.fit(X_reduced)
+        # print("fitting kmeans")
+        # kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=1024, verbose=1)
+        # kmeans.fit(X_reduced)
+        clutering_alg = hdbscan.HDBSCAN(min_samples=50)
+        clutering_alg.fit(X_reduced)
 
-        pred = kmeans.predict(X_reduced)
+        #pred = kmeans.predict(X_reduced)
+        pred = clutering_alg.labels_
+        num_clusters = len(np.unique(pred))
         class_map = {}
         for i in range(num_clusters):
             class_map[i] = []

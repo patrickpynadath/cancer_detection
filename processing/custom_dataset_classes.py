@@ -219,7 +219,7 @@ class DynamicDataset(TransferLearningDataset):
 
     def _get_kmeans_class_dct(self, encoder, num_clusters, device):
         X = self._get_encoder_lv(encoder, device)
-        print(X)
+        print(X.shape)
         kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=128, verbose=1)
         kmeans.fit(X)
 

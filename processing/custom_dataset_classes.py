@@ -232,7 +232,7 @@ class DynamicDataset(TransferLearningDataset):
         # kmeans = MiniBatchKMeans(n_clusters=num_clusters, batch_size=1024, verbose=1)
         # kmeans.fit(X_reduced)
         print("runnign hdbscan ")
-        clutering_alg = hdbscan.HDBSCAN(min_samples=50)
+        clutering_alg = hdbscan.HDBSCAN(min_cluster_size=20)
         clutering_alg.fit(X_reduced)
 
         #pred = kmeans.predict(X_reduced)

@@ -97,6 +97,7 @@ if __name__ == '__main__':
                                                         encoder=encoder)
         tag += 'mlp_clf'
         if 'dynamic' in args.sample_strat:
+            print(tag)
             trainer = DynamicSamplingTrainer(mlp, device, tag, train_loader, test_loader, LOG_DIR, args.lr)
             trainer.training_loop(args.epochs)
         else:

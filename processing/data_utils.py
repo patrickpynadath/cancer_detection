@@ -118,7 +118,7 @@ def get_clf_dataloaders(base_dir,
             pos_train_imgids = list(split_dct['train'][1])
             pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
     if oversample == 'none' or oversample == 'normal_ros':
-        Dataset = TransferLearningDataset
+        Dataset = lambda p, v: TransferLearningDataset(p, v, tile_length=tile_length, input_size=input_size, learning_mode=learning_mode)
     else:
         Dataset = lambda p, v: DynamicDataset(p, v, tile_length=tile_length, input_size=input_size, learning_mode=learning_mode,
                                                use_kmeans=oversample=='dynamic_kmeans_ros',kmeans_clusters=kmeans_clusters,

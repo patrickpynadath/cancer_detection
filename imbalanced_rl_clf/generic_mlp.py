@@ -39,8 +39,8 @@ class PL_MLP_clf(pl.LightningModule):
         self.val_actual = []
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        z = self.model.encoder(x, None)
+        orig, jigsaw, y = batch
+        z = self.model.encoder(jigsaw, None)
         out = self.model.mp(z)
 
         logits = self.softmax(out)
@@ -54,9 +54,13 @@ class PL_MLP_clf(pl.LightningModule):
         return loss
 
     def validation_step(self, batch,  batch_idx):
-        x, y = batch
-        logits = self(x)
+        orig, jigsaw, y = batch
+        z = self.model.encoder(jigsaw, None)
+        out = self.model.mp(z)
+
+        logits = self.softmax(out)
         loss = self.criterion(logits, y)
+
         pred = torch.argmax(logits, dim=1)
 
         self.val_pred += [pred[i].item() for i in range(len(pred))]

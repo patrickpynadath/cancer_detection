@@ -88,4 +88,5 @@ def get_metrics(true, pred):
     acc = accuracy_score(true, pred)
     f1 = f1_score(true, pred)
     roc = roc_auc_score(true, pred)
-    return {'acc' : acc, 'f1' : f1, 'roc_auc' : roc}
+    num_pos_pred = sum(pred)
+    return {'acc' : acc, 'f1' : f1, 'roc_auc' : roc, 'num_pos_pred' : num_pos_pred}

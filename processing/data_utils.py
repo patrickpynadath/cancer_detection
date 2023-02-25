@@ -91,6 +91,7 @@ def get_clf_dataloaders(base_dir,
                         batch_size,
                         tile_length,
                         input_size,
+                        label_dtype,
                         kmeans_clusters=None,
                         device=None,
                         encoder=None,
@@ -135,17 +136,17 @@ def get_clf_dataloaders(base_dir,
                                                               learning_mode=learning_mode,
                                                               use_kmeans=sample_strat == 'dynamic_kmeans_ros',
                                                               kmeans_clusters=kmeans_clusters,
-                                                              encoder=encoder, device=device)
+                                                              encoder=encoder, device=device, label_dtype=label_dtype)
     else:
         train_set = TransferLearningDataset(train_paths, train_values,
                                            tile_length=tile_length,
                                            input_size=input_size,
-                                           learning_mode=learning_mode)
+                                           learning_mode=learning_mode, label_dtype=label_dtype)
 
     test_set = TransferLearningDataset(test_paths, test_values,
                                        tile_length=tile_length,
                                        input_size=input_size,
-                                       learning_mode=learning_mode)
+                                       learning_mode=learning_mode, label_dtype=label_dtype)
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)

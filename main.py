@@ -80,14 +80,14 @@ if __name__ == '__main__':
         encoder = trained_ae.encode
         mlp = Generic_MLP(encoder)
         criterion = None
+        labels_dtype = torch.long
         if args.criterion == 'CE':
             criterion = CrossEntropyLoss()
             tag += 'CE/'
         elif args.criterion == 'MSFE':
             criterion = MSFELoss()
-            print("asd")
-            print(criterion)
             tag += 'MSFE/'
+            labels_dtype = torch.float32
         train_loader, test_loader = get_clf_dataloaders(args.base_dir,
                                                         args.batch_size,
                                                         tile_length=args.tile_size,
@@ -96,7 +96,8 @@ if __name__ == '__main__':
                                                         device=args.device,
                                                         learning_mode=args.learning_mode,
                                                         kmeans_clusters=args.kmeans_clusters,
-                                                        encoder=encoder)
+                                                        encoder=encoder,
+                                                        label_dtype=labels_dtype)
         tag += 'mlp_clf'
         if 'dynamic' in args.sample_strat:
             print(tag)

@@ -89,7 +89,8 @@ class TransferLearningDataset(AugmentedImgDataset):
     def __init__(self, paths, values,
                  tile_length,
                  input_size,
-                 learning_mode = 'normal'):
+                 learning_mode = 'normal',
+                 label_dtype=torch.long):
         super().__init__(paths, values)
         self.tile_length = tile_length
         self.tiling = (math.ceil(input_size[0] / tile_length), math.ceil(input_size[1] / tile_length))
@@ -98,6 +99,7 @@ class TransferLearningDataset(AugmentedImgDataset):
         self.pad = Pad(padding=self.pad_dim)
         self.learning_mode = learning_mode
         self.input_size = input_size
+        self.label_dtype = torch.long
 
     def _make_jigsaw(self, img: torch.Tensor):
         img = self.pad(img)
@@ -153,7 +155,7 @@ class TransferLearningDataset(AugmentedImgDataset):
         else:
             input_img = final_img.clone()
         # also get the labels
-        return final_img, input_img, torch.tensor(self.values[i], dtype=torch.long)
+        return final_img, input_img, torch.tensor(self.values[i], dtype=self.label_dtype)
 
 
 class DynamicDataset(TransferLearningDataset):
@@ -164,11 +166,12 @@ class DynamicDataset(TransferLearningDataset):
                  use_kmeans = False,
                  kmeans_clusters=8,
                  encoder = None,
-                 device='cpu'):
+                 device='cpu',
+                 label_dtype=torch.long):
         super().__init__(paths,
                          values, tile_length,
                          input_size,
-                         learning_mode)
+                         learning_mode, label_dtype=label_dtype)
 
         self.orig_paths = paths
         self.orig_values = values

@@ -30,7 +30,7 @@ class DynamicSamplingTrainer:
         self.val_pred = []
         self.val_actual = []
         self.epoch_val = 0
-        self.logger = SummaryWriter(log_dir=f'{self.log_dir}/tag')
+        self.logger = SummaryWriter(log_dir=f'{self.log_dir}/{tag}')
 
     def train_step(self, data: torch.Tensor):
         """

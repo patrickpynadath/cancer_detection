@@ -15,7 +15,7 @@ class Generic_MLP(nn.Module):
         self.l2 = nn.Linear(512, 256)
         self.l3 = nn.Linear(256, 2)
         self.mp = nn.Sequential(self.l1, nn.ReLU(), self.l2, nn.ReLU(), self.l3)
-        self.final_act = nn.Softmax()
+        self.final_act = nn.Softmax(dim=1)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).

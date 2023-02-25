@@ -106,6 +106,9 @@ class DynamicSamplingTrainer:
         metric_dct = get_metrics(self.train_actual, self.train_pred)
         for k in metric_dct.keys():
             self.logger.add_scalar(f'train/{k}', metric_dct[k], self.epoch_val)
+        self.logger.add_scalar('train/num_pos_pred', sum(self.train_pred), self.epoch_val)
+        self.train_pred = []
+        self.train_actual = []
         f1_scores = get_class_f1_scores(self.train_actual, self.train_pred,
                                         self.train_loader.dataset.class_map, self.use_true_labels)
         self.train_loader.dataset.adjust_sample_size(f1_scores)
@@ -115,6 +118,9 @@ class DynamicSamplingTrainer:
         metric_dct = get_metrics(self.val_actual, self.val_pred)
         for k in metric_dct.keys():
             self.logger.add_scalar(f'val/{k}', metric_dct[k], self.epoch_val)
+        self.logger.add_scalar('val/num_pos_pred', sum(self.val_pred), self.epoch_val)
+        self.val_pred = []
+        self.val_actual = []
         return
 
 

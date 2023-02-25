@@ -187,8 +187,8 @@ class DynamicDataset(TransferLearningDataset):
 
     def adjust_sample_size(self, f1_class_scores):
         denom = 0
-        for i, score in enumerate(f1_class_scores):
-            denom += (1 - score)
+        for key, item in f1_class_scores.items():
+            denom += (1 - item)
         avg_size = len(self.orig_values) / len(self.class_map.keys())
         sample_idx = []
         print(f'initial size: {len(self.paths)}')

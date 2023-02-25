@@ -104,6 +104,7 @@ class DynamicSamplingTrainer:
         return
 
     def on_train_epoch_end(self):
+        print(self.train_actual, self.train_pred)
         metric_dct = get_metrics(self.train_actual, self.train_pred)
         for k in metric_dct.keys():
             self.logger.add_scalar(f'train/{k}', metric_dct[k], self.epoch_val)

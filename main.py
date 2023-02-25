@@ -73,7 +73,7 @@ if __name__ == '__main__':
             num_hiddens=256,
             num_residual_layers=20,
             num_residual_hiddens=256,
-            latent_size=1024, lr=.01, input_size=(128, 64))
+            latent_size=1024, lr=.01, input_size=(128, 64)).to(args.device)
         encoder = trained_ae.encode
         mlp = Generic_MLP(encoder)
         criterion = None

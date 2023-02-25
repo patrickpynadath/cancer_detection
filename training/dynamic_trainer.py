@@ -60,7 +60,7 @@ class DynamicSamplingTrainer:
         with torch.no_grad():
             loss = 0
             pg = tqdm(enumerate(self.test_loader), total=len(self.test_loader), desc='val loop running')
-            for i, data in enumerate(self.test_loader):
+            for i, data in pg:
                 orig, jigsaw, labels = data
                 orig, jigsaw, labels = orig.to(self.device), jigsaw.to(self.device), labels.to(self.device)
                 self.model.eval()

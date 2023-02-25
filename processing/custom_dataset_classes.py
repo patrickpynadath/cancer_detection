@@ -184,9 +184,9 @@ class DynamicDataset(TransferLearningDataset):
         denom = 0
         for i, score in enumerate(f1_class_scores):
             denom += 1 - score
-
         avg_size = len(self.orig_values) / len(self.class_map.keys())
         sample_idx = []
+        print(f'initial size: {len(self.paths)}')
         for k in self.class_map.keys():
             print(f"adjusting class size: {k}")
             ratio = (1-f1_class_scores[k])/denom
@@ -199,6 +199,7 @@ class DynamicDataset(TransferLearningDataset):
             sample_idx += to_append[:num_to_sample]
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]
+        print(f"new size: {len(self.paths)}")
         return
 
     def _get_encoder_lv(self, encoder, device='cpu'):

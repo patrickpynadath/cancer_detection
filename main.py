@@ -94,13 +94,13 @@ if __name__ == '__main__':
                                                         kmeans_clusters=args.kmeans_clusters,
                                                         encoder=encoder)
         tag += 'mlp_clf'
-        clf = PL_MLP_clf(mlp, criterion)
         if 'dynamic' in args.oversample_method:
             trainer = DynamicSamplingTrainer(mlp, args.device, tag, train_loader, test_loader, LOG_DIR, args.lr)
             trainer.training_loop(args.epochs)
-
-        generic_training_loop(args, clf, train_loader, test_loader, tag)
-        torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
+        else:
+            clf = PL_MLP_clf(mlp, criterion, args.lr)
+            generic_training_loop(args, clf, train_loader, test_loader, tag)
+            torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
 
     elif args.command == 'train_diffusion':
         train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)

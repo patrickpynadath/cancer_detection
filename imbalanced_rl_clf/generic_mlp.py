@@ -26,8 +26,9 @@ class Generic_MLP(nn.Module):
 
 
 class PL_MLP_clf(pl.LightningModule):
-    def __init__(self, mlp : Generic_MLP, criterion):
+    def __init__(self, mlp : Generic_MLP, criterion, lr):
         super().__init__()
+        self.lr = lr
         self.model = mlp
         self.softmax = nn.Softmax()
         self.epoch_val = 0

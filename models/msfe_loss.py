@@ -12,9 +12,11 @@ class MSFELoss(_Loss):
 
     def forward(self, input: Tensor, target: Tensor) -> Tensor:
         # making target into batch x 1 x 2
-        print(input.size())
+        new_target = torch.ones_like(input, device=input.device)
+        new_target[:, 1] = target
+        new_target[:, 0] = new_target[:, 0] - target
         neg_idx = (target == 0).nonzero()
         pos_idx = (target == 1).nonzero()
-        FPE = F.mse_loss(input[pos_idx], target[pos_idx])
-        FNE = F.mse_loss(input[neg_idx], target[neg_idx])
+        FPE = F.mse_loss(input[pos_idx], new_target[pos_idx])
+        FNE = F.mse_loss(input[neg_idx], new_target[neg_idx])
         return FPE ** 2 + FNE ** 2

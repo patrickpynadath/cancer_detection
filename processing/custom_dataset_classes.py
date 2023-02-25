@@ -194,12 +194,10 @@ class DynamicDataset(TransferLearningDataset):
         sample_idx = []
         print(f'initial size: {len(self.paths)}')
         print(f1_class_scores)
-        s = 0
         for k in self.class_map.keys():
             print(f"adjusting class size: {k}")
             ratio = (1-f1_class_scores[k])/denom
-            s += ratio
-            num_to_sample = int(avg_size * ratio)
+            num_to_sample = int(len(self.orig_values) * ratio) # why use avg size and not total? this way, always add up to 1
             print(f"ratio: {ratio}")
             print(f"num to sample: {num_to_sample}")
             print(f"orig: {len(self.class_map[k])}")
@@ -208,7 +206,6 @@ class DynamicDataset(TransferLearningDataset):
             to_append = to_append[:num_to_sample]
             print(len(to_append))
             sample_idx += to_append
-        print(f'sum of ratio {s}')
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]
         print(f"new size: {len(self.paths)}")

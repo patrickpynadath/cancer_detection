@@ -53,7 +53,7 @@ class ImbalancedLoss(_Loss):
         elif self.mode == 'info':
             num = -1 * torch.matmul(torch.log(input_row), target_row)
             denom = torch.linalg.vector_norm(torch.linalg.norm(target_row)) + self.eps
-
+        print(f"{score_type} : {num / denom}")
         return num / denom
 
 

@@ -21,10 +21,10 @@ class ImbalancedLoss(_Loss):
 
         get_metric = lambda score_type: self._get_score(input, new_target, score_type)
 
-        fp = .1 * get_metric('fp')
+        fp = .01 * get_metric('fp')
         fn = 2 * get_metric('fn')
         tp = 2 * get_metric('tp')
-        tn = .1 * get_metric('tn')
+        tn = .01 * get_metric('tn')
 
 
         return fp + fn - tp - tn

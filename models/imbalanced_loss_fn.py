@@ -8,7 +8,7 @@ from torch.nn.modules.loss import _Loss
 class ImbalancedLoss(_Loss):
     def __init__(self, size_average=None, reduce=None,
                  reduction: str = 'mean', mode: str = 'info',
-                 eps = 1e-7):
+                 eps = .01:
         super(ImbalancedLoss, self).__init__(size_average, reduce, reduction)
         self.mode = mode
         self.eps = eps
@@ -29,7 +29,7 @@ class ImbalancedLoss(_Loss):
         prec_sur = tp / (tp + fp + self.eps)
         rec_sur = tp / (tp + fn + self.eps)
         spec_sur = tn / (tn + fp + self.eps)
-        return - 1 * prec_sur * rec_sur * spec_sur
+        return - 1 * (prec_sur + rec_sur + spec_sur)
 
     def _get_score(self, input: Tensor, target: Tensor, score_type: str) -> Tensor:
         assert score_type in ['fp', 'fn', 'tn', 'tp']

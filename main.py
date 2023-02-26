@@ -82,7 +82,7 @@ if __name__ == '__main__':
         criterion = None
         labels_dtype = torch.long
         if args.criterion == 'CE':
-            criterion = CrossEntropyLoss()
+            criterion = CrossEntropyLoss(weight=torch.Tensor([.05, 1]))
             tag += 'CE/'
         elif args.criterion == 'MSFE':
             criterion = MSFELoss()

@@ -71,7 +71,7 @@ class PL_MLP_clf(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, eps=.01)
+        optimizer = torch.optim.Adam(self.model.mp.parameters(), lr=self.lr, eps=.01)
         return optimizer
 
     def on_train_epoch_end(self) -> None:

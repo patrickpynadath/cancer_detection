@@ -93,7 +93,7 @@ if __name__ == '__main__':
             labels_dtype = torch.float32
 
         elif args.criterion == 'IMB':
-            criterion = ImbalancedLoss()
+            criterion = ImbalancedLoss(mode=args.sim_calc)
             tag += 'IMB/'
             labels_dtype = torch.float32
 

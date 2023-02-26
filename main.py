@@ -7,7 +7,7 @@ from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloa
     split_data, get_ae_loaders
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss
+    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss
 from training import generic_training_loop, diffusion_training_loop, DynamicSamplingTrainer
 from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
 import torch
@@ -88,6 +88,12 @@ if __name__ == '__main__':
             criterion = MSFELoss()
             tag += 'MSFE/'
             labels_dtype = torch.float32
+
+        elif args.criterion == 'IMB':
+            criterion = ImbalancedLoss()
+            tag += 'IMB/'
+            labels_dtype = torch.float32
+
         train_loader, test_loader = get_clf_dataloaders(args.base_dir,
                                                         args.batch_size,
                                                         tile_length=args.tile_size,

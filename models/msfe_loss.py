@@ -19,7 +19,9 @@ class MSFELoss(_Loss):
         pos_idx = (target == 1).nonzero()
         FPE = F.mse_loss(input[pos_idx], new_target[pos_idx])
         FNE = F.mse_loss(input[neg_idx], new_target[neg_idx])
-        print(FPE)
-        print(FNE)
-        l = FPE ** 2 + (FNE ** 2)
+        l = 0
+        if not torch.isnan(FPE):
+            l += FPE ** 2
+        if not torch.isnan(FNE):
+            l += FNE ** 2
         return l

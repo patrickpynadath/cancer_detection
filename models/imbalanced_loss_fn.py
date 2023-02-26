@@ -21,13 +21,14 @@ class ImbalancedLoss(_Loss):
 
         get_metric = lambda score_type: self._get_score(input, new_target, score_type)
 
-        fp = .01 * get_metric('fp')
-        fn = 2 * get_metric('fn')
-        tp = 2 * get_metric('tp')
-        tn = .01 * get_metric('tn')
+        fp = get_metric('fp')
+        fn = get_metric('fn')
+        tp = get_metric('tp')
+        tn = get_metric('tn')
 
-
-        return fp + fn - tp - tn
+        prec = tp / (fp + tp + self.eps)
+        rec = tp / (tp + fn + self.eps)
+        return -1 * (prec * rec) / (prec + rec + self.eps)
 
     def _get_score(self, input: Tensor, target: Tensor, score_type: str) -> Tensor:
         assert score_type in ['fp', 'fn', 'tn', 'tp']

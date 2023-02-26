@@ -26,10 +26,10 @@ class ImbalancedLoss(_Loss):
         tp = get_metric('tp')
         tn = get_metric('tn')
 
-        # prec_sur = tp / (tp + fp + self.eps)
-        # rec_sur = tp / (tp + fn + self.eps)
-        # spec_sur = tn / (tn + fp + self.eps)
-        return fn / (tp + self.eps)
+        prec_sur = tp / (tp + fp + self.eps)
+        rec_sur = tp / (tp + fn + self.eps)
+        spec_sur = tn / (tn + fp + self.eps)
+        return (prec_sur * rec_sur)/(prec_sur + spec_sur)
 
     def _get_score(self, input: Tensor, target: Tensor, score_type: str) -> Tensor:
         assert score_type in ['fp', 'fn', 'tn', 'tp']
@@ -53,7 +53,6 @@ class ImbalancedLoss(_Loss):
         elif self.mode == 'info':
             num = -1 * torch.matmul(torch.log(input_row), target_row)
             denom = torch.linalg.vector_norm(torch.linalg.norm(target_row)) + self.eps
-        print(f"{score_type} : {num / denom}")
         return num / denom
 
 

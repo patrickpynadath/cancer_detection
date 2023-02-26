@@ -51,9 +51,9 @@ class ImbalancedLoss(_Loss):
             denom = (torch.linalg.norm(input_row) * torch.linalg.norm(target_row)) + self.eps
 
         elif self.mode == 'info':
-            num = -1 * torch.matmul(torch.log(input_row, ), target_row)
+            num = -1 * torch.matmul(torch.log(input_row), target_row)
             denom = torch.linalg.vector_norm(torch.linalg.norm(target_row)) + self.eps
-        print(f"{score_type} : {num}")
+        print(f"{score_type} : {torch.log(input_row)}")
         return num / denom
 
 

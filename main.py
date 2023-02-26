@@ -102,7 +102,7 @@ if __name__ == '__main__':
                                                         device=args.device,
                                                         learning_mode=args.learning_mode,
                                                         kmeans_clusters=args.kmeans_clusters,
-                                                        encoder=encoder,
+                                                        encoder=trained_ae.encode,
                                                         label_dtype=labels_dtype)
         tag += 'mlp_clf'
         if 'dynamic' in args.sample_strat:

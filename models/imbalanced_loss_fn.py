@@ -7,7 +7,7 @@ from torch.nn.modules.loss import _Loss
 
 class ImbalancedLoss(_Loss):
     def __init__(self, size_average=None, reduce=None,
-                 reduction: str = 'mean', mode: str = 'info',
+                 reduction: str = 'mean', mode: str = 'geo',
                  eps = .01):
         super(ImbalancedLoss, self).__init__(size_average, reduce, reduction)
         self.mode = mode
@@ -53,7 +53,7 @@ class ImbalancedLoss(_Loss):
         elif self.mode == 'info':
             num = -1 * torch.matmul(torch.log(input_row), target_row)
             denom = torch.linalg.vector_norm(torch.linalg.norm(target_row)) + self.eps
-        print(f"{score_type} : {torch.log(input_row)}")
+        print(f"{score_type} : {num / denom}")
         return num / denom
 
 

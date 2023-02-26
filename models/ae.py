@@ -60,6 +60,9 @@ class PLAutoEncoder(pl.LightningModule):
         z = self._fc_latent(pre_latent)
         return z
 
+    def get_encoder(self):
+        return {'encoder': self._encoder, 'fc_latent': self._fc_latent}
+
     def decode(self, z):
         dec = self._fc_dec(z)
         pre_recon = dec.view(-1, self.enc_dim[1], self.enc_dim[2], self.enc_dim[3])

@@ -6,9 +6,10 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 class Generic_MLP(nn.Module):
 
-    def __init__(self, encoder):
+    def __init__(self, encoder, fc_latent):
         super(Generic_MLP, self).__init__()
         self.encoder = encoder
+        self.fc_latent = fc_latent
 
 
         self.l1 = nn.Linear(1024, 512)
@@ -20,7 +21,9 @@ class Generic_MLP(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        z = self.encoder(x, None)
+        z = self.encoder(x)
+        z = z.flatten(start_dim=1)
+        z = self.fc_latent(z)
         out = self.mp(z)
         return self.final_act(out)
 
@@ -68,7 +71,7 @@ class PL_MLP_clf(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.mp.parameters(), lr=self.lr, eps=.01)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, eps=.01)
         return optimizer
 
     def on_train_epoch_end(self) -> None:

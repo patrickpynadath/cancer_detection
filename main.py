@@ -77,8 +77,8 @@ if __name__ == '__main__':
             num_residual_layers=20,
             num_residual_hiddens=256,
             latent_size=1024, lr=.01, input_size=(128, 64)).to(device)
-        encoder = trained_ae.encode
-        mlp = Generic_MLP(encoder)
+        pretrained = trained_ae.get_encoder()
+        mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])
         criterion = None
         labels_dtype = torch.long
         if args.criterion == 'CE':

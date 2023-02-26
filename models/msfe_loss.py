@@ -20,5 +20,4 @@ class MSFELoss(_Loss):
         FPE = F.mse_loss(input[pos_idx], new_target[pos_idx])
         FNE = F.mse_loss(input[neg_idx], new_target[neg_idx])
         l = FPE ** 2 + (FNE ** 2)
-        print(l)
         return l

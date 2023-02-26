@@ -77,6 +77,8 @@ class PL_MLP_clf(pl.LightningModule):
         for k in res_dct.keys():
             tb.add_scalar(f'train/{k}', res_dct[k], self.epoch_val)
         self.epoch_val += 1
+        self.train_pred = []
+        self.train_actual = []
         return
 
     def on_validation_epoch_end(self) -> None:
@@ -84,6 +86,8 @@ class PL_MLP_clf(pl.LightningModule):
         res_dct = get_metrics(self.val_actual, self.val_pred)
         for k in res_dct.keys():
             tb.add_scalar(f'val/{k}', res_dct[k], self.epoch_val)
+        self.val_pred = []
+        self.val_actual = []
         return
 
 

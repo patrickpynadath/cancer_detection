@@ -47,11 +47,11 @@ class ImbalancedLoss(_Loss):
             target_row = target[:, 1]
 
         if self.mode == 'geo':
-            num = torch.linalg.vecdot(input, target_row)
+            num = torch.matmul(input_row, target_row)
             denom = (torch.linalg.norm(input_row) * torch.linalg.norm(target_row)) + self.eps
 
         elif self.mode == 'info':
-            num = -1 * torch.linalg.vecdot(torch.log(input_row), target_row)
+            num = -1 * torch.matmul(torch.log(input_row), target_row)
             denom = torch.linalg.vector_norm(torch.linalg.norm(target_row)) + self.eps
 
         return num / denom

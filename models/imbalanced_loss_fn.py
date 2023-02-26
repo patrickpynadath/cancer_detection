@@ -33,7 +33,6 @@ class ImbalancedLoss(_Loss):
 
     def _get_score(self, input: Tensor, target: Tensor, score_type: str) -> Tensor:
         assert score_type in ['fp', 'fn', 'tn', 'tp']
-        dummy = torch.ones(size=(target.size(0)), device=target.device)
         if score_type == 'tp':
             input_row = input[:, 1]
             target_row = target[:, 1]

@@ -8,7 +8,7 @@ from torch.nn.modules.loss import _Loss
 class ImbalancedLoss(_Loss):
     def __init__(self, size_average=None, reduce=None,
                  reduction: str = 'mean', mode: str = 'geo',
-                 eps = .01):
+                 eps = 1e-7):
         super(ImbalancedLoss, self).__init__(size_average, reduce, reduction)
         self.mode = mode
         self.eps = eps

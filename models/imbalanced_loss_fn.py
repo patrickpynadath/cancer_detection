@@ -26,10 +26,10 @@ class ImbalancedLoss(_Loss):
         tp = get_metric('tp')
         tn = get_metric('tn')
 
-        prec_sur = tp / (tp + fp + self.eps)
-        rec_sur = tp / (tp + fn + self.eps)
-        spec_sur = tn / (tn + fp + self.eps)
-        return fn + .1 * fp - tn - 2 * tp
+        # prec_sur = tp / (tp + fp + self.eps)
+        # rec_sur = tp / (tp + fn + self.eps)
+        # spec_sur = tn / (tn + fp + self.eps)
+        return fn / (tp + self.eps)
 
     def _get_score(self, input: Tensor, target: Tensor, score_type: str) -> Tensor:
         assert score_type in ['fp', 'fn', 'tn', 'tp']

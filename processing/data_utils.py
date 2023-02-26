@@ -108,22 +108,25 @@ def get_clf_dataloaders(base_dir,
         pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir) * n
         pos_train_paths = pos_train_paths[:pos_size]
         neg_train_imgids = list(split_dct['train'][0])
+        neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
     elif sample_strat == 'rus':
         pos_size = len(split_dct['train'][1])
         pos_train_imgids = list(split_dct['train'][1])
         pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
         neg_train_imgids = random.sample(list(split_dct['train'][0]), pos_size)
+        neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
+
     else:
         pos_train_imgids = list(split_dct['train'][1])
         neg_train_imgids = list(split_dct['train'][0])
+        pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
+        neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
 
     neg_test_imgids = list(split_dct['test'][0])
     pos_test_imgids = list(split_dct['test'][1])
 
     neg_test_paths = get_img_paths(neg_test_imgids, total_df, base_dir)
     pos_test_paths = get_img_paths(pos_test_imgids, total_df, base_dir)
-    neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
-    pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
 
     train_paths = pos_train_paths + neg_train_paths
     train_values = [1 for _ in pos_train_paths] + [0 for _ in neg_train_paths]

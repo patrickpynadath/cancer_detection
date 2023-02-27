@@ -185,7 +185,7 @@ class DynamicDataset(TransferLearningDataset):
                 raise Exception
         class_ratios = {}
         for k in self.class_map.keys():
-            class_ratios[k] = len(self.class_map[k])/self.orig_paths
+            class_ratios[k] = len(self.class_map[k])/len(self.orig_paths)
         self.use_kmeans= use_kmeans
         self.class_ratios = class_ratios
         self.update_beta = update_beta

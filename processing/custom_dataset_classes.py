@@ -185,7 +185,7 @@ class DynamicDataset(TransferLearningDataset):
                 raise Exception
         class_ratios = {}
         for k in self.class_map.keys():
-            class_ratios[k] = .5
+            class_ratios[k] = len(self.class_map[k])/self.orig_paths
         self.use_kmeans= use_kmeans
         self.class_ratios = class_ratios
         self.update_beta = update_beta
@@ -206,10 +206,10 @@ class DynamicDataset(TransferLearningDataset):
         print(f1_class_scores)
         for k in self.class_map.keys():
             print(f"adjusting class size: {k}")
-            cur_ratio = len(self.class_map[k])/len(self.orig_paths)
+            cur_ratio = self.class_ratios[k]
             ratio = new_ratios[k] * self.update_beta + cur_ratio * (1 - self.update_beta)
             num_to_sample = int(len(self.orig_values) * ratio)
-            print(f"cur sampling size: {len(self.class_map[k])}")
+            print(f"cur sampling size: {int(self.class_ratios[k] * len(self.orig_paths))}")
             print(f"new sampling size: {num_to_sample}")
             #multiple = int(1 + num_to_sample / len(self.class_map[k]))
             #to_append = self.class_map[k] * multiple

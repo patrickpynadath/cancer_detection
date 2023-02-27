@@ -150,7 +150,7 @@ def get_class_f1_scores(true, pred, idx_class_map, use_true_classes=True):
         for k in range(num_classes):
             tmp_pred = []
             tmp_actual = []
-            for idx, class_val in idx_class_map:
+            for idx, class_val in enumerate(list(idx_class_map)):
                 if class_val == k:
                     tmp_pred.append(pred[idx])
                     tmp_actual.append(true[idx])

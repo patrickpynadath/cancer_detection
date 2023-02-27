@@ -208,7 +208,7 @@ class DynamicDataset(TransferLearningDataset):
             print(f"adjusting class size: {k}")
             cur_ratio = len(self.class_map[k])/len(self.orig_paths)
             ratio = new_ratios[k] * self.update_beta + cur_ratio * (1 - self.update_beta)
-            num_to_sample = int(len(self.class_map[k]) * ratio)
+            num_to_sample = int(len(self.orig_values) * ratio)
             print(f"cur sampling size: {len(self.class_map[k])}")
             print(f"new sampling size: {num_to_sample}")
             multiple = int(1 + num_to_sample / len(self.class_map[k]))

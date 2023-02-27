@@ -194,12 +194,13 @@ class DynamicDataset(TransferLearningDataset):
     # calculated_weight
     # need final weights to be in between current and calculated
     def adjust_sample_size(self, f1_class_scores):
-        denom = 0
-        print(f1_class_scores)
-        for key, item in enumerate(f1_class_scores):
-            denom += (1 - item)
-        new_ratios = np.exp(np.array(f1_class_scores))/np.sum(np.exp(np.array(f1_class_scores)))
-        avg_size = len(self.orig_values) / len(self.class_map.keys())
+        print(f"f1 scores: {f1_class_scores}")
+        f1_class_scores = np.array(f1_class_scores)
+        ratios = np.ones_like(f1_class_scores) - f1_class_scores
+        new_ratios = np.exp(np.array(ratios))/np.sum(np.exp(np.array(ratios)))
+        print(f"new sampling ratios: {new_ratios}")
+        orig_ratios = [len(self.class_map[k])/len(self.orig_values) for k in list(self.class_map.keys())]
+        print(f"orig ratios: {orig_ratios}")
         sample_idx = []
         print(f'initial size: {len(self.paths)}')
         print(f1_class_scores)
@@ -208,9 +209,8 @@ class DynamicDataset(TransferLearningDataset):
             cur_ratio = len(self.class_map[k])/len(self.orig_paths)
             ratio = new_ratios[k] * self.update_beta + cur_ratio * (1 - self.update_beta)
             num_to_sample = int(len(self.class_map[k]) * ratio)
-            print(f"ratio: {ratio}")
-            print(f"num to sample: {num_to_sample}")
-            print(f"orig: {len(self.class_map[k])}")
+            print(f"cur sampling size: {len(self.class_map[k])}")
+            print(f"new sampling size: {num_to_sample}")
             multiple = int(1 + num_to_sample / len(self.class_map[k]))
             to_append = self.class_map[k] * multiple
             to_append = to_append[:num_to_sample]

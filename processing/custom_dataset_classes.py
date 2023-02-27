@@ -216,7 +216,7 @@ class DynamicDataset(TransferLearningDataset):
             #to_append = to_append[:num_to_sample]
             to_append = random.choices(self.class_map[k], k=num_to_sample)
             print(len(to_append))
-            self.class_ratios[k] = cur_ratio
+            self.class_ratios[k] = ratio
             sample_idx += to_append
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]

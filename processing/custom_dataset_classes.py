@@ -176,19 +176,29 @@ class DynamicDataset(TransferLearningDataset):
 
         self.orig_paths = paths
         self.orig_values = values
-        self.class_map = get_label_idx_dct(values)  # dct with class_idx : sample_idx
+        self.idx_class_map = values
+        self.class_idx_map = get_label_idx_dct(values)  # dct with class_idx : sample_idx
         if use_kmeans:
             if encoder:
                 print("training kmeans")
-                self.class_map = self._get_kmeans_class_dct(encoder, kmeans_clusters, device)
+                self.class_idx_map, self.idx_class_map = self._get_kmeans_class_dct(encoder, kmeans_clusters, device)
             else:
                 raise Exception
         class_ratios = {}
-        for k in self.class_map.keys():
-            class_ratios[k] = len(self.class_map[k])/len(self.orig_paths)
+        for k in self.class_idx_map.keys():
+            class_ratios[k] = len(self.class_idx_map[k]) / len(self.orig_paths)
         self.use_kmeans= use_kmeans
         self.class_ratios = class_ratios
         self.update_beta = update_beta
+        self.cur_paths_class_map = [0 for _ in self.orig_paths]
+
+
+    def _update_paths_class_map(self):
+        paths_class_map = []
+        for k in self.class_idx_map.keys():
+            for idx in self.class_idx_map[k]:
+                paths_class_map[idx] = k
+
 
     # we have a current weight,
     # calculated_weight
@@ -199,12 +209,13 @@ class DynamicDataset(TransferLearningDataset):
         ratios = np.ones_like(f1_class_scores) - f1_class_scores
         new_ratios = np.exp(np.array(ratios))/np.sum(np.exp(np.array(ratios)))
         print(f"new sampling ratios: {new_ratios}")
-        orig_ratios = [len(self.class_map[k])/len(self.orig_values) for k in list(self.class_map.keys())]
+        orig_ratios = [len(self.class_idx_map[k]) / len(self.orig_values) for k in list(self.class_idx_map.keys())]
         print(f"orig ratios: {orig_ratios}")
         sample_idx = []
         print(f'initial size: {len(self.paths)}')
         print(f1_class_scores)
-        for k in self.class_map.keys():
+        new_idx_class_map = []
+        for k in self.class_idx_map.keys():
             print(f"adjusting class size: {k}")
             cur_ratio = self.class_ratios[k]
             ratio = new_ratios[k] * self.update_beta + cur_ratio * (1 - self.update_beta)
@@ -214,10 +225,12 @@ class DynamicDataset(TransferLearningDataset):
             #multiple = int(1 + num_to_sample / len(self.class_map[k]))
             #to_append = self.class_map[k] * multiple
             #to_append = to_append[:num_to_sample]
-            to_append = random.choices(self.class_map[k], k=num_to_sample)
+            to_append = random.choices(self.class_idx_map[k], k=num_to_sample)
             print(len(to_append))
             self.class_ratios[k] = ratio
             sample_idx += to_append
+            new_idx_class_map += [k for _ in range(num_to_sample)]
+        self.idx_class_map = new_idx_class_map
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]
         print(f"new size: {len(self.paths)}")
@@ -248,16 +261,16 @@ class DynamicDataset(TransferLearningDataset):
         kmeans = KMeans(n_clusters=20, verbose=1)
         kmeans.fit(X_reduced)
 
-        pred = kmeans.predict(X_reduced)
-        print(np.unique(pred, return_counts=True))
+        idx_to_cluster = kmeans.predict(X_reduced)
+        print(np.unique(idx_to_cluster, return_counts=True))
 
-        class_map = {}
+        cluster_to_idx = {}
         #print(np.unique(pred, return_counts=True))
-        for i in list(np.unique(pred)):
-            class_map[i] = []
-        for idx, cluster_idx in enumerate(list(pred)):
-            class_map[cluster_idx].append(idx)
-        return class_map
+        for i in list(np.unique(idx_to_cluster)):
+            cluster_to_idx[i] = []
+        for idx, cluster_idx in enumerate(list(idx_to_cluster)):
+            cluster_to_idx[cluster_idx].append(idx)
+        return cluster_to_idx, idx_to_cluster
 
     def _get_label_dct(self):
         class_map = {0 : [], 1 : []}

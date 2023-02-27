@@ -4,6 +4,7 @@ from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
 from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+import numpy as np
 
 
 class DynamicSamplingTrainer:
@@ -113,7 +114,7 @@ class DynamicSamplingTrainer:
             self.logger.add_scalar(f'train/{k}', metric_dct[k], self.epoch_val)
         self.logger.add_scalar('train/num_pos_pred', sum(self.train_pred), self.epoch_val)
         f1_scores = get_class_f1_scores(self.train_actual, self.train_pred,
-                                        self.train_loader.dataset.class_map, self.use_true_labels)
+                                        self.train_loader.dataset.idx_class_map, self.use_true_labels)
         self.train_loader.dataset.adjust_sample_size(f1_scores)
         self.train_pred = []
         self.train_actual = []
@@ -139,18 +140,20 @@ class DynamicSamplingTrainer:
 
 # because I want to extend the resampling to be based on k-means as well, the class_map is needed
 # just a list that has what the classes for the i-th sample is
-def get_class_f1_scores(true, pred, class_map, use_true_classes=True):
+def get_class_f1_scores(true, pred, idx_class_map, use_true_classes=True):
     if use_true_classes:
         scores = f1_score(true, pred, average=None)
         return scores
     else:
-        f1_dct = [0 for _ in list(class_map.keys())]
-        for k in class_map.keys():
+        num_classes = len(np.unique(idx_class_map))
+        f1_dct = [0 for _ in range(num_classes)]
+        for k in range(num_classes):
             tmp_pred = []
             tmp_actual = []
-            for idx in class_map[k]:
-                tmp_pred.append(pred[idx])
-                tmp_actual.append(true[idx])
+            for idx, class_val in idx_class_map:
+                if class_val == k:
+                    tmp_pred.append(pred[idx])
+                    tmp_actual.append(true[idx])
             if tmp_pred:
                 score = f1_score(tmp_actual, tmp_pred)
                 f1_dct[k] = score

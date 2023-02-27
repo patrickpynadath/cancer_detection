@@ -211,9 +211,11 @@ class DynamicDataset(TransferLearningDataset):
             num_to_sample = int(len(self.orig_values) * ratio)
             print(f"cur sampling size: {len(self.class_map[k])}")
             print(f"new sampling size: {num_to_sample}")
-            multiple = int(1 + num_to_sample / len(self.class_map[k]))
-            to_append = self.class_map[k] * multiple
-            to_append = to_append[:num_to_sample]
+            #multiple = int(1 + num_to_sample / len(self.class_map[k]))
+            #to_append = self.class_map[k] * multiple
+            #to_append = to_append[:num_to_sample]
+            to_append = random.choices(self.class_map[k], k=num_to_sample)
+            print(len(to_append))
             sample_idx += to_append
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]

@@ -96,7 +96,8 @@ def get_clf_dataloaders(base_dir,
                         device=None,
                         encoder=None,
                         learning_mode='normal',
-                        sample_strat='none'):
+                        sample_strat='none',
+                        update_beta=.25):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -139,7 +140,8 @@ def get_clf_dataloaders(base_dir,
                                                               learning_mode=learning_mode,
                                                               use_kmeans=sample_strat == 'dynamic_kmeans_ros',
                                                               kmeans_clusters=kmeans_clusters,
-                                                              encoder=encoder, device=device, label_dtype=label_dtype)
+                                                              encoder=encoder, device=device, label_dtype=label_dtype,
+                                   update_beta=update_beta)
     else:
         train_set = TransferLearningDataset(train_paths, train_values,
                                            tile_length=tile_length,

@@ -13,6 +13,8 @@ class DynamicSamplingTrainer:
                  train_loader,
                  test_loader,
                  log_dir,
+                 use_encoder_params,
+                 criterion,
                  lr: float):
 
         self.tag = tag
@@ -21,10 +23,12 @@ class DynamicSamplingTrainer:
         self.test_loader = test_loader
         self.device = device
         self.log_dir = log_dir
-        self.optimizer = Adam(self.model.parameters(),
-                                  lr=lr)
+        self.use_encoder_params = use_encoder_params
+        self.lr = lr
 
-        self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = self.configure_optimizer()
+
+        self.criterion = criterion
         self.train_pred = []
         self.train_actual = []
         self.val_pred = []
@@ -124,6 +128,14 @@ class DynamicSamplingTrainer:
         self.val_actual = []
         return
 
+    def configure_optimizer(self):
+        if self.use_encoder_params:
+            optimizer = Adam(self.model.parameters(),
+                              lr=self.lr)
+        else:
+            optimizer = Adam(self.model.mp.parameters(),
+                             lr=self.lr)
+        return optimizer
 
 # because I want to extend the resampling to be based on k-means as well, the class_map is needed
 # just a list that has what the classes for the i-th sample is
@@ -134,7 +146,7 @@ def get_class_f1_scores(true, pred, class_map, use_true_classes=True):
         f1_dct[0] = scores[0]
         f1_dct[1] = scores[1]
     else:
-        f1_dct = {}
+        f1_dct = [0 for _ in list(class_map.keys())]
         for k in class_map.keys():
             tmp_pred = []
             tmp_actual = []
@@ -147,6 +159,7 @@ def get_class_f1_scores(true, pred, class_map, use_true_classes=True):
             else:
                 f1_dct[k] = 0
     return f1_dct
+
 
 
 def get_metrics(true, pred):

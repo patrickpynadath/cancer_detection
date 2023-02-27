@@ -12,6 +12,7 @@ def config_resnet_train_cmd(args: ArgumentParser):
     model_flags.add_argument('--block_name', help='block name to use for resnet',
                                     choices=['BasicBlock', 'BottleNeck'], default='BottleNeck')
     model_flags.add_argument('--criterion', help='criterion to use', default = 'CE', type=str)
+    model_flags.add_argument('--use_encoder_params', help='include encoder params for optim', type=bool, default=False)
     model_flags.add_argument('--epochs', help='epochs to run for', default=200,  type=int)
 
     Trainer.add_argparse_args(args)
@@ -27,4 +28,7 @@ def config_resnet_train_cmd(args: ArgumentParser):
     data_flags.add_argument('--sim_calc', help='flag for vector sim metric', default='geo')
     data_flags.add_argument('--learning_mode', help='training mode for clf', type=str, default='normal')
     data_flags.add_argument('--kmeans_clusters', help='number of clusters for kmeans', default=20)
+    data_flags.add_argument('--balancing_beta', help='hyper param for dynamic resampling, controls how much the resampling ratio can change by',
+                            type=float, default=.25)
+
     return args

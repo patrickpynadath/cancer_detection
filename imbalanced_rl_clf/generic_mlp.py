@@ -29,7 +29,7 @@ class Generic_MLP(nn.Module):
 
 
 class PL_MLP_clf(pl.LightningModule):
-    def __init__(self, mlp : Generic_MLP, criterion, lr):
+    def __init__(self, mlp : Generic_MLP, criterion, lr, use_encoder_params):
         super().__init__()
         self.lr = lr
         self.model = mlp
@@ -39,6 +39,7 @@ class PL_MLP_clf(pl.LightningModule):
         self.train_actual = []
         self.val_pred = []
         self.val_actual = []
+        self.use_encoder_params = use_encoder_params
 
     def forward(self, x):
         return self.model(x)
@@ -70,7 +71,10 @@ class PL_MLP_clf(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.mp.parameters(), lr=self.lr, eps=.01)
+        if self.use_encoder_params:
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, eps=.01)
+        else:
+            optimizer = torch.optim.Adam(self.model.mp.parameters(), lr=self.lr, eps=.01)
         return optimizer
 
     def on_train_epoch_end(self) -> None:

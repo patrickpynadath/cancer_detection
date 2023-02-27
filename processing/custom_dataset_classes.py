@@ -167,7 +167,8 @@ class DynamicDataset(TransferLearningDataset):
                  use_kmeans = False,
                  kmeans_clusters=8,
                  encoder = None,
-                 device='cpu'):
+                 device='cpu',
+                 update_beta=.25):
         super().__init__(paths,
                          values, tile_length,
                          input_size,
@@ -187,19 +188,25 @@ class DynamicDataset(TransferLearningDataset):
             class_ratios[k] = .5
         self.use_kmeans= use_kmeans
         self.class_ratios = class_ratios
+        self.update_beta = update_beta
 
+    # we have a current weight,
+    # calculated_weight
+    # need final weights to be in between current and calculated
     def adjust_sample_size(self, f1_class_scores):
         denom = 0
         print(f1_class_scores)
-        for key, item in f1_class_scores.items():
+        for key, item in enumerate(f1_class_scores):
             denom += (1 - item)
+        new_ratios = np.exp(np.array(f1_class_scores))/np.sum(np.exp(np.array(f1_class_scores)))
         avg_size = len(self.orig_values) / len(self.class_map.keys())
         sample_idx = []
         print(f'initial size: {len(self.paths)}')
         print(f1_class_scores)
         for k in self.class_map.keys():
             print(f"adjusting class size: {k}")
-            ratio = (1-f1_class_scores[k])/denom
+            cur_ratio = len(self.class_map[k])/len(self.orig_paths)
+            ratio = new_ratios[k] * self.update_beta + cur_ratio * (1 - self.update_beta)
             num_to_sample = int(avg_size * ratio * 2)
             print(f"ratio: {ratio}")
             print(f"num to sample: {num_to_sample}")
@@ -207,7 +214,6 @@ class DynamicDataset(TransferLearningDataset):
             multiple = int(1 + num_to_sample / len(self.class_map[k]))
             to_append = self.class_map[k] * multiple
             to_append = to_append[:num_to_sample]
-            print(len(to_append))
             sample_idx += to_append
         self.paths = [self.orig_paths[idx] for idx in sample_idx]
         self.values = [self.orig_values[idx] for idx in sample_idx]

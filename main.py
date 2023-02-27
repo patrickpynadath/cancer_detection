@@ -81,6 +81,7 @@ if __name__ == '__main__':
         mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])
         criterion = None
         labels_dtype = torch.long
+        tag += f'use_encoder_params_{args.use_encoder_params}'
         if args.criterion == 'CE':
             if args.sample_strat == 'none':
                 criterion = CrossEntropyLoss(weight=torch.Tensor([.05, 1]))
@@ -106,14 +107,23 @@ if __name__ == '__main__':
                                                         learning_mode=args.learning_mode,
                                                         kmeans_clusters=args.kmeans_clusters,
                                                         encoder=trained_ae.encode,
-                                                        label_dtype=labels_dtype)
+                                                        label_dtype=labels_dtype,
+                                                        update_beta=args.balancing_beta)
         tag += 'mlp_clf'
         if 'dynamic' in args.sample_strat:
             print(tag)
-            trainer = DynamicSamplingTrainer(mlp, device, tag, train_loader, test_loader, LOG_DIR, args.lr)
+            trainer = DynamicSamplingTrainer(model=mlp,
+                                             device=device,
+                                             tag=tag,
+                                             train_loader=train_loader,
+                                             test_loader=test_loader,
+                                             log_dir=LOG_DIR,
+                                             lr=args.lr,
+                                             use_encoder_params=args.use_encoder_params,
+                                             criterion=criterion)
             trainer.training_loop(args.epochs)
         else:
-            clf = PL_MLP_clf(mlp, criterion, args.lr)
+            clf = PL_MLP_clf(mlp, criterion, args.lr, use_encoder_params=args.use_encoder_params)
             generic_training_loop(args, clf, train_loader, test_loader, tag)
             torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
 
@@ -126,11 +136,12 @@ if __name__ == '__main__':
     elif args.command == 'train_transfer_learn_ae':
         train_loader, test_loader = get_ae_loaders(args.base_dir, args.tile_size, (args.input_height, args.input_width), args.batch_size, args.learning_mode)
         ae = get_pl_ae(args.num_channels,
-                 args.num_hiddens,
-                 args.num_residual_layers,
-                 args.num_residual_hiddens,
-                 args.latent_size, args.lr)
-        generic_training_loop(args, ae, train_loader, test_loader)
+                     args.num_hiddens,
+                     args.num_residual_layers,
+                     args.num_residual_hiddens,
+                     args.latent_size, args.lr)
+        generic_training_loop(args, ae, train_loader, test_loader,
+                              model_name=f'ae_lz_{args.latent_size}_learnmode_{args.learning_mode}')
         torch.save(ae.model.state_dict(), f'ae_tl_{args.learning_mode}.pickle')
 
 

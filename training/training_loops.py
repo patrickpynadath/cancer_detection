@@ -11,7 +11,7 @@ def generic_training_loop(args,
                           model_name,
                           dynamic = False):
     tb_logger = TensorBoardLogger(save_dir='lightning_logs', name=model_name)
-    trainer = pl.Trainer.from_argparse_args(args, logger=tb_logger)
+    trainer = pl.Trainer.from_argparse_args(args, logger=tb_logger, num_sanity_val_steps=0)
     trainer.tune(pl_model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     trainer.fit(pl_model, train_loader, val_loader)
     return

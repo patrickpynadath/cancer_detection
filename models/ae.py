@@ -26,6 +26,7 @@ class PLAutoEncoder(pl.LightningModule):
                                 num_residual_hiddens)
         self._fc_latent = nn.LazyLinear(latent_size)
         self.fc_rl = nn.ReLU()
+        self.max_poonn.MaxPool2d(kernel_size=4)
         self.fc_bn = nn.LazyBatchNorm1d()
 
         # initializing enc and lazy linear
@@ -155,7 +156,7 @@ def get_pl_ae(num_channels,
                  num_hiddens,
                  num_residual_layers,
                  num_residual_hiddens,
-                 latent_size, lr, (512, 256))
+                 latent_size, lr, (256, 128))
 
 
 

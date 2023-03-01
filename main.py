@@ -112,6 +112,8 @@ if __name__ == '__main__':
         tag += 'mlp_clf'
         if 'dynamic' in args.sample_strat:
             print(tag)
+            if not os.path.exists(tag):
+                os.mkdir(tag)
             trainer = DynamicSamplingTrainer(model=mlp,
                                              device=device,
                                              tag=tag,
@@ -122,6 +124,8 @@ if __name__ == '__main__':
                                              use_encoder_params=args.use_encoder_params,
                                              criterion=criterion)
             trainer.training_loop(args.epochs)
+            torch.save(mlp.state_dict(), f'{tag}/model_sd.pickle')
+
         else:
             clf = PL_MLP_clf(mlp, criterion, args.lr, use_encoder_params=args.use_encoder_params)
             generic_training_loop(args, clf, train_loader, test_loader, tag)

@@ -3,3 +3,5 @@ from .diffusion_model import GaussianDiffusionCustom, get_diffusion_model_from_a
 from .ae import get_pl_ae, PLAutoEncoder
 from .imbalanced_loss_fn import ImbalancedLoss
 from .msfe_loss import MSFELoss
+from .resnet_baseline import ResNet, PL_ResNet
+

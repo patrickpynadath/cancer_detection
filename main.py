@@ -7,7 +7,8 @@ from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloa
     split_data, get_ae_loaders
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss
+    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
+    ResNet, PL_ResNet
 from training import generic_training_loop, diffusion_training_loop, DynamicSamplingTrainer
 from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
 import torch
@@ -26,8 +27,11 @@ if __name__ == '__main__':
     process_data = subparsers.add_parser('process_data', help = 'command for processing data')
     process_data = config_data_processing_cmd(process_data)
 
-    train_clf = subparsers.add_parser('train_clf', help ='command to train clf')
-    train_clf = config_resnet_train_cmd(train_clf)
+    train_transfer_learn_clf = subparsers.add_parser('train_transfer_learn_clf', help ='command to train clf')
+    train_transfer_learn_clf = config_resnet_train_cmd(train_transfer_learn_clf)
+
+    train_resnet = subparsers.add_parser('train_resnet_clf', help = 'train resnet clf')
+    train_resnet = config_resnet_train_cmd(train_resnet)
 
     train_transfer_learn_ae = subparsers.add_parser('train_transfer_learn_ae', help='train transfer learning autoencoder')
     train_transfer_learn_ae = config_transfer_learn_ae(train_transfer_learn_ae)
@@ -53,7 +57,21 @@ if __name__ == '__main__':
         paths = get_paths()
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
-    elif args.command == 'train_clf':
+    if args.command == 'train_resnet_clf':
+        tag = 'resnet_baseline'
+        input_size =(args.input_height, args.input_width)
+        resnet = ResNet(depth=args.depth, tag=tag, input_size=input_size).to(args.device)
+        clf = PL_ResNet(resnet)
+        train_loader, test_loader = get_clf_dataloaders(args.base_dir,
+                                                        args.batch_size,
+                                                        32,
+                                                        input_size)
+        generic_training_loop(args, clf, train_loader, test_loader, tag)
+
+
+
+
+    elif args.command == 'train_transfer_learn_clf':
         assert args.sample_strat in ['none', 'rus', 'ros', 'dynamic_ros', 'dynamic_kmeans_ros']
         input_size = (args.input_height, args.input_width)
         device = 'cpu'

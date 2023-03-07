@@ -4,6 +4,7 @@ import random
 from sklearn.model_selection import ShuffleSplit
 import pickle
 import os
+import torch
 
 from .custom_dataset_classes import ImgloaderDataSet, DynamicDataset, TransferLearningDataset
 
@@ -91,13 +92,14 @@ def get_clf_dataloaders(base_dir,
                         batch_size,
                         tile_length,
                         input_size,
-                        label_dtype,
+                        label_dtype=torch.long,
                         kmeans_clusters=None,
                         device=None,
                         encoder=None,
                         learning_mode='normal',
                         sample_strat='none',
-                        update_beta=.25):
+                        update_beta=.25,
+                        w = 'natural'):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -116,12 +118,15 @@ def get_clf_dataloaders(base_dir,
         pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
         neg_train_imgids = random.sample(list(split_dct['train'][0]), pos_size)
         neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
-
     else:
         pos_train_imgids = list(split_dct['train'][1])
         neg_train_imgids = list(split_dct['train'][0])
         pos_train_paths = get_img_paths(pos_train_imgids, total_df, base_dir)
         neg_train_paths = get_img_paths(neg_train_imgids, total_df, base_dir)
+
+    # if 'test_ratio' != 'natural':
+
+
 
     neg_test_imgids = list(split_dct['test'][0])
     pos_test_imgids = list(split_dct['test'][1])

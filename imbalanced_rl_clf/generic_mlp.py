@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 class Generic_MLP(nn.Module):
 
-    def __init__(self, encoder, fc_latent):
+    def s__init__(self, encoder, fc_latent):
         super(Generic_MLP, self).__init__()
         self.encoder = encoder
         self.fc_latent = fc_latent

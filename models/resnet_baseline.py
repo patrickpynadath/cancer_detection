@@ -170,6 +170,7 @@ class ResNet(nn.Module):
 
 class PL_ResNet(LightningModule):
     def __init__(self, model):
+        super().__init__()
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
         pass

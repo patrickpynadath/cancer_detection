@@ -61,7 +61,7 @@ if __name__ == '__main__':
         tag = 'resnet_baseline'
         input_size =(args.input_height, args.input_width)
         resnet = ResNet(depth=args.depth, tag=tag, input_size=input_size).to(args.device)
-        clf = PL_ResNet(resnet)
+        clf = PL_ResNet(resnet, .001)
         train_loader, test_loader = get_clf_dataloaders(args.base_dir,
                                                         args.batch_size,
                                                         32,

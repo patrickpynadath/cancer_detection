@@ -169,11 +169,11 @@ class ResNet(nn.Module):
 
 
 class PL_ResNet(LightningModule):
-    def __init__(self, model):
+    def __init__(self, model, lr):
         super().__init__()
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
-        pass
+        self.lr = lr
 
     def forward(self, x):
         return self.model(x)
@@ -205,7 +205,7 @@ class PL_ResNet(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=.001, eps=.01)
+        optimizer = torch.optim.Adam(self.model.parameters(), self.lr, eps=.01)
 
     def on_train_epoch_end(self) -> None:
         tb = self.logger.experiment

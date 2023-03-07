@@ -205,11 +205,7 @@ class PL_ResNet(LightningModule):
         return loss
 
     def configure_optimizers(self):
-        if self.use_encoder_params:
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, eps=.01)
-        else:
-            optimizer = torch.optim.Adam(self.model.mp.parameters(), lr=self.lr, eps=.01)
-        return optimizer
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, eps=.01)
 
     def on_train_epoch_end(self) -> None:
         tb = self.logger.experiment

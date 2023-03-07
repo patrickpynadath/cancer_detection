@@ -174,6 +174,11 @@ class PL_ResNet(LightningModule):
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
         self.lr = lr
+        self.epoch_val = 0
+        self.train_pred = []
+        self.train_actual = []
+        self.val_pred = []
+        self.val_actual = []
 
     def forward(self, x):
         return self.model(x)

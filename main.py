@@ -61,7 +61,11 @@ if __name__ == '__main__':
         tag = f'{args.sample_strat}/{args.criterion}/resnet_baseline'
         input_size =(args.input_height, args.input_width)
         resnet = ResNet(depth=args.depth, tag=tag, input_size=input_size).to(args.device)
-        clf = PL_ResNet(resnet, .001)
+        if args.criterion == 'CE':
+            criterion = torch.nn.CrossEntropyLoss()
+        elif args.criterion == 'MSFE':
+            criterion = MSFELoss()
+        clf = PL_ResNet(resnet, .001, criterion=criterion)
         train_loader, test_loader = get_clf_dataloaders(args.base_dir,
                                                         args.batch_size,
                                                         32,

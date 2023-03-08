@@ -202,6 +202,6 @@ if __name__ == '__main__':
         trained_jigsaw_ae.to(device)
         encoder = trained_jigsaw_ae.encode
         env = ImbalancedClfEnv(trainloader.dataset, device)
-        agent = Agent(2, args.eps_end, args.eps_start, args.eps_decay, encoder, device, 10000, args.batch_size, args.lr)
+        agent = Agent(2, args.eps_end, args.eps_start, args.eps_decay, encoder, device, 10000, args.batch_size, args.lr, QModel=Generic_MLP)
         trainer = RLTrainer(args.gamma, args.tau, env, agent, device, test_loader)
         trainer.train_loop(args.updates)

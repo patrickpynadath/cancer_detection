@@ -169,10 +169,10 @@ class ResNet(nn.Module):
 
 
 class PL_ResNet(LightningModule):
-    def __init__(self, model, lr):
+    def __init__(self, model, lr, criterion):
         super().__init__()
         self.model = model
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = criterion
         self.lr = lr
         self.epoch_val = 0
         self.train_pred = []

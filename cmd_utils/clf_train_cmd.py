@@ -8,7 +8,7 @@ def config_resnet_train_cmd(args: ArgumentParser):
 
     model_flags.add_argument('--device', help='device to train model on', default='cpu', type=str)
     model_flags.add_argument('--lr', help='lr to use for adam optimizer', default=1e-3, type=float)
-    model_flags.add_argument('--depth', help='layers for resnet', default=56, type=int)
+    model_flags.add_argument('--depth', help='layers for resnet', default=110, type=int)
     model_flags.add_argument('--block_name', help='block name to use for resnet',
                                     choices=['BasicBlock', 'BottleNeck'], default='BottleNeck')
     model_flags.add_argument('--criterion', help='criterion to use', default = 'CE', type=str)

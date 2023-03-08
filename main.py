@@ -58,14 +58,15 @@ if __name__ == '__main__':
         mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
 
     if args.command == 'train_resnet_clf':
-        tag = 'resnet_baseline'
+        tag = f'{args.sample_strat}/{args.criterion}/resnet_baseline'
         input_size =(args.input_height, args.input_width)
         resnet = ResNet(depth=args.depth, tag=tag, input_size=input_size).to(args.device)
         clf = PL_ResNet(resnet, .001)
         train_loader, test_loader = get_clf_dataloaders(args.base_dir,
                                                         args.batch_size,
                                                         32,
-                                                        input_size)
+                                                        input_size,
+                                                        sample_strat=args.sample_strat)
         generic_training_loop(args, clf, train_loader, test_loader, tag)
 
 

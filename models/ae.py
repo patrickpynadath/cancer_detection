@@ -160,8 +160,7 @@ def get_ae(num_channels,
     elif res_type == 'orig':
         encoder = OrigResEncoder(num_residual_layers)
         decoder = OrigResDecoder(num_residual_layers)
-    ae = PLAutoEncoder(num_hiddens=num_hiddens, num_residual_layers=num_residual_layers,
-                       latent_size=latent_size,
+    ae = PLAutoEncoder(latent_size=latent_size,
                        lr=lr,
                        input_size=input_size,
                        tag=tag,

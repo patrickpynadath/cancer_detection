@@ -13,16 +13,12 @@ import torch
 # TODO: make able to use original resnet arch for enc and dec
 class PLAutoEncoder(pl.LightningModule):
     def __init__(self,
-                 num_hiddens,
-                 num_residual_layers,
                  latent_size,
                  lr,
                  input_size, tag, encoder, decoder):
         super().__init__()
         self.label = tag
-        self.res_layers = num_residual_layers
         self.latent_size = latent_size
-        self.num_hiddens = num_hiddens
         self._encoder = encoder
         self._fc_latent = nn.LazyLinear(latent_size)
         self.fc_rl = nn.ReLU()

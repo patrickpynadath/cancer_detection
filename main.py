@@ -66,12 +66,17 @@ def train_transfer_learn_clf(cmd_args):
     elif cmd_args.learning_mode == 'jigsaw':
         path = TRAINED_JIGSAW_PATH
         tag += 'jigsaw/'
+    blank_ae = get_ae(num_channels=1,
+                      num_hiddens=256,
+                      num_residual_layers=20,
+                      num_residual_hiddens=256,
+                      latent_size=1024,
+                      lr=.01,
+                      input_size=(128, 64),
+                      res_type=args.res_type,
+                      tag=tag)
     trained_ae = PLAutoEncoder.load_from_checkpoint(
         path,
-        num_channels=1,
-        num_hiddens=256,
-        num_residual_layers=20,
-        num_residual_hiddens=256,
         latent_size=1024, lr=.01, input_size=(128, 64)).to(device)
     pretrained = trained_ae.get_encoder()
     mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])

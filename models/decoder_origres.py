@@ -1,5 +1,5 @@
 import torch.nn as nn
-from .resnet_baseline import Bottleneck, conv3x3
+from .resnet_baseline import BottleNeckTranspose
 import math
 
 
@@ -11,16 +11,16 @@ class OrigResDecoder(nn.Module):
 
         assert (depth - 2) % 9 == 0, 'When use bottleneck, depth should be 9n+2, e.g. 20, 29, 47, 56, 110, 1199'
         n = (depth - 2) // 9
-        block = Bottleneck
 
         self.depth = depth
-        self.inplanes = 256 # planes * block.expansion
+        self.inplanes = 64 # planes * block.expansion
 
         self.relu = nn.ReLU(inplace=True)
-        self.layer1 = self._make_layer(block, 64, n, stride=2)
-        self.layer2 = self._make_layer(block, 32, n, stride=2)
-        self.layer3 = self._make_layer(block, 16, n)
-        self.final_conv_T = nn.ConvTranspose2d(64, 1, 3, padding=1,
+        self.layer1 = self._make_layer(64, n, stride=2)
+        self.layer2 = self._make_layer(32, n, stride=2)
+        self.layer3 = self._make_layer(16, n)
+        self.final_conv_T = nn.ConvTranspose2d(16, 1, 3,
+                                                padding=1,
                                                 bias=False)
         self.bn1 = nn.BatchNorm2d(1)
 
@@ -32,20 +32,20 @@ class OrigResDecoder(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-    def _make_layer(self, block, planes, blocks, stride=1):
-        downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
+    def _make_layer(self, planes, blocks, stride=1):
+        upsample = None
+        if stride != 1 or self.inplanes != planes * BottleNeckTranspose.expansion:
+            upsample = nn.Sequential(
+                nn.ConvTranspose2d(planes * BottleNeckTranspose.expansion, self.inplanes,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion),
+                nn.BatchNorm2d(self.inplanes),
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
-        self.inplanes = planes * block.expansion
+        layers.append(BottleNeckTranspose(self.inplanes, planes, stride, upsample))
+        self.inplanes = planes * BottleNeckTranspose.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+            layers.append(BottleNeckTranspose(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 

@@ -18,6 +18,10 @@ def conv3x3(in_planes, out_planes, stride=1):
                      padding=1, bias=False)
 
 
+def conv3x3T(in_planes, out_planes, stride=1):
+    return nn.ConvTranspose2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                     padding=1, bias=False)
+
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -50,6 +54,8 @@ class BasicBlock(nn.Module):
         return out
 
 
+
+
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -78,6 +84,45 @@ class Bottleneck(nn.Module):
         out = self.relu(out)
 
         out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+
+class BottleNeckTranspose(nn.Module):
+    expansion = 4
+
+    def __init__(self, outplanes, planes, stride=1, downsample=None):
+        super(BottleNeckTranspose, self).__init__()
+        self.convT1 = nn.ConvTranspose2d(planes * 4, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.convT2 = nn.ConvTranspose2d(planes, planes, kernel_size=3, stride=stride,
+                                         padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.convT3 = nn.ConvTranspose2d(planes, outplanes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(outplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.convT1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.convT2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.convT3(out)
         out = self.bn3(out)
 
         if self.downsample is not None:
@@ -166,6 +211,44 @@ class ResNet(nn.Module):
         x = self.fc(x)
 
         return x
+
+# TODO: All of this, but transpose
+class BottleNeckTranspose(nn.Module):
+    expansion = 4
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(BottleNeckTranspose, self).__init__()
+        self.convT1 = nn.ConvTranspose2d(inplanes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.convT2 = nn.ConvTranspose2d(planes, planes, kernel_size=3, stride=stride,
+                                         padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.convT3 = nn.ConvTranspose2d(planes, inplanes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(inplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.convT1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.convT2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.convT3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
 
 
 class PL_ResNet(LightningModule):

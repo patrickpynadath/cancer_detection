@@ -30,7 +30,6 @@ class PLAutoEncoder(pl.LightningModule):
 
         # initializing enc and lazy linear
         dummy = torch.zeros(64, 1, input_size[0], input_size[1])
-        print(dummy.size())
         dummy = self._encoder(dummy)
         self.enc_dim = dummy.size()
         dummy = torch.flatten(dummy, start_dim=1)
@@ -63,6 +62,7 @@ class PLAutoEncoder(pl.LightningModule):
     def decode(self, z):
         dec = self._fc_dec(z)
         pre_recon = dec.view(-1, self.enc_dim[1], self.enc_dim[2], self.enc_dim[3])
+        print(pre_recon.size())
         x_recon = self._decoder(pre_recon)
         return x_recon
 

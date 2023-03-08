@@ -8,7 +8,7 @@ from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloa
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
     create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
-    ResNet, PL_ResNet
+    ResNet, PL_ResNet, PLAutoEncoder_OrigRes
 from training import generic_training_loop, diffusion_training_loop, DynamicSamplingTrainer
 from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
 import torch
@@ -160,15 +160,22 @@ if __name__ == '__main__':
         torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
 
     elif args.command == 'train_transfer_learn_ae':
+        input_size = (args.input_height, args.input_width)
         train_loader, test_loader = get_ae_loaders(args.base_dir, args.tile_size, (args.input_height, args.input_width), args.batch_size, args.learning_mode)
-        ae = get_pl_ae(args.num_channels,
-                     args.num_hiddens,
-                     args.num_residual_layers,
-                     args.num_residual_hiddens,
-                     args.latent_size, args.lr)
+        if args.res_type == 'custom':
+            res_type = 'custom_res_ae'
+            tag = f'ae_lz_{args.latent_size}_learnmode_{args.learning_mode}_res_{res_type}'
+            ae = get_pl_ae(args.num_channels,
+                         args.num_hiddens,
+                         args.num_residual_layers,
+                         args.num_residual_hiddens,
+                         args.latent_size, args.lr, input_size=input_size, tag=tag)
+        else:
+            res_type = 'orig_res_ae'
+            tag = f'ae_lz_{args.latent_size}_learnmode_{args.learning_mode}_res_{res_type}'
+            ae = PLAutoEncoder_OrigRes(args.num_residual_layers, args.latent_size, args.lr, input_size=input_size, tag=tag)
         generic_training_loop(args, ae, train_loader, test_loader,
-                              model_name=f'ae_lz_{args.latent_size}_learnmode_{args.learning_mode}')
-        torch.save(ae.model.state_dict(), f'ae_tl_{args.learning_mode}.pickle')
+                              model_name=tag)
 
 
     elif args.command == 'generate_imgs':

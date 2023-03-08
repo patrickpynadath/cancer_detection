@@ -1,6 +1,6 @@
 import torch.nn as nn
-from .encoder import Encoder
-from .decoder import Decoder
+from .encoder_origres import OrigResEncoder
+from .decoder_origres import OrigResDecoder
 import pytorch_lightning as pl
 from torchvision.utils import make_grid
 from torchvision.transforms import Pad
@@ -8,23 +8,17 @@ from torch.nn import ModuleDict
 import math
 import torch
 
-class PLAutoEncoder(pl.LightningModule):
+class PLAutoEncoder_OrigRes(pl.LightningModule):
     def __init__(self,
-                 num_channels,
-                 num_hiddens,
-                 num_residual_layers,
-                 num_residual_hiddens,
+                 depth,
                  latent_size,
                  lr,
-                 input_size, tag):
+                 input_size,
+                 tag):
         super().__init__()
         self.label = tag
-        self.res_layers = num_residual_layers
         self.latent_size = latent_size
-        self.num_hiddens = num_hiddens
-        self._encoder = Encoder(num_channels, num_hiddens,
-                                num_residual_layers,
-                                num_residual_hiddens)
+        self._encoder = OrigResEncoder(depth)
         self._fc_latent = nn.LazyLinear(latent_size)
         self.fc_rl = nn.ReLU()
         self.fc_bn = nn.LazyBatchNorm1d()
@@ -46,15 +40,11 @@ class PLAutoEncoder(pl.LightningModule):
         self._fc_dec(dummy)
         dummy = self.dec_rl(dummy)
         dummy = self.dec_bn(dummy)
-        self._decoder = Decoder(num_hiddens,
-                                num_channels,
-                                num_hiddens,
-                                num_residual_layers,
-                                num_residual_hiddens)
+        self._decoder = OrigResDecoder(depth)
         self.criterion = nn.MSELoss()
         self.lr = lr
 
-    def encode(self, x, qual_values):
+    def encode(self, x):
         enc = self._encoder(x)
         pre_latent = enc.flatten(start_dim=1)
         #pre_latent = torch.cat((pre_latent, qual_values), dim=1)
@@ -72,15 +62,15 @@ class PLAutoEncoder(pl.LightningModule):
 
     def forward(self, x, qual_values):
        # print(torch.isnan(qual_values).any())
-        z = self.encode(x, qual_values)
+        z = self.encode(x)
         out = self.decode(z)
         return out
 
     def generate(self, x, qual_values):
         return self.forward(x, qual_values)
 
-    def get_encoding(self, x, qual_values):
-        return self.encode(x, qual_values)
+    def get_encoding(self, x):
+        return self.encode(x)
 
     def training_step(self, batch, batch_idx):
         orig_img, jigsaw_img, qual_labels = batch
@@ -124,39 +114,3 @@ class PLAutoEncoder(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adagrad(self.parameters(), lr=self.lr)
         return optimizer
-
-
-class PLWindowAE(pl.LightningModule):
-    def __init__(self,
-                 num_channels,
-                 num_hiddens,
-                 num_residual_layers,
-                 num_residual_hiddens,
-                 total_bottleneck_size,
-                 lr,
-                 input_size,
-                 tile_size=32):
-        super().__init__()
-        self.tile_length = tile_size
-        self.tiling = (math.ceil(input_size[0] / tile_size), math.ceil(input_size[1] / tile_size))
-        self.pad_dim = (self.tiling[0] * self.tile_length - input_size[0],
-                        self.tiling[1] * self.tile_length - input_size[1])
-        self.pad = Pad(padding=self.pad_dim)
-
-
-        # calculate window sizes and stuff
-        # make dict of fc layers for the window models
-
-def get_pl_ae(num_channels,
-             num_hiddens,
-             num_residual_layers,
-             num_residual_hiddens,
-             latent_size, lr, input_size, tag):
-    return PLAutoEncoder(num_channels,
-                 num_hiddens,
-                 num_residual_layers,
-                 num_residual_hiddens,
-                 latent_size, lr, input_size, tag)
-
-
-

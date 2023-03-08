@@ -4,4 +4,6 @@ from .ae import get_pl_ae, PLAutoEncoder
 from .imbalanced_loss_fn import ImbalancedLoss
 from .msfe_loss import MSFELoss
 from .resnet_baseline import ResNet, PL_ResNet
+from .ae_orig_res import PLAutoEncoder_OrigRes
+
 

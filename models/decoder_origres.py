@@ -16,13 +16,13 @@ class OrigResDecoder(nn.Module):
         self.depth = depth
         self.inplanes = 64 # planes * block.expansion
 
-        self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 64, n, stride=2)
         self.layer2 = self._make_layer(block, 32, n, stride=2)
         self.layer3 = self._make_layer(block, 16, n)
         self.final_conv_T = nn.ConvTranspose2d(16, 1, 3, padding=1,
                                                 bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -51,11 +51,10 @@ class OrigResDecoder(nn.Module):
 
     def forward(self, x):
 
-        x = self.bn1(x)
-        x = self.relu(x)
-
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.final_conv_T(x)
+        x = self.bn1(x)
+        x = self.relu(x)
         return x

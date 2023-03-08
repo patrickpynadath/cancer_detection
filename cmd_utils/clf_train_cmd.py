@@ -14,7 +14,7 @@ def config_resnet_train_cmd(args: ArgumentParser):
     model_flags.add_argument('--criterion', help='criterion to use', default = 'CE', type=str)
     model_flags.add_argument('--use_encoder_params', help='include encoder params for optim', type=bool, default=False)
     model_flags.add_argument('--epochs', help='epochs to run for', default=200,  type=int)
-    model_flags.add_argument('--res_type', 'type of res model to use', default='custom')
+    model_flags.add_argument('--res_type', help='type of res model to use', default='custom')
 
     Trainer.add_argparse_args(args)
     data_flags.add_argument('--batch_size', help='batch size to use for dataloader', default=64, type=int)

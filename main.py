@@ -77,7 +77,7 @@ def train_transfer_learn_clf(cmd_args):
                       tag=tag)
     trained_ae = PLAutoEncoder.load_from_checkpoint(
         path,
-        latent_size=1024, lr=.01, input_size=(128, 64), tag=tag, encoder=blank_ae.encoder, decoder=blank_ae.decoder).to(device)
+        latent_size=1024, lr=.01, input_size=(128, 64), tag=tag, encoder=blank_ae._encoder, decoder=blank_ae._decoder).to(device)
     pretrained = trained_ae.get_encoder()
     mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])
     criterion = None

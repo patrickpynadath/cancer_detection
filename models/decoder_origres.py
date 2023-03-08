@@ -35,6 +35,7 @@ class OrigResDecoder(nn.Module):
     def _make_layer(self, planes, blocks, stride=1):
         upsample = None
         if stride != 1 or self.inplanes != planes * BottleNeckTranspose.expansion:
+            print('asd')
             upsample = nn.Sequential(
                 nn.ConvTranspose2d(planes * BottleNeckTranspose.expansion, self.inplanes,
                           kernel_size=1, stride=stride, bias=False),

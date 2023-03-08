@@ -22,7 +22,7 @@ class OrigResDecoder(nn.Module):
         self.layer3 = self._make_layer(block, 16, n)
         self.final_conv_T = nn.ConvTranspose2d(64, 1, 3, padding=1,
                                                 bias=False)
-        self.bn1 = nn.BatchNorm2d(16)
+        self.bn1 = nn.BatchNorm2d(1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

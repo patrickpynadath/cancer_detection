@@ -100,7 +100,7 @@ class BottleNeckTranspose(nn.Module):
 
     def __init__(self, outplanes, planes, stride=1, downsample=None):
         super(BottleNeckTranspose, self).__init__()
-        self.convT1 = nn.ConvTranspose2d(planes * 4, planes, kernel_size=1, bias=False)
+        self.convT1 = nn.ConvTranspose2d(outplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.convT2 = nn.ConvTranspose2d(planes, planes, kernel_size=3, stride=stride,
                                          padding=1, bias=False)

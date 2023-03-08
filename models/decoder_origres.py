@@ -13,7 +13,7 @@ class OrigResDecoder(nn.Module):
         n = (depth - 2) // 9
 
         self.depth = depth
-        self.inplanes = 64 # planes * block.expansion
+        self.outplanes = 64 # planes * block.expansion
 
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(64, n, stride=2)
@@ -34,18 +34,18 @@ class OrigResDecoder(nn.Module):
 
     def _make_layer(self, planes, blocks, stride=1):
         upsample = None
-        if stride != 1 or self.inplanes != planes * BottleNeckTranspose.expansion:
+        if stride != 1 or self.outplanes != planes * BottleNeckTranspose.expansion:
             upsample = nn.Sequential(
-                nn.ConvTranspose2d(planes * BottleNeckTranspose.expansion, self.inplanes,
-                          kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.inplanes),
+                nn.ConvTranspose2d(planes * BottleNeckTranspose.expansion, self.outplanes,
+                                   kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.outplanes),
             )
 
         layers = []
-        layers.append(BottleNeckTranspose(self.inplanes, planes, stride, upsample))
-        self.inplanes = planes * BottleNeckTranspose.expansion
+        layers.append(BottleNeckTranspose(self.outplanes, planes, stride, upsample))
+        self.outplanes = planes * BottleNeckTranspose.expansion
         for i in range(1, blocks):
-            layers.append(BottleNeckTranspose(self.inplanes, planes))
+            layers.append(BottleNeckTranspose(self.outplanes, planes))
 
         return nn.Sequential(*layers)
 

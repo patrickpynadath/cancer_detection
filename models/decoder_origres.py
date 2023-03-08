@@ -14,7 +14,7 @@ class OrigResDecoder(nn.Module):
         block = Bottleneck
 
         self.depth = depth
-        self.inplanes = 64 # planes * block.expansion
+        self.inplanes = 256 # planes * block.expansion
 
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 64, n, stride=2)

@@ -14,7 +14,7 @@ class OrigResDecoder(nn.Module):
         block = Bottleneck
 
         self.depth = depth
-        self.inplanes = 64 * 4 # planes * block.expansion
+        self.inplanes = 64 # planes * block.expansion
 
         self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)

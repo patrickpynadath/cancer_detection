@@ -2,10 +2,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from .res_stack import ResidualStack
 
-
 class Decoder(nn.Module):
     def __init__(self,
-                 in_channels,
                  out_channels,
                  num_hiddens,
                  num_residual_layers,

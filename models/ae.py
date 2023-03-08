@@ -1,6 +1,8 @@
 import torch.nn as nn
 from .encoder import Encoder
 from .decoder import Decoder
+from .encoder_origres import OrigResEncoder
+from .decoder_origres import OrigResDecoder
 import pytorch_lightning as pl
 from torchvision.utils import make_grid
 from torchvision.transforms import Pad
@@ -8,23 +10,20 @@ from torch.nn import ModuleDict
 import math
 import torch
 
+# TODO: make able to use original resnet arch for enc and dec
 class PLAutoEncoder(pl.LightningModule):
     def __init__(self,
-                 num_channels,
                  num_hiddens,
                  num_residual_layers,
-                 num_residual_hiddens,
                  latent_size,
                  lr,
-                 input_size, tag):
+                 input_size, tag, encoder, decoder):
         super().__init__()
         self.label = tag
         self.res_layers = num_residual_layers
         self.latent_size = latent_size
         self.num_hiddens = num_hiddens
-        self._encoder = Encoder(num_channels, num_hiddens,
-                                num_residual_layers,
-                                num_residual_hiddens)
+        self._encoder = encoder
         self._fc_latent = nn.LazyLinear(latent_size)
         self.fc_rl = nn.ReLU()
         self.fc_bn = nn.LazyBatchNorm1d()
@@ -46,11 +45,7 @@ class PLAutoEncoder(pl.LightningModule):
         self._fc_dec(dummy)
         dummy = self.dec_rl(dummy)
         dummy = self.dec_bn(dummy)
-        self._decoder = Decoder(num_hiddens,
-                                num_channels,
-                                num_hiddens,
-                                num_residual_layers,
-                                num_residual_hiddens)
+        self._decoder = decoder
         self.criterion = nn.MSELoss()
         self.lr = lr
 
@@ -147,16 +142,36 @@ class PLWindowAE(pl.LightningModule):
         # calculate window sizes and stuff
         # make dict of fc layers for the window models
 
-def get_pl_ae(num_channels,
-             num_hiddens,
-             num_residual_layers,
-             num_residual_hiddens,
-             latent_size, lr, input_size, tag):
-    return PLAutoEncoder(num_channels,
-                 num_hiddens,
-                 num_residual_layers,
-                 num_residual_hiddens,
-                 latent_size, lr, input_size, tag)
+def get_ae(num_channels,
+           num_hiddens,
+           num_residual_layers,
+           num_residual_hiddens,
+           latent_size,
+           lr,
+           input_size,
+           tag,
+           res_type):
+    assert res_type in ['custom', 'orig']
+    if res_type == 'custom':
+        encoder = Encoder(in_channels=num_channels,
+                          num_hiddens=num_hiddens,
+                          num_residual_layers=num_residual_layers,
+                          num_residual_hiddens=num_residual_hiddens)
+        decoder = Decoder(out_channels=num_channels,
+                          num_hiddens=num_hiddens,
+                          num_residual_layers=num_residual_layers,
+                          num_residual_hiddens=num_residual_hiddens)
+    elif res_type == 'orig':
+        encoder = OrigResEncoder(num_residual_layers)
+        decoder = OrigResDecoder(num_residual_layers)
+    ae = PLAutoEncoder(num_hiddens=num_hiddens, num_residual_layers=num_residual_layers,
+                       latent_size=latent_size,
+                       lr=lr,
+                       input_size=input_size,
+                       tag=tag,
+                       encoder=encoder,
+                       decoder=decoder)
+    return ae
 
 
 

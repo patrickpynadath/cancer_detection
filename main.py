@@ -7,10 +7,10 @@ from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloa
     split_data, get_ae_loaders
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
-    create_save_artificial_samples, get_pl_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
-    ResNet, PL_ResNet, PLAutoEncoder_OrigRes
+    create_save_artificial_samples, get_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
+    ResNet, PL_ResNet, Generic_MLP, PL_MLP_clf
 from training import generic_training_loop, diffusion_training_loop, DynamicSamplingTrainer
-from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent, Generic_MLP, PL_MLP_clf
+from imbalanced_rl_clf import ImbalancedClfEnv, RLTrainer, Agent
 import torch
 from torch.nn import CrossEntropyLoss
 # data preprocessing
@@ -20,195 +20,230 @@ TRAINED_NORMAL_PATH = 'lightning_logs/version_187/checkpoints/epoch=108-step=745
 LOG_DIR = 'lightning_logs/'
 
 
+# cleaning up code
+def process_data(cmd_args):
+    final_size = (cmd_args.finalwidth, cmd_args.finalheight)
+    base_dir = cmd_args.base_data_dir
+    mp = MammographyPreprocessor(size=final_size, csv_path=f'{base_dir}/train.csv',
+                                 train_path=f'{base_dir}/train_images')
+    paths = get_paths()
+    mp.preprocess_all(paths, parallel=cmd_args.par, save=True, save_dir=f'{base_dir}/train_images')
+    return
+
+
+def train_resnet_clf(cmd_args):
+    tag = f'{cmd_args.sample_strat}/{cmd_args.criterion}/resnet_baseline'
+    input_size = (cmd_args.input_height, cmd_args.input_width)
+    resnet = ResNet(depth=cmd_args.depth, tag=tag, input_size=input_size).to(cmd_args.device)
+    if cmd_args.criterion == 'CE':
+        criterion = torch.nn.CrossEntropyLoss()
+    elif cmd_args.criterion == 'MSFE':
+        criterion = MSFELoss()
+    clf = PL_ResNet(resnet, .001, criterion=criterion)
+    train_loader, test_loader = get_clf_dataloaders(cmd_args.base_dir,
+                                                    cmd_args.batch_size,
+                                                    32,
+                                                    input_size,
+                                                    sample_strat=cmd_args.sample_strat)
+    generic_training_loop(cmd_args, clf, train_loader, test_loader, tag)
+    return
+
+
+def train_transfer_learn_clf(cmd_args):
+    assert cmd_args.sample_strat in ['none', 'rus', 'ros', 'dynamic_ros', 'dynamic_kmeans_ros']
+    input_size = (cmd_args.input_height, cmd_args.input_width)
+    device = 'cpu'
+    if cmd_args.accelerator == 'gpu':
+        device = 'cuda'
+
+    tag = 'samplestrat_' + cmd_args.sample_strat + '/'
+
+    path = None
+
+    if cmd_args.learning_mode == 'normal':
+        path = TRAINED_NORMAL_PATH
+        tag += 'normal/'
+    elif cmd_args.learning_mode == 'jigsaw':
+        path = TRAINED_JIGSAW_PATH
+        tag += 'jigsaw/'
+    trained_ae = PLAutoEncoder.load_from_checkpoint(
+        path,
+        num_channels=1,
+        num_hiddens=256,
+        num_residual_layers=20,
+        num_residual_hiddens=256,
+        latent_size=1024, lr=.01, input_size=(128, 64)).to(device)
+    pretrained = trained_ae.get_encoder()
+    mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])
+    criterion = None
+    labels_dtype = torch.long
+    tag += f'use_encoder_params_{cmd_args.use_encoder_params}'
+    if cmd_args.criterion == 'CE':
+        if cmd_args.sample_strat == 'none':
+            criterion = CrossEntropyLoss(weight=torch.Tensor([.05, 1]))
+        else:
+            criterion = CrossEntropyLoss()
+        tag += 'CE/'
+    elif cmd_args.criterion == 'MSFE':
+        criterion = MSFELoss()
+        tag += 'MSFE/'
+        labels_dtype = torch.float32
+
+    elif cmd_args.criterion == 'IMB':
+        criterion = ImbalancedLoss(mode=cmd_args.sim_calc)
+        tag += 'IMB/'
+        labels_dtype = torch.float32
+
+    train_loader, test_loader = get_clf_dataloaders(cmd_args.base_dir,
+                                                    cmd_args.batch_size,
+                                                    tile_length=cmd_args.tile_size,
+                                                    sample_strat=cmd_args.sample_strat,
+                                                    input_size=input_size,
+                                                    device=cmd_args.device,
+                                                    learning_mode=cmd_args.learning_mode,
+                                                    kmeans_clusters=cmd_args.kmeans_clusters,
+                                                    encoder=trained_ae.encode,
+                                                    label_dtype=labels_dtype,
+                                                    update_beta=cmd_args.balancing_beta)
+    tag += 'mlp_clf'
+    if 'dynamic' in cmd_args.sample_strat:
+        print(tag)
+
+        trainer = DynamicSamplingTrainer(model=mlp,
+                                         device=device,
+                                         tag=tag,
+                                         train_loader=train_loader,
+                                         test_loader=test_loader,
+                                         log_dir=LOG_DIR,
+                                         lr=cmd_args.lr,
+                                         use_encoder_params=cmd_args.use_encoder_params,
+                                         criterion=criterion)
+        trainer.training_loop(cmd_args.epochs)
+        torch.save(mlp.state_dict(), f'{cmd_args.sample_strat}_model_sd.pickle')
+
+    else:
+        clf = PL_MLP_clf(mlp, criterion, cmd_args.lr, use_encoder_params=cmd_args.use_encoder_params)
+        generic_training_loop(cmd_args, clf, train_loader, test_loader, tag)
+        torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
+    return
+
+
+def train_diffusion(cmd_args):
+    train_loader, test_loader = get_diffusion_dataloaders(cmd_args.base_dir, cmd_args.batch_size)
+    diffusion_model = get_diffusion_model_from_args(cmd_args)
+    diffusion_training_loop(diffusion_model, train_loader, 'total_cancer_results')
+    torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
+    return
+
+
+def train_transfer_learn_ae(cmd_args):
+    input_size = (cmd_args.input_height, cmd_args.input_width)
+    train_loader, test_loader = get_ae_loaders(cmd_args.base_dir, cmd_args.tile_size, (cmd_args.input_height, cmd_args.input_width),
+                                               cmd_args.batch_size, cmd_args.learning_mode)
+    tag = f'ae_lz_{cmd_args.latent_size}_learnmode_{cmd_args.learning_mode}_res_{args.res_type}'
+    ae = get_ae(cmd_args.num_channels,
+                cmd_args.num_hiddens,
+                cmd_args.num_residual_layers,
+                cmd_args.num_residual_hiddens,
+                cmd_args.latent_size, cmd_args.lr, input_size=input_size, tag=tag, res_type=cmd_args.res_type)
+    generic_training_loop(cmd_args, ae, train_loader, test_loader,
+                          model_name=tag)
+    return
+
+
+def generate_imgs(cmd_args):
+    os.makedirs('artificial_pos_samples', exist_ok=True)
+    diff_model = get_trained_diff_model(cmd_args.save_name, (cmd_args.img_height, cmd_args.img_width))
+    create_save_artificial_samples(diff_model, cmd_args.num_samples, 'artificial_pos_samples',
+                                   device=cmd_args.device, batch_size=cmd_args.batch_size)
+    return
+
+
+def generate_splits(cmd_args):
+    test_size = cmd_args.test_size
+    base_dir = cmd_args.base_data_dir
+    split_data(test_size, base_dir)
+    return
+
+
+def train_rl(cmd_args):
+    device = 'cuda'
+    path = None
+    if cmd_args.training_mode == 'normal':
+        path = TRAINED_NORMAL_PATH
+    elif cmd_args.training_mode == 'jigsaw':
+        path = TRAINED_JIGSAW_PATH
+    trained_jigsaw_ae = PLAutoEncoder.load_from_checkpoint(
+        path,
+        num_channels=1,
+        num_hiddens=256,
+        num_residual_layers=20,
+        num_residual_hiddens=256,
+        latent_size=1024, lr=.01, input_size=(128, 64))
+    size = (cmd_args.input_height, cmd_args.input_width)
+    trainloader, test_loader = get_ae_loaders(cmd_args.base_dir, 32, size, cmd_args.batch_size, 'jigsaw')
+    trained_jigsaw_ae.to(device)
+    encoder = trained_jigsaw_ae.encode
+    env = ImbalancedClfEnv(trainloader.dataset, device)
+    agent = Agent(2, cmd_args.eps_end, cmd_args.eps_start, cmd_args.eps_decay, encoder, device, 10000, cmd_args.batch_size, cmd_args.lr,
+                  QModel=Generic_MLP)
+    trainer = RLTrainer(cmd_args.gamma, cmd_args.tau, env, agent, device, test_loader)
+    trainer.train_loop(cmd_args.updates)
+    return
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Predicting Breast-Cancer based on Mammography")
     subparsers = parser.add_subparsers(dest='command')
 
-    process_data = subparsers.add_parser('process_data', help = 'command for processing data')
-    process_data = config_data_processing_cmd(process_data)
+    process_data_args = subparsers.add_parser('process_data', help ='command for processing data')
+    process_data_args = config_data_processing_cmd(process_data_args)
 
-    train_transfer_learn_clf = subparsers.add_parser('train_transfer_learn_clf', help ='command to train clf')
-    train_transfer_learn_clf = config_resnet_train_cmd(train_transfer_learn_clf)
+    train_transfer_learn_clf_args = subparsers.add_parser('train_transfer_learn_clf', help ='command to train clf')
+    train_transfer_learn_clf_args = config_resnet_train_cmd(train_transfer_learn_clf_args)
 
-    train_resnet = subparsers.add_parser('train_resnet_clf', help = 'train resnet clf')
-    train_resnet = config_resnet_train_cmd(train_resnet)
+    train_resnet_args = subparsers.add_parser('train_resnet_clf', help ='train resnet clf')
+    train_resnet_args = config_resnet_train_cmd(train_resnet_args)
 
-    train_transfer_learn_ae = subparsers.add_parser('train_transfer_learn_ae', help='train transfer learning autoencoder')
-    train_transfer_learn_ae = config_transfer_learn_ae(train_transfer_learn_ae)
+    train_transfer_learn_ae_args = subparsers.add_parser('train_transfer_learn_ae', help='train transfer learning autoencoder')
+    train_transfer_learn_ae_args = config_transfer_learn_ae(train_transfer_learn_ae_args)
 
-    train_diffusion = subparsers.add_parser('train_diffusion', help='command for training diffusion models')
-    train_diffusion = config_diffusion_train_cmd(train_diffusion)
+    train_diffusion_args = subparsers.add_parser('train_diffusion', help='command for training diffusion models')
+    train_diffusion_args = config_diffusion_train_cmd(train_diffusion_args)
 
-    generate_imgs = subparsers.add_parser('generate_imgs', help='command for creating artificial positive samples')
-    generate_imgs = config_diffusion_generate_cmd(generate_imgs)
+    generate_imgs_args = subparsers.add_parser('generate_imgs', help='command for creating artificial positive samples')
+    generate_imgs_args = config_diffusion_generate_cmd(generate_imgs_args)
 
-    generate_splits = subparsers.add_parser('generate_splits', help = 'generating the splits to use for resnet and diffusion')
-    generate_splits = config_split_data_cmd(generate_splits)
+    generate_splits_args = subparsers.add_parser('generate_splits', help ='generating the splits to use for resnet and diffusion')
+    generate_splits_args = config_split_data_cmd(generate_splits_args)
 
-    train_rl = subparsers.add_parser('train_rl', help = 'train rl policy net')
-    train_rl = config_rl_train_cmd(train_rl)
+    train_rl_args = subparsers.add_parser('train_rl', help ='train rl policy net')
+    train_rl_args = config_rl_train_cmd(train_rl_args)
 
     args = parser.parse_args()
 
     if args.command == 'process_data':
-        final_size = (args.finalwidth, args.finalheight)
-        base_dir = args.base_data_dir
-        mp = MammographyPreprocessor(size=final_size, csv_path = f'{base_dir}/train.csv', train_path=f'{base_dir}/train_images')
-        paths = get_paths()
-        mp.preprocess_all(paths, parallel=args.par, save=True, save_dir=f'{base_dir}/train_images')
+        process_data(args)
 
     if args.command == 'train_resnet_clf':
-        tag = f'{args.sample_strat}/{args.criterion}/resnet_baseline'
-        input_size =(args.input_height, args.input_width)
-        resnet = ResNet(depth=args.depth, tag=tag, input_size=input_size).to(args.device)
-        if args.criterion == 'CE':
-            criterion = torch.nn.CrossEntropyLoss()
-        elif args.criterion == 'MSFE':
-            criterion = MSFELoss()
-        clf = PL_ResNet(resnet, .001, criterion=criterion)
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir,
-                                                        args.batch_size,
-                                                        32,
-                                                        input_size,
-                                                        sample_strat=args.sample_strat)
-        generic_training_loop(args, clf, train_loader, test_loader, tag)
-
-
-
+        train_resnet_clf(args)
 
     elif args.command == 'train_transfer_learn_clf':
-        assert args.sample_strat in ['none', 'rus', 'ros', 'dynamic_ros', 'dynamic_kmeans_ros']
-        input_size = (args.input_height, args.input_width)
-        device = 'cpu'
-        if args.accelerator == 'gpu':
-            device = 'cuda'
-
-        tag = 'samplestrat_' + args.sample_strat + '/'
-
-        path = None
-
-        if args.learning_mode == 'normal':
-            path = TRAINED_NORMAL_PATH
-            tag += 'normal/'
-        elif args.learning_mode == 'jigsaw':
-            path = TRAINED_JIGSAW_PATH
-            tag += 'jigsaw/'
-        trained_ae = PLAutoEncoder.load_from_checkpoint(
-            path,
-            num_channels=1,
-            num_hiddens=256,
-            num_residual_layers=20,
-            num_residual_hiddens=256,
-            latent_size=1024, lr=.01, input_size=(128, 64)).to(device)
-        pretrained = trained_ae.get_encoder()
-        mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])
-        criterion = None
-        labels_dtype = torch.long
-        tag += f'use_encoder_params_{args.use_encoder_params}'
-        if args.criterion == 'CE':
-            if args.sample_strat == 'none':
-                criterion = CrossEntropyLoss(weight=torch.Tensor([.05, 1]))
-            else:
-                criterion = CrossEntropyLoss()
-            tag += 'CE/'
-        elif args.criterion == 'MSFE':
-            criterion = MSFELoss()
-            tag += 'MSFE/'
-            labels_dtype = torch.float32
-
-        elif args.criterion == 'IMB':
-            criterion = ImbalancedLoss(mode=args.sim_calc)
-            tag += 'IMB/'
-            labels_dtype = torch.float32
-
-        train_loader, test_loader = get_clf_dataloaders(args.base_dir,
-                                                        args.batch_size,
-                                                        tile_length=args.tile_size,
-                                                        sample_strat=args.sample_strat,
-                                                        input_size=input_size,
-                                                        device=args.device,
-                                                        learning_mode=args.learning_mode,
-                                                        kmeans_clusters=args.kmeans_clusters,
-                                                        encoder=trained_ae.encode,
-                                                        label_dtype=labels_dtype,
-                                                        update_beta=args.balancing_beta)
-        tag += 'mlp_clf'
-        if 'dynamic' in args.sample_strat:
-            print(tag)
-
-            trainer = DynamicSamplingTrainer(model=mlp,
-                                             device=device,
-                                             tag=tag,
-                                             train_loader=train_loader,
-                                             test_loader=test_loader,
-                                             log_dir=LOG_DIR,
-                                             lr=args.lr,
-                                             use_encoder_params=args.use_encoder_params,
-                                             criterion=criterion)
-            trainer.training_loop(args.epochs)
-            torch.save(mlp.state_dict(), f'{args.sample_strat}_model_sd.pickle')
-
-        else:
-            clf = PL_MLP_clf(mlp, criterion, args.lr, use_encoder_params=args.use_encoder_params)
-            generic_training_loop(args, clf, train_loader, test_loader, tag)
-            torch.save(clf.model.mp.state_dict(), f'{tag}.pickle')
+        train_transfer_learn_clf(args)
 
     elif args.command == 'train_diffusion':
-        train_loader, test_loader = get_diffusion_dataloaders(args.base_dir, args.batch_size)
-        diffusion_model = get_diffusion_model_from_args(args)
-        diffusion_training_loop(diffusion_model, train_loader, 'total_cancer_results')
-        torch.save(diffusion_model.model.state_dict(), 'diff_cancer_model.pickle')
+        train_diffusion(args)
 
     elif args.command == 'train_transfer_learn_ae':
-        input_size = (args.input_height, args.input_width)
-        train_loader, test_loader = get_ae_loaders(args.base_dir, args.tile_size, (args.input_height, args.input_width), args.batch_size, args.learning_mode)
-        if args.res_type == 'custom':
-            res_type = 'custom_res_ae'
-            tag = f'ae_lz_{args.latent_size}_learnmode_{args.learning_mode}_res_{res_type}'
-            ae = get_pl_ae(args.num_channels,
-                         args.num_hiddens,
-                         args.num_residual_layers,
-                         args.num_residual_hiddens,
-                         args.latent_size, args.lr, input_size=input_size, tag=tag)
-        else:
-            res_type = 'orig_res_ae'
-            tag = f'ae_lz_{args.latent_size}_learnmode_{args.learning_mode}_res_{res_type}'
-            ae = PLAutoEncoder_OrigRes(args.num_residual_layers, args.latent_size, args.lr, input_size=input_size, tag=tag)
-        generic_training_loop(args, ae, train_loader, test_loader,
-                              model_name=tag)
-
+        train_transfer_learn_ae(args)
 
     elif args.command == 'generate_imgs':
-        os.makedirs('artificial_pos_samples', exist_ok = True)
-        diff_model = get_trained_diff_model(args.save_name, (args.img_height, args.img_width))
-        create_save_artificial_samples(diff_model, args.num_samples, 'artificial_pos_samples',
-                                       device=args.device, batch_size=args.batch_size)
-
+        generate_imgs(args)
 
     elif args.command == 'generate_splits':
-        test_size = args.test_size
-        base_dir = args.base_data_dir
-        split_data(test_size, base_dir)
+        generate_splits(args)
 
-    if args.command == 'train_rl':
-        device = 'cuda'
-        path = None
-        if args.training_mode == 'normal':
-            path = TRAINED_NORMAL_PATH
-        elif args.training_mode == 'jigsaw':
-            path = TRAINED_JIGSAW_PATH
-        trained_jigsaw_ae = PLAutoEncoder.load_from_checkpoint(
-            path,
-            num_channels=1,
-            num_hiddens=256,
-            num_residual_layers=20,
-            num_residual_hiddens=256,
-            latent_size=1024, lr=.01, input_size=(128, 64))
-        size = (args.input_height, args.input_width)
-        trainloader, test_loader = get_ae_loaders(args.base_dir, 32, size, args.batch_size, 'jigsaw')
-        trained_jigsaw_ae.to(device)
-        encoder = trained_jigsaw_ae.encode
-        env = ImbalancedClfEnv(trainloader.dataset, device)
-        agent = Agent(2, args.eps_end, args.eps_start, args.eps_decay, encoder, device, 10000, args.batch_size, args.lr, QModel=Generic_MLP)
-        trainer = RLTrainer(args.gamma, args.tau, env, agent, device, test_loader)
-        trainer.train_loop(args.updates)
+    elif args.command == 'train_rl':
+        train_rl(args)
+
+

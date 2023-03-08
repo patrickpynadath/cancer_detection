@@ -16,7 +16,7 @@ class OrigResDecoder(nn.Module):
         self.depth = depth
         self.inplanes = 64 * 4 # planes * block.expansion
 
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 64, n)
         self.layer2 = self._make_layer(block, 32, n, stride=2)

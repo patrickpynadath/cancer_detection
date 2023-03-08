@@ -27,8 +27,9 @@ run_train_ae(){
 
 # what do I need to test?
 # train classifier resnet
+# removed orig resnet arch -- issues with decoder
 for LEARNMODE in "jigsaw" "normal"; do
-  for RESTYPE in "orig" "custom"; do
+  for RESTYPE in "custom"; do
     run_train_ae $LEARNMODE $RESTYPE
   done
   for CRITERION in "CE" "MSFE"; do

@@ -42,8 +42,9 @@ class OrigResDecoder(nn.Module):
             )
 
         layers = []
-        layers.append(BottleNeckTranspose(self.outplanes, planes, stride, upsample))
         self.outplanes = planes * BottleNeckTranspose.expansion
+        layers.append(BottleNeckTranspose(self.outplanes, planes, stride, upsample))
+
         for i in range(1, blocks):
             layers.append(BottleNeckTranspose(self.outplanes, planes))
 

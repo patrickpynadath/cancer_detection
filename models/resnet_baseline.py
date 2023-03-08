@@ -211,6 +211,7 @@ class PL_ResNet(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.model.parameters(), self.lr, eps=.01)
+        return optimizer
 
     def on_train_epoch_end(self) -> None:
         tb = self.logger.experiment

@@ -19,14 +19,14 @@ class PLAutoEncoder(pl.LightningModule):
         super().__init__()
         self.label = tag
         self.latent_size = latent_size
-        self._encoder = encoder
+        self.encoder = encoder
         self._fc_latent = nn.LazyLinear(latent_size)
         self.fc_rl = nn.ReLU()
         self.fc_bn = nn.LazyBatchNorm1d()
 
         # initializing enc and lazy linear
         dummy = torch.zeros(64, 1, input_size[0], input_size[1])
-        dummy = self._encoder(dummy)
+        dummy = self.encoder(dummy)
         self.enc_dim = dummy.size()
         dummy = torch.flatten(dummy, start_dim=1)
         pre_latent_dim = dummy.size(1)
@@ -41,24 +41,24 @@ class PLAutoEncoder(pl.LightningModule):
         self._fc_dec(dummy)
         dummy = self.dec_rl(dummy)
         dummy = self.dec_bn(dummy)
-        self._decoder = decoder
+        self.decoder = decoder
         self.criterion = nn.MSELoss()
         self.lr = lr
 
     def encode(self, x, qual_values):
-        enc = self._encoder(x)
+        enc = self.encoder(x)
         pre_latent = enc.flatten(start_dim=1)
         #pre_latent = torch.cat((pre_latent, qual_values), dim=1)
         z = self._fc_latent(pre_latent)
         return z
 
     def get_encoder(self):
-        return {'encoder': self._encoder, 'fc_latent': self._fc_latent}
+        return {'encoder': self.encoder, 'fc_latent': self._fc_latent}
 
     def decode(self, z):
         dec = self._fc_dec(z)
         pre_recon = dec.view(-1, self.enc_dim[1], self.enc_dim[2], self.enc_dim[3])
-        x_recon = self._decoder(pre_recon)
+        x_recon = self.decoder(pre_recon)
         return x_recon
 
     def forward(self, x, qual_values):

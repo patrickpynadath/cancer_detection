@@ -79,7 +79,8 @@ def train_transfer_learn_clf(cmd_args):
         path,
         latent_size=1024, lr=.01, input_size=(128, 64), tag=tag, encoder=blank_ae._encoder, decoder=blank_ae._decoder).to(device)
     pretrained = trained_ae.get_encoder()
-    mlp = Generic_MLP(encoder=pretrained['encoder'], fc_latent=pretrained['fc_latent'])
+    mlp = Generic_MLP(encoder=pretrained['encoder'],
+                      fc_latent=pretrained['fc_latent'])
     criterion = None
     labels_dtype = torch.long
     tag += f'use_encoder_params_{cmd_args.use_encoder_params}'

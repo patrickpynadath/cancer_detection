@@ -31,7 +31,6 @@ run_train_ae(){
 # removed orig resnet arch -- issues with decoder
 for LEARNMODE in "jigsaw" "normal"; do
   for RESTYPE in "custom"; do
-    echo $device_string
     run_train_ae $LEARNMODE $RESTYPE
   done
   for CRITERION in "CE" "MSFE"; do

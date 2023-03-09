@@ -8,7 +8,7 @@ from sklearn.preprocessing import normalize
 from tqdm import trange
 from torch.utils.data import Dataset
 from .custom_dataset_classes import TransferLearningDatasetRSNA, TransferLearningDatasetCIFAR
-from processing.custom_dataset_classes import get_label_idx_dct
+from .custom_dataset_classes import get_label_idx_dct
 import copy
 
 class DynamicDatasetRSNA(TransferLearningDatasetRSNA):

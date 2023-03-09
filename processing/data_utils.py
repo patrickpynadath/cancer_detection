@@ -7,7 +7,7 @@ import os
 import torch
 
 from .custom_dataset_classes import ImgloaderDataSet, TransferLearningDatasetRSNA
-from . import DynamicDatasetRSNA
+from .dynamic_dataset import DynamicDatasetRSNA
 
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)

@@ -59,7 +59,10 @@ def train_transfer_learn_clf(cmd_args):
     tag = 'samplestrat_' + cmd_args.sample_strat + '/'
 
     path = None
-
+    if args.fast_dev_run:
+        epochs = 1
+    else:
+        epochs = cmd_args.epochs
     if cmd_args.learning_mode == 'normal':
         path = TRAINED_NORMAL_PATH
         tag += 'normal/'
@@ -124,7 +127,7 @@ def train_transfer_learn_clf(cmd_args):
                                          lr=cmd_args.lr,
                                          use_encoder_params=cmd_args.use_encoder_params,
                                          criterion=criterion)
-        trainer.training_loop(cmd_args.epochs)
+        trainer.training_loop(epochs)
         torch.save(mlp.state_dict(), f'{cmd_args.sample_strat}_model_sd.pickle')
 
     else:

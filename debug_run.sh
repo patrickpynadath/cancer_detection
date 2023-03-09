@@ -6,6 +6,7 @@ elif [[ $device == "cuda" ]]; then
   device_string="--device cuda --accelerator gpu --devices 1"
 fi
 
+echo "$device_string"
 
 run_resnet(){
   echo "cur command"

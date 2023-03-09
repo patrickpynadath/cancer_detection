@@ -1,8 +1,8 @@
 device=$1
 
-if [ $device == "cpu" ]; then
+if [[ $device == "cpu" ]]; then
   device_string="--device cpu --accelerator cpu"
-elif [ $device == "cuda" ]; then
+elif [[ $device == "cuda" ]]; then
   device_string="--device cuda --accelerator gpu --devices 1"
 fi
 

@@ -9,7 +9,7 @@ fi
 
 run_resnet(){
   echo "cur command"
-  echo "python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2 $device_string"
+  echo "python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2 ""$device_string"""
   python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2 $device_string
 }
 
@@ -30,6 +30,7 @@ run_train_ae(){
 # removed orig resnet arch -- issues with decoder
 for LEARNMODE in "jigsaw" "normal"; do
   for RESTYPE in "custom"; do
+    echo $device_string
     run_train_ae $LEARNMODE $RESTYPE
   done
   for CRITERION in "CE" "MSFE"; do

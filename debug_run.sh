@@ -9,20 +9,20 @@ fi
 
 run_resnet(){
   echo "cur command"
-  echo "python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2"
-  python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2
+  echo "python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2 $device_string"
+  python main.py train_resnet_clf --fast_dev_run True --criterion $1 --sample_strat $2 $device_string
 }
 
 run_transfer_learn_clf(){
   echo "cur command"
-  echo "main.py train_transfer_learn_clf --fast_dev_run True --criterion $1 --sample_strat $2 --learning_mode $3"
-  python main.py train_transfer_learn_clf --fast_dev_run True --criterion $1 --sample_strat $2 --learning_mode $3
+  echo "main.py train_transfer_learn_clf --fast_dev_run True --criterion $1 --sample_strat $2 --learning_mode $3 $device_string"
+  python main.py train_transfer_learn_clf --fast_dev_run True --criterion $1 --sample_strat $2 --learning_mode $3 $device_string
 }
 
 run_train_ae(){
   echo "cur command"
-  echo "python main.py train_transfer_learn_ae --fast_dev_run True --learning_mode $1 --res_type $2"
-  python main.py train_transfer_learn_ae --fast_dev_run True --learning_mode $1 --res_type $2
+  echo "python main.py train_transfer_learn_ae --fast_dev_run True --learning_mode $1 --res_type $2 $device_string"
+  python main.py train_transfer_learn_ae --fast_dev_run True --learning_mode $1 --res_type $2 $device_string
 }
 
 # what do I need to test?

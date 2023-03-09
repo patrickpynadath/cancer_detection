@@ -6,7 +6,8 @@ import pickle
 import os
 import torch
 
-from .custom_dataset_classes import ImgloaderDataSet, DynamicDataset, TransferLearningDataset
+from .custom_dataset_classes import ImgloaderDataSet, TransferLearningDatasetRSNA
+from . import DynamicDatasetRSNA
 
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
@@ -141,22 +142,22 @@ def get_clf_dataloaders(base_dir,
     test_values = [1 for _ in pos_test_paths] + [0 for _ in neg_test_paths]
 
     if 'dynamic' in sample_strat:
-        train_set = DynamicDataset(train_paths, train_values, tile_length=tile_length, input_size=input_size,
-                                                              learning_mode=learning_mode,
-                                                              use_kmeans=sample_strat == 'dynamic_kmeans_ros',
-                                                              kmeans_clusters=kmeans_clusters,
-                                                              encoder=encoder, device=device, label_dtype=label_dtype,
-                                   update_beta=update_beta)
+        train_set = DynamicDatasetRSNA(train_paths, train_values, tile_length=tile_length, input_size=input_size,
+                                       learning_mode=learning_mode,
+                                       use_kmeans=sample_strat == 'dynamic_kmeans_ros',
+                                       kmeans_clusters=kmeans_clusters,
+                                       encoder=encoder, device=device, label_dtype=label_dtype,
+                                       update_beta=update_beta)
     else:
-        train_set = TransferLearningDataset(train_paths, train_values,
+        train_set = TransferLearningDatasetRSNA(train_paths, train_values,
+                                                tile_length=tile_length,
+                                                input_size=input_size,
+                                                learning_mode=learning_mode, label_dtype=label_dtype)
+
+    test_set = TransferLearningDatasetRSNA(test_paths, test_values,
                                            tile_length=tile_length,
                                            input_size=input_size,
                                            learning_mode=learning_mode, label_dtype=label_dtype)
-
-    test_set = TransferLearningDataset(test_paths, test_values,
-                                       tile_length=tile_length,
-                                       input_size=input_size,
-                                       learning_mode=learning_mode, label_dtype=label_dtype)
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
@@ -180,8 +181,8 @@ def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_s
     train_paths = get_img_paths(train_img_ids, total_df, base_dir)
     test_paths = get_img_paths(test_img_ids, total_df, base_dir)
 
-    train_set = TransferLearningDataset(train_paths, train_labels, tile_length, input_size, learning_mode=learning_mode)
-    test_set = TransferLearningDataset(test_paths, test_labels, tile_length, input_size, learning_mode=learning_mode)
+    train_set = TransferLearningDatasetRSNA(train_paths, train_labels, tile_length, input_size, learning_mode=learning_mode)
+    test_set = TransferLearningDatasetRSNA(test_paths, test_labels, tile_length, input_size, learning_mode=learning_mode)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader

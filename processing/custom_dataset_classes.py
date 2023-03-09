@@ -1,18 +1,13 @@
 import math
 import random
-from sklearn.cluster import MiniBatchKMeans, KMeans
 import numpy as np
 import pandas as pd
 import torch
-from tqdm import tqdm, trange
-from sklearn.decomposition import IncrementalPCA,PCA
 from PIL import Image
 from skimage.filters.rank import entropy
 from skimage.morphology import disk
 from torch.utils.data import Dataset
 from torchvision.transforms import Pad
-from sklearn.preprocessing import normalize
-import hdbscan
 
 
 class XRayDataset(Dataset):
@@ -85,7 +80,7 @@ class AugmentedImgDataset(ImgloaderDataSet):
         return final_img, torch.tensor(self.values[i], dtype=torch.long)
 
 
-class TransferLearningDataset(AugmentedImgDataset):
+class TransferLearningDatasetRSNA(AugmentedImgDataset):
     def __init__(self, paths, values,
                  tile_length,
                  input_size,
@@ -158,125 +153,83 @@ class TransferLearningDataset(AugmentedImgDataset):
         return final_img, input_img, torch.tensor(self.values[i], dtype=self.label_dtype)
 
 
-class DynamicDataset(TransferLearningDataset):
-    def __init__(self, paths, values,
+class TransferLearningDatasetCIFAR(Dataset):
+    def __init__(self,
+                 dataset,
                  tile_length,
                  input_size,
-                 label_dtype,
+                 anomoly_class_idx,
                  learning_mode = 'normal',
-                 use_kmeans = False,
-                 kmeans_clusters=8,
-                 encoder = None,
-                 device='cpu',
-                 update_beta=.25):
-        super().__init__(paths,
-                         values, tile_length,
-                         input_size,
-                         learning_mode, label_dtype=label_dtype)
+                 label_dtype=torch.long):
+        super().__init__(self)
+        self.dataset = dataset
+        self.tile_length = tile_length
+        self.tiling = (math.ceil(input_size[0] / tile_length), math.ceil(input_size[1] / tile_length))
+        self.pad_dim = (self.tiling[0] * self.tile_length - input_size[0],
+                        self.tiling[1] * self.tile_length - input_size[1])
+        self.pad = Pad(padding=self.pad_dim)
+        self.learning_mode = learning_mode
+        self.input_size = input_size
+        self.label_dtype = label_dtype
+        self.anomoly_class_idx = anomoly_class_idx
+        self.values = self._get_values()
 
-        self.orig_paths = paths
-        self.orig_values = values
-        self.idx_class_map = values
-        self.class_idx_map = get_label_idx_dct(values)  # dct with class_idx : sample_idx
-        if use_kmeans:
-            if encoder:
-                print("training kmeans")
-                self.class_idx_map, self.idx_class_map = self._get_kmeans_class_dct(encoder, kmeans_clusters, device)
+    def _make_jigsaw(self, img: torch.Tensor):
+        img = self.pad(img)
+        x_indices = [i for i in range(self.tiling[0])]
+        y_indices = [i for i in range(self.tiling[1])]
+        random.shuffle(x_indices)
+        random.shuffle(y_indices)
+        jigsaw_img = torch.zeros_like(img)
+        for out_x_idx, orig_x_idx in enumerate(x_indices):
+            for out_y_idx, orig_y_idx in enumerate(y_indices):
+                jigsaw_img[:,
+                out_x_idx * self.tile_length: (out_x_idx + 1) * self.tile_length,
+                out_y_idx * self.tile_length: (out_y_idx + 1) * self.tile_length] \
+                    = self._get_tile(img, orig_x_idx, orig_y_idx)
+        return jigsaw_img
+
+    def _make_fillin(self, img: torch.Tensor):
+        img = self.pad(img.clone())
+        x_indices = [i for i in range(self.tiling[0])]
+        y_indices = [i for i in range(self.tiling[1])]
+        to_omit = torch.randint(low=1, high=self.tiling[0] * self.tiling[1] // 4)
+
+        to_omit_x= random.sample(x_indices, k=to_omit)
+        to_omit_y= random.sample(y_indices, k=to_omit)
+        for out_x_idx, orig_x_idx in enumerate(to_omit_x):
+            for out_y_idx, orig_y_idx in enumerate(to_omit_y):
+                img[:,
+                out_x_idx * self.tile_length: (out_x_idx + 1) * self.tile_length,
+                out_y_idx * self.tile_length: (out_y_idx + 1) * self.tile_length] \
+                    = torch.zeros(size=(img.size(0), self.tile_length, self.tile_length))
+        return img
+
+    def _get_tile(self, img, tile_x_idx, tile_y_idx):
+        return img[:, tile_x_idx * self.tile_length: (tile_x_idx + 1) * self.tile_length,
+               tile_y_idx * self.tile_length: (tile_y_idx + 1) * self.tile_length]
+
+    def __getitem__(self, i):
+        final_img = self.dataset[i][0] # torch tensor
+        if self.learning_mode == 'jigsaw':
+            input_img = self._make_jigsaw(final_img)
+        elif self.learning_mode == 'fillin':
+            input_img = self._make_fillin(final_img)
+        else:
+            input_img = final_img.clone()
+        # also get the labels
+        return final_img, input_img, torch.tensor(self.values[i], dtype=self.label_dtype)
+
+    def _get_values(self):
+        new_values = []
+        for i in range(len(self.dataset)):
+            if self.dataset[i][1] == self.anomoly_class_idx:
+                new_values.append(1)
             else:
-                raise Exception
-        class_ratios = {}
-        for k in self.class_idx_map.keys():
-            class_ratios[k] = len(self.class_idx_map[k]) / len(self.orig_paths)
-        self.use_kmeans= use_kmeans
-        self.class_ratios = class_ratios
-        self.update_beta = update_beta
-        self.cur_paths_class_map = [0 for _ in self.orig_paths]
+                new_values.append(0)
+        return new_values
 
 
-    def _update_paths_class_map(self):
-        paths_class_map = []
-        for k in self.class_idx_map.keys():
-            for idx in self.class_idx_map[k]:
-                paths_class_map[idx] = k
-
-
-    # we have a current weight,
-    # calculated_weight
-    # need final weights to be in between current and calculated
-    def adjust_sample_size(self, f1_class_scores):
-        print(f"f1 scores: {f1_class_scores}")
-        f1_class_scores = np.array(f1_class_scores)
-        ratios = np.ones_like(f1_class_scores) - f1_class_scores
-        new_ratios = np.exp(np.array(ratios))/np.sum(np.exp(np.array(ratios)))
-        print(f"new sampling ratios: {new_ratios}")
-        orig_ratios = [len(self.class_idx_map[k]) / len(self.orig_values) for k in list(self.class_idx_map.keys())]
-        print(f"orig ratios: {orig_ratios}")
-        sample_idx = []
-        print(f'initial size: {len(self.paths)}')
-        print(f1_class_scores)
-        new_idx_class_map = []
-        for k in self.class_idx_map.keys():
-            print(f"adjusting class size: {k}")
-            cur_ratio = self.class_ratios[k]
-            ratio = new_ratios[k] * self.update_beta + cur_ratio * (1 - self.update_beta)
-            num_to_sample = int(len(self.orig_values) * ratio)
-            print(f"cur sampling size: {int(self.class_ratios[k] * len(self.orig_paths))}")
-            print(f"new sampling size: {num_to_sample}")
-            #multiple = int(1 + num_to_sample / len(self.class_map[k]))
-            #to_append = self.class_map[k] * multiple
-            #to_append = to_append[:num_to_sample]
-            to_append = random.choices(self.class_idx_map[k], k=num_to_sample)
-            print(len(to_append))
-            self.class_ratios[k] = ratio
-            sample_idx += to_append
-            new_idx_class_map += [k for _ in range(num_to_sample)]
-        self.idx_class_map = new_idx_class_map
-        self.paths = [self.orig_paths[idx] for idx in sample_idx]
-        self.values = [self.orig_values[idx] for idx in sample_idx]
-        print(f"new size: {len(self.paths)}")
-        return
-
-    def _get_encoder_lv(self, encoder, device='cpu'):
-        to_stack = []
-        print('getting encoded lv')
-        with torch.no_grad():
-            pg = trange(len(self.paths))
-            for i in pg:
-                sample = self.__getitem__(i)[1][None, :].to(device)
-                lv = encoder(sample, None)[0, :]
-                #lv = lv / torch.linalg.norm(lv, ord=2)
-                to_stack.append(lv.cpu().numpy())
-        return np.stack(to_stack, axis=0)
-
-    def _get_kmeans_class_dct(self, encoder, num_clusters, device):
-        X = self._get_encoder_lv(encoder, device)
-        X = normalize(X)
-        pca = PCA(n_components=20)
-        print("fitting pca")
-        pca.fit(X)
-
-        X_reduced = pca.transform(X)
-        print(X_reduced)
-        print("fitting kmeans")
-        kmeans = KMeans(n_clusters=20, verbose=1)
-        kmeans.fit(X_reduced)
-
-        idx_to_cluster = kmeans.predict(X_reduced)
-        print(np.unique(idx_to_cluster, return_counts=True))
-
-        cluster_to_idx = {}
-        #print(np.unique(pred, return_counts=True))
-        for i in list(np.unique(idx_to_cluster)):
-            cluster_to_idx[i] = []
-        for idx, cluster_idx in enumerate(list(idx_to_cluster)):
-            cluster_to_idx[cluster_idx].append(idx)
-        return cluster_to_idx, idx_to_cluster
-
-    def _get_label_dct(self):
-        class_map = {0 : [], 1 : []}
-        for idx, label in enumerate(self.values):
-            class_map[int(label)].append(idx)
-        return class_map
 
 
 def get_label_idx_dct(labels):

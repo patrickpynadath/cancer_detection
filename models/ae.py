@@ -15,7 +15,8 @@ class PLAutoEncoder(pl.LightningModule):
     def __init__(self,
                  latent_size,
                  lr,
-                 input_size, tag, encoder, decoder):
+                 input_size, tag, encoder, decoder,
+                 num_channels=1):
         super().__init__()
         self.label = tag
         self.latent_size = latent_size
@@ -25,7 +26,7 @@ class PLAutoEncoder(pl.LightningModule):
         self.fc_bn = nn.LazyBatchNorm1d()
 
         # initializing enc and lazy linear
-        dummy = torch.zeros(64, 1, input_size[0], input_size[1])
+        dummy = torch.zeros(64, num_channels, input_size[0], input_size[1])
         dummy = self._encoder(dummy)
         self.enc_dim = dummy.size()
         dummy = torch.flatten(dummy, start_dim=1)
@@ -95,9 +96,9 @@ class PLAutoEncoder(pl.LightningModule):
         recon = self.forward(jigsaw_img, qual_labels)
         loss = self.criterion(recon, orig_img)
         self.log('val_loss', loss, on_epoch=True)
-        self.orig_img = orig_img[0, 0, :, :]
-        self.recon = recon[0, 0, :, :]
-        self.jigsaw_img = jigsaw_img[0, 0, :, :]
+        self.orig_img = orig_img[0, :, :, :]
+        self.recon = recon[0, :, :, :]
+        self.jigsaw_img = jigsaw_img[0, :, :, :]
         return loss
 
     def validation_step_end(self, outputs):
@@ -165,7 +166,8 @@ def get_ae(num_channels,
                        input_size=input_size,
                        tag=tag,
                        encoder=encoder,
-                       decoder=decoder)
+                       decoder=decoder,
+                       num_channels=num_channels)
     return ae
 
 

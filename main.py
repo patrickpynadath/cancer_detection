@@ -60,7 +60,7 @@ def make_cifar_splits(cmd_args):
 
 def train_CIFAR_ae(cmd_args):
     sample_ratio = cmd_args.minority_sample_ratio
-    tile_length = cmd_args.tile_length
+    tile_length = cmd_args.tile_size
     learning_mode = cmd_args.learning_mode
     batch_size = cmd_args.batch_size
     num_hiddens = cmd_args.num_hiddens

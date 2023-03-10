@@ -20,4 +20,5 @@ def config_transfer_learn_ae(args: ArgumentParser):
     args.add_argument('--num_channels', help='num input channels', default=1, type=int)
     args.add_argument('--lr', help='lr for model', default=1e-5, type=float)
     args.add_argument('--res_type', help='type of residual blocks to use', default='custom')
+    args.add_argument('--minority_sample_ratio', help='use for finding splits', type=float, default=1)
     return args

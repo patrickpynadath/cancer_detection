@@ -60,7 +60,7 @@ def split_data_RSNA(test_ratio, base_dir):
     return
 
 
-def split_data_CIFAR(test_ratio, minority_sample_ratio, base_dir, dataset):
+def split_data_CIFAR(minority_sample_ratio, base_dir, dataset, dataset_label):
     pos_idx = []
     neg_idx = []
     for i in range(len(dataset)):
@@ -68,29 +68,20 @@ def split_data_CIFAR(test_ratio, minority_sample_ratio, base_dir, dataset):
             pos_idx.append(i)
         else:
             neg_idx.append(i)
-    rs = ShuffleSplit(n_splits=1, test_size=test_ratio)
 
-
-    neg_train, neg_test = next(rs.split(neg_idx))
-    pos_train, pos_test = next(rs.split(pos_idx))
     # sample from pos_train, pos_test after calculating the number to sample
-    num_pos_train = int(minority_sample_ratio * len(pos_train))
-    num_pos_test = int(minority_sample_ratio * len(pos_test))
+    num_pos = int(minority_sample_ratio * len(pos_idx))
 
-    pos_train = random.sample(pos_train, num_pos_train)
-    pos_test = random.sample(pos_test, num_pos_test)
-    base_dir += f'/{round(test_ratio, 3)}'
+    pos_train = random.sample(pos_idx, num_pos)
+    print(f'imbalance ratio for {dataset_label}: {num_pos/len(dataset)}')
+    base_dir += f'/{round(minority_sample_ratio, 3)}'
     if not os.path.exists(f'{base_dir}'):
         os.mkdir(f'{base_dir}')
 
-    with open(f'{base_dir}/neg_train_imgid.pickle', 'wb') as f:
-        pickle.dump(neg_train, f)
-    with open(f'{base_dir}/neg_test_imgid.pickle', 'wb') as f:
-        pickle.dump(neg_test, f)
-    with open(f'{base_dir}/pos_train_imgid.pickle', 'wb') as f:
+    with open(f'{base_dir}/neg_{dataset_label}_imgid.pickle', 'wb') as f:
+        pickle.dump(neg_idx, f)
+    with open(f'{base_dir}/pos_{dataset_label}_imgid.pickle', 'wb') as f:
         pickle.dump(pos_train, f)
-    with open(f'{base_dir}/pos_test_imgid.pickle', 'wb') as f:
-        pickle.dump(pos_test, f)
     return
 
 

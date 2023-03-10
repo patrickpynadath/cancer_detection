@@ -2,9 +2,9 @@ import os
 from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd, \
     config_data_processing_cmd, config_split_data_cmd, \
     config_resnet_train_cmd, config_transfer_learn_ae, \
-    config_rl_train_cmd
+    config_rl_train_cmd, config_split_data_CIFAR_cmd
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
-    split_data_RSNA, get_ae_loaders_RSNA
+    split_data_RSNA, get_ae_loaders_RSNA, split_data_CIFAR, get_cifar_sets
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
     create_save_artificial_samples, get_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
@@ -50,6 +50,11 @@ def train_resnet_clf(cmd_args):
 
 
 def make_cifar_splits(cmd_args):
+    for r in [1, .8, .5, .25, .1, .05]:
+        base_dir = cmd_args.base_dir
+        train, test = get_cifar_sets()
+        split_data_CIFAR(r, base_dir, train, 'train')
+        split_data_CIFAR(r, base_dir, test, 'test')
     return
 
 
@@ -230,6 +235,9 @@ if __name__ == '__main__':
     generate_splits_args = subparsers.add_parser('generate_splits', help ='generating the splits to use for resnet and diffusion')
     generate_splits_args = config_split_data_cmd(generate_splits_args)
 
+    generate_CIFAR_splits_args = subparsers.add_parser('generate_CIFAR_splits', help='make cifar splits for train/test')
+    generate_CIFAR_splits_args = config_split_data_CIFAR_cmd(generate_CIFAR_splits_args)
+
     train_rl_args = subparsers.add_parser('train_rl', help ='train rl policy net')
     train_rl_args = config_rl_train_cmd(train_rl_args)
 
@@ -255,6 +263,9 @@ if __name__ == '__main__':
 
     elif args.command == 'generate_splits':
         generate_splits(args)
+
+    elif args.command == 'generate_CIFAR_splits':
+        make_cifar_splits(args)
 
     elif args.command == 'train_rl':
         train_rl(args)

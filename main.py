@@ -59,7 +59,6 @@ def make_cifar_splits(cmd_args):
 
 
 def train_CIFAR_ae(cmd_args):
-    sample_ratio = cmd_args.minority_sample_ratio
     tile_length = cmd_args.tile_size
     learning_mode = cmd_args.learning_mode
     batch_size = cmd_args.batch_size
@@ -69,11 +68,11 @@ def train_CIFAR_ae(cmd_args):
     latent_size = cmd_args.latent_size
     lr = cmd_args.lr
     res_type = cmd_args.res_type
-
-    tag = f'res_type_{res_type}_lz_{latent_size}_{learning_mode}_{sample_ratio}'
-    train_loader, test_loader = get_ae_loaders_CIFAR(tile_length, 'cifar-10-batches-py', batch_size, learning_mode, sample_ratio)
-    ae = get_ae(3, num_hiddens, num_residual_layers, num_residual_hiddens, latent_size, lr, input_size=(32, 32), tag=tag, res_type=res_type)
-    generic_training_loop(cmd_args, ae, train_loader, test_loader, model_name=tag)
+    for r in [1, .8, .5, .25, .1, .05]:
+        tag = f'res_type_{res_type}_lz_{latent_size}_{learning_mode}_{r}'
+        train_loader, test_loader = get_ae_loaders_CIFAR(tile_length, 'cifar-10-batches-py', batch_size, learning_mode, r)
+        ae = get_ae(3, num_hiddens, num_residual_layers, num_residual_hiddens, latent_size, lr, input_size=(32, 32), tag=tag, res_type=res_type)
+        generic_training_loop(cmd_args, ae, train_loader, test_loader, model_name=tag)
     return
 
 

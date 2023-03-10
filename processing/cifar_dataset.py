@@ -5,6 +5,10 @@ from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
 
+IDX_TO_LABEL = ('plane', 'car', 'bird', 'cat',
+                   'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+ANIMAL_CLASS_IDX = [2, 3, 4, 5, 6]
+OBJ_CLASS_IDX = [1, 7, 8, 9]
 
 def get_cifar_sets():
     root_dir = r'../'
@@ -25,10 +29,15 @@ def get_cifar_sets():
     return trainset, testset
 
 
-def get_cifar_dataloaders(batch_size):
-    trainset, testset = get_cifar_sets()
-    train_loader = DataLoader(trainset, batch_size = batch_size, shuffle=True)
-    test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
-    return train_loader, test_loader
+def get_values(dataset):
+    new_values = []
+    for i in range(len(dataset)):
+        if dataset[i][1] in ANIMAL_CLASS_IDX:
+            new_values.append(1)
+        else:
+            new_values.append(0)
+    return new_values
+
+
 
 

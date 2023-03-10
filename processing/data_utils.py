@@ -5,9 +5,9 @@ from sklearn.model_selection import ShuffleSplit
 import pickle
 import os
 import torch
-
 from .custom_dataset_classes import ImgloaderDataSet, TransferLearningDatasetRSNA
 from .dynamic_dataset import DynamicDatasetRSNA
+from .cifar_dataset import get_cifar_sets, ANIMAL_CLASS_IDX, get_values
 
 os.environ["NCCL_DEBUG"] = "INFO"
 random.seed(1)
@@ -39,7 +39,7 @@ def get_paths(base_dir='data', train=True, target_col=None, target_val=None):
 # target col can be any column included in the given csv
 
 
-def split_data(test_ratio, base_dir):
+def split_data_RSNA(test_ratio, base_dir):
     train_csv = pd.read_csv(f'{base_dir}/train.csv')
     neg_df = train_csv[train_csv['cancer'].isin([0])]
     pos_df = train_csv[train_csv['cancer'].isin([1])]
@@ -60,6 +60,40 @@ def split_data(test_ratio, base_dir):
     return
 
 
+def split_data_CIFAR(test_ratio, minority_sample_ratio, base_dir, dataset):
+    pos_idx = []
+    neg_idx = []
+    for i in range(len(dataset)):
+        if dataset[i][1] in ANIMAL_CLASS_IDX:
+            pos_idx.append(i)
+        else:
+            neg_idx.append(i)
+    rs = ShuffleSplit(n_splits=1, test_size=test_ratio)
+
+
+    neg_train, neg_test = next(rs.split(neg_idx))
+    pos_train, pos_test = next(rs.split(pos_idx))
+    # sample from pos_train, pos_test after calculating the number to sample
+    num_pos_train = int(minority_sample_ratio * len(pos_train))
+    num_pos_test = int(minority_sample_ratio * len(pos_test))
+
+    pos_train = random.sample(pos_train, num_pos_train)
+    pos_test = random.sample(pos_test, num_pos_test)
+    base_dir += f'/{round(test_ratio, 3)}'
+    if not os.path.exists(f'{base_dir}'):
+        os.mkdir(f'{base_dir}')
+
+    with open(f'{base_dir}/neg_train_imgid.pickle', 'wb') as f:
+        pickle.dump(neg_train, f)
+    with open(f'{base_dir}/neg_test_imgid.pickle', 'wb') as f:
+        pickle.dump(neg_test, f)
+    with open(f'{base_dir}/pos_train_imgid.pickle', 'wb') as f:
+        pickle.dump(pos_train, f)
+    with open(f'{base_dir}/pos_test_imgid.pickle', 'wb') as f:
+        pickle.dump(pos_test, f)
+    return
+
+
 def get_stored_splits(base_dir):
     with open(f'{base_dir}/neg_train_imgid.pickle', 'rb') as f:
         neg_train = pickle.load(f)
@@ -71,6 +105,7 @@ def get_stored_splits(base_dir):
         pos_test = pickle.load(f)
     return {'train': (neg_train, pos_train),
             'test': (neg_test, pos_test)}
+
 
 
 def get_diffusion_dataloaders(base_dir, batch_size):
@@ -164,7 +199,11 @@ def get_clf_dataloaders(base_dir,
     return train_loader, test_loader
 
 
-def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_size=32, learning_mode='normal'):
+def get_ae_loaders_RSNA(base_dir='data',
+                        tile_length=16,
+                        input_size=(128, 64),
+                        batch_size=32,
+                        learning_mode='normal'):
     split_dct = get_stored_splits(base_dir)
     total_df = pd.read_csv(f'{base_dir}/train.csv')
     total_df.index = total_df['image_id']
@@ -186,6 +225,21 @@ def get_ae_loaders(base_dir='data',tile_length=16, input_size=(128, 64), batch_s
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
     return train_loader, test_loader
+
+
+def get_ae_loaders_CIFAR(tile_length,
+                         batch_size,
+                         learning_mode,
+                         minority_sample_ratio):
+    train, test = get_cifar_sets()
+    base_dir = 'cifar-10-batches-py'
+    stored_splits = get_stored_splits(base_dir)
+    train_values = get_values(train)
+    test_values = get_values(test)
+
+
+
+    return
 
 
 def get_qual_values(df, image_ids):

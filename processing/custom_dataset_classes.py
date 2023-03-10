@@ -8,6 +8,7 @@ from skimage.filters.rank import entropy
 from skimage.morphology import disk
 from torch.utils.data import Dataset
 from torchvision.transforms import Pad
+from .cifar_dataset import get_values
 
 
 class XRayDataset(Dataset):
@@ -155,13 +156,15 @@ class TransferLearningDatasetRSNA(AugmentedImgDataset):
 
 class TransferLearningDatasetCIFAR(Dataset):
     def __init__(self,
+                 sample_idx,
+                 values,
                  dataset,
                  tile_length,
                  input_size,
-                 anomoly_class_idx,
                  learning_mode = 'normal',
                  label_dtype=torch.long):
-        super().__init__(self)
+        super().__init__()
+        self.sample_idx = sample_idx
         self.dataset = dataset
         self.tile_length = tile_length
         self.tiling = (math.ceil(input_size[0] / tile_length), math.ceil(input_size[1] / tile_length))
@@ -171,8 +174,7 @@ class TransferLearningDatasetCIFAR(Dataset):
         self.learning_mode = learning_mode
         self.input_size = input_size
         self.label_dtype = label_dtype
-        self.anomoly_class_idx = anomoly_class_idx
-        self.values = self._get_values()
+        self.values = values
 
     def _make_jigsaw(self, img: torch.Tensor):
         img = self.pad(img)
@@ -189,22 +191,6 @@ class TransferLearningDatasetCIFAR(Dataset):
                     = self._get_tile(img, orig_x_idx, orig_y_idx)
         return jigsaw_img
 
-    def _make_fillin(self, img: torch.Tensor):
-        img = self.pad(img.clone())
-        x_indices = [i for i in range(self.tiling[0])]
-        y_indices = [i for i in range(self.tiling[1])]
-        to_omit = torch.randint(low=1, high=self.tiling[0] * self.tiling[1] // 4)
-
-        to_omit_x= random.sample(x_indices, k=to_omit)
-        to_omit_y= random.sample(y_indices, k=to_omit)
-        for out_x_idx, orig_x_idx in enumerate(to_omit_x):
-            for out_y_idx, orig_y_idx in enumerate(to_omit_y):
-                img[:,
-                out_x_idx * self.tile_length: (out_x_idx + 1) * self.tile_length,
-                out_y_idx * self.tile_length: (out_y_idx + 1) * self.tile_length] \
-                    = torch.zeros(size=(img.size(0), self.tile_length, self.tile_length))
-        return img
-
     def _get_tile(self, img, tile_x_idx, tile_y_idx):
         return img[:, tile_x_idx * self.tile_length: (tile_x_idx + 1) * self.tile_length,
                tile_y_idx * self.tile_length: (tile_y_idx + 1) * self.tile_length]
@@ -213,21 +199,13 @@ class TransferLearningDatasetCIFAR(Dataset):
         final_img = self.dataset[i][0] # torch tensor
         if self.learning_mode == 'jigsaw':
             input_img = self._make_jigsaw(final_img)
-        elif self.learning_mode == 'fillin':
-            input_img = self._make_fillin(final_img)
         else:
             input_img = final_img.clone()
         # also get the labels
         return final_img, input_img, torch.tensor(self.values[i], dtype=self.label_dtype)
 
-    def _get_values(self):
-        new_values = []
-        for i in range(len(self.dataset)):
-            if self.dataset[i][1] == self.anomoly_class_idx:
-                new_values.append(1)
-            else:
-                new_values.append(0)
-        return new_values
+
+
 
 
 

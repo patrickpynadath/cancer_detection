@@ -4,7 +4,7 @@ from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd,
     config_resnet_train_cmd, config_transfer_learn_ae, \
     config_rl_train_cmd
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
-    split_data, get_ae_loaders
+    split_data_RSNA, get_ae_loaders_RSNA
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
     create_save_artificial_samples, get_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
@@ -46,6 +46,10 @@ def train_resnet_clf(cmd_args):
                                                     input_size,
                                                     sample_strat=cmd_args.sample_strat)
     generic_training_loop(cmd_args, clf, train_loader, test_loader, tag)
+    return
+
+
+def make_cifar_splits(cmd_args):
     return
 
 
@@ -147,8 +151,8 @@ def train_diffusion(cmd_args):
 
 def train_transfer_learn_ae(cmd_args):
     input_size = (cmd_args.input_height, cmd_args.input_width)
-    train_loader, test_loader = get_ae_loaders(cmd_args.base_dir, cmd_args.tile_size, (cmd_args.input_height, cmd_args.input_width),
-                                               cmd_args.batch_size, cmd_args.learning_mode)
+    train_loader, test_loader = get_ae_loaders_RSNA(cmd_args.base_dir, cmd_args.tile_size, (cmd_args.input_height, cmd_args.input_width),
+                                                    cmd_args.batch_size, cmd_args.learning_mode)
     tag = f'ae_lz_{cmd_args.latent_size}_learnmode_{cmd_args.learning_mode}_res_{args.res_type}'
     ae = get_ae(cmd_args.num_channels,
                 cmd_args.num_hiddens,
@@ -171,7 +175,7 @@ def generate_imgs(cmd_args):
 def generate_splits(cmd_args):
     test_size = cmd_args.test_size
     base_dir = cmd_args.base_data_dir
-    split_data(test_size, base_dir)
+    split_data_RSNA(test_size, base_dir)
     return
 
 
@@ -190,7 +194,7 @@ def train_rl(cmd_args):
         num_residual_hiddens=256,
         latent_size=1024, lr=.01, input_size=(128, 64))
     size = (cmd_args.input_height, cmd_args.input_width)
-    trainloader, test_loader = get_ae_loaders(cmd_args.base_dir, 32, size, cmd_args.batch_size, 'jigsaw')
+    trainloader, test_loader = get_ae_loaders_RSNA(cmd_args.base_dir, 32, size, cmd_args.batch_size, 'jigsaw')
     trained_jigsaw_ae.to(device)
     encoder = trained_jigsaw_ae.encode
     env = ImbalancedClfEnv(trainloader.dataset, device)

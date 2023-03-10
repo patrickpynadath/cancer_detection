@@ -228,8 +228,10 @@ def get_ae_loaders_CIFAR(tile_length,
     stored_splits = get_stored_splits(base_dir)
     train_idx = stored_splits['train'][0] + stored_splits['train'][1]
     test_idx = stored_splits['test'][0] + stored_splits['test'][1]
-    train_values = [get_values(train)[idx] for idx in train_idx]
-    test_values = [get_values(test)[idx] for idx in test_idx]
+    tv_train = get_values(train)
+    tv_test = get_values(test)
+    train_values = [tv_train[idx] for idx in train_idx]
+    test_values = [tv_test[idx] for idx in test_idx]
 
     train_ds = TransferLearningDatasetCIFAR(train_idx, train_values, train, tile_length, (32, 32), learning_mode)
     test_ds = TransferLearningDatasetCIFAR(test_idx, test_values, test, tile_length, (32, 32), learning_mode)

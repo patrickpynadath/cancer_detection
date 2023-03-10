@@ -4,7 +4,7 @@ from cmd_utils import config_diffusion_train_cmd, config_diffusion_generate_cmd,
     config_resnet_train_cmd, config_transfer_learn_ae, \
     config_rl_train_cmd, config_split_data_CIFAR_cmd
 from processing import MammographyPreprocessor, get_paths, get_diffusion_dataloaders, get_clf_dataloaders,\
-    split_data_RSNA, get_ae_loaders_RSNA, split_data_CIFAR, get_cifar_sets
+    split_data_RSNA, get_ae_loaders_RSNA, split_data_CIFAR, get_cifar_sets, get_ae_loaders_CIFAR
 import argparse
 from models import get_diffusion_model_from_args, get_trained_diff_model, \
     create_save_artificial_samples, get_ae, PLAutoEncoder, MSFELoss, ImbalancedLoss, \
@@ -55,6 +55,25 @@ def make_cifar_splits(cmd_args):
         train, test = get_cifar_sets()
         split_data_CIFAR(r, base_dir, train, 'train')
         split_data_CIFAR(r, base_dir, test, 'test')
+    return
+
+
+def train_CIFAR_ae(cmd_args):
+    sample_ratio = cmd_args.minority_sample_ratio
+    tile_length = cmd_args.tile_length
+    learning_mode = cmd_args.learning_mode
+    batch_size = cmd_args.batch_size
+    num_hiddens = cmd_args.num_hiddens
+    num_residual_layers = cmd_args.num_residual_layers
+    num_residual_hiddens = cmd_args.num_residual_hiddens
+    latent_size = cmd_args.latent_size
+    lr = cmd_args.lr
+    res_type = cmd_args.res_type
+
+    tag = f'res_type_{res_type}_lz_{latent_size}_{learning_mode}_{sample_ratio}'
+    train_loader, test_loader = get_ae_loaders_CIFAR(tile_length, 'cifar-10-batches-py', batch_size, learning_mode, sample_ratio)
+    ae = get_ae(3, num_hiddens, num_residual_layers, num_residual_hiddens, latent_size, lr, input_size=(32, 32), tag=tag, res_type=res_type)
+    generic_training_loop(cmd_args, ae, train_loader, test_loader, model_name=tag)
     return
 
 
@@ -241,6 +260,9 @@ if __name__ == '__main__':
     train_rl_args = subparsers.add_parser('train_rl', help ='train rl policy net')
     train_rl_args = config_rl_train_cmd(train_rl_args)
 
+    train_CIFAR_ae_args = subparsers.add_parser('train_CIFAR_ae', help='training ae on cifar')
+    train_CIFAR_ae_args = config_transfer_learn_ae(train_CIFAR_ae_args)
+
     args = parser.parse_args()
 
     if args.command == 'process_data':
@@ -270,4 +292,6 @@ if __name__ == '__main__':
     elif args.command == 'train_rl':
         train_rl(args)
 
+    elif args.command == 'train_CIFAR_ae':
+        train_CIFAR_ae(args)
 

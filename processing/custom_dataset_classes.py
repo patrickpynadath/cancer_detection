@@ -204,6 +204,9 @@ class TransferLearningDatasetCIFAR(Dataset):
         # also get the labels
         return final_img, input_img, torch.tensor(self.values[i], dtype=self.label_dtype)
 
+    def __len__(self):
+        return len(self.values)
+
 
 
 

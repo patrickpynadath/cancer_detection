@@ -74,7 +74,7 @@ def split_data_CIFAR(minority_sample_ratio, base_dir, dataset, dataset_label):
 
     pos_train = random.sample(pos_idx, num_pos)
     print(f'imbalance ratio for {dataset_label}: {num_pos/len(dataset)}')
-    base_dir += f'/{round(minority_sample_ratio, 3)}'
+    base_dir += f'/{minority_sample_ratio}'
     if not os.path.exists(f'{base_dir}'):
         os.mkdir(f'{base_dir}')
 
